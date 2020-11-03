@@ -1,3 +1,5 @@
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+
 # verona-player-html
 This is a simple, dependency-less, vanilla-js-written, but full-featured unit player,
 mainly as showcase for developers and for software-testing.
