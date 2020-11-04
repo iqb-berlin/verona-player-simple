@@ -2,22 +2,22 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Verona HTML Player 1</title>
+    <title>Simple Verona Player 1</title>
 
-    <meta name="application-name" content="verona-html-player-1.0.0"
+    <meta name="application-name" content="verona-simple-player-1.0.0"
           data-version="1.0.0"
           data-repository-url="https://github.com/iqb-berlin/testcenter-backend"
           data-api-version="2.1.0"
           data-not-supported-api-features=""
-          data-supported-unit-definition-types="verona-html-player-1.0.0"
-          data-supported-unit-state-data-types="verona-html-player-1.0.0"
+          data-supported-unit-definition-types="verona-simple-player-1.0.0"
+          data-supported-unit-state-data-types="verona-simple-player-1.0.0"
           data-supported-browsers='{"Firefox": 55, "Chrome": 51, "Edge": 18}'
     />
 
     <template id="player-info-template">
         <div style="display: flex;">
             <div style="flex: 50%; padding: 2px">
-                <h1>Verona HTML Player 2</h1>
+                <h1>Simple Verona Player</h1>
                 <p>
                     This is a simple, dependency-less, vanilla-js-written, but full-featured unit player,
                     mainly as showcase for developers and for software-testing.
@@ -224,7 +224,7 @@
                     type: 'vopStateChangedNotification',
                     sessionId: sessionId,
                     timeStamp: Date.now(),
-                    unitStateDataTyp: 'sample-player-2.1.0',
+                    unitStateDataTyp: 'verona-simple-player-1.0.0',
                 };
                 const playerState = {
                     validPages: Pages.validPages,
@@ -286,7 +286,7 @@
             PlayerUI.togglePageNavButtons();
             PlayerUI.toggleUnitNavButtons();
 
-            if (data['unitDefinitionType'] !== "sample-player-2.1.0") {
+            if (data['unitDefinitionType'] !== "verona-simple-player-1.0.0") {
                 Log.debug("Unit definition type does not match: " + data['unitDefinitionType']);
             } else {
                 // Message.send.vopStateChangedNotification();
