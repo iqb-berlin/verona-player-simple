@@ -14,7 +14,7 @@ and the player does the rest. Use some special Ids for some special buttons.
 # Development rules for units
 The Unit can contain any HTMl-content, even `<script>`- and `<style>`-tags!
 * Don't use the `<form>`-element, since the whole unit will put into one.
-* use the `<fieldset>` to define pages if you want to have a multi-page unit.
+* Use the `<fieldset>` to define pages if you want to have a multi-page unit.
 * Any `<input>`-, `<textarea>`- and `<select>`-element will be tracked and content stored as well as any element
   containing the `contenteditable`-attribute. In both cases use the name element to set up variable names.
 * The player contains some JS-Classes which can be used in unit-code to extend functionality.
