@@ -200,6 +200,35 @@ describe('basic test', () => {
         done();
     });
 
+    it ('should load values into the right forms', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input type='text'/><input type='text' name='field' /><p contenteditable></p>",
+            sessionId: "1",
+            unitState: {
+                dataParts: {
+                    all: {
+                        answers: {
+                            '': ['firstContent', 'thirdContent'],
+                            'field': 'secondContent',
+                        }
+                    }
+                }
+            }
+        });
+
+        const input1 = await driver.findElement(By.css('#unit input:nth-of-type(1)'));
+        const input2 = await driver.findElement(By.css('#unit input:nth-of-type(2)'));
+        const input3 = await driver.findElement(By.css('#unit p'));
+
+        expect(await input1.getAttribute('value')).toEqual('firstContent');
+        expect(await input2.getAttribute('value')).toEqual('secondContent');
+        expect(await input3.getText()).toEqual('thirdContent');
+
+        done();
+    });
+
+
     describe('unit navigation', () => {
 
         it ('should enable next if available', async done => {
