@@ -229,6 +229,28 @@ describe('basic test', () => {
     });
 
 
+    it('should execute script in unit', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <script>
+                    document.addEventListener('vopStartCommand', () =>
+                        document.querySelector('#unit p').innerHTML = 'rewritten'
+                    );
+                </script>
+                <p>original</p>`,
+            sessionId: "1",
+        });
+
+        const unit = await driver.findElement(By.css('#unit p'));
+
+        await unit.click();
+
+        expect(await unit.getText()).toEqual('rewritten');
+        done();
+    });
+
+
     describe('unit navigation', () => {
 
         it ('should enable next if available', async done => {
