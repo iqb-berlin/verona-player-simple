@@ -29,7 +29,7 @@ describe('basic test', () => {
     });
 
     beforeEach(async done => {
-        await driver.get('file:' + playerPath);;
+        await driver.get('file:' + playerPath);
         done();
     })
 
@@ -249,10 +249,24 @@ describe('basic test', () => {
         done();
     });
 
+    it('should apply style in unit', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <style>#thing {background-color: rgb(143, 188, 143)}</style><p id="thing">should be green</p>`,
+            sessionId: "1",
+        });
+
+        const thing = await driver.findElement(By.css('#thing'));
+
+        expect(await thing.getCssValue('background-color')).toEqual('rgb(143, 188, 143)');
+        done();
+    });
+
 
     describe('unit navigation', () => {
 
-        it ('should enable next if available', async done => {
+        it('should enable next if available', async done => {
             await send({
                 type: "vopStartCommand",
                 unitDefinition: "<h1>Virtual Unit</h1>",
@@ -276,7 +290,7 @@ describe('basic test', () => {
             done();
         });
 
-        it ('should enable previous if available', async done => {
+        it('should enable previous if available', async done => {
             await driver.get('file:' + playerPath);
 
             await send({
@@ -302,7 +316,7 @@ describe('basic test', () => {
             done();
         });
 
-        it ('should enable both if available', async done => {
+        it('should enable both if available', async done => {
             await send({
                 type: "vopStartCommand",
                 unitDefinition: "<h1>Virtual Unit</h1>",
