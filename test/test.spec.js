@@ -11,7 +11,7 @@ let options = new Options();
 if (testConfig.headless) {
     options.addArguments('-headless');
 }
-console.log(options);
+console.log(testConfig);
 
 const playerPath = __dirname + '/../verona-simple-player-1.html';
 
@@ -22,7 +22,6 @@ const send = async message => {
 describe('basic test', () => {
 
     beforeAll(async done => {
-
         driver = await new Builder()
             .forBrowser('firefox')
             .setFirefoxOptions(options)
@@ -31,14 +30,14 @@ describe('basic test', () => {
     });
 
     beforeEach(async done => {
-        if (!testConfig.keepOpen) {
-            await driver.get('file:' + playerPath);
-        }
+        await driver.get('file:' + playerPath);
         done();
     })
 
     afterAll(async done => {
-        await driver.quit();
+        if (!testConfig.keepOpen) {
+            await driver.quit();
+        }
         done();
     });
 
@@ -201,30 +200,80 @@ describe('basic test', () => {
         done();
     });
 
-    it ('should enable unit-navigation if more than one unit is possible', async done => {
-        await send({
-            type: "vopStartCommand",
-            unitDefinition: "<h1>Virtual Unit</h1>",
-            sessionId: "1",
-            playerConfig: {
-                pagingMode: "concat-scroll-snap",
-                unitNumber: 0,
-                unitTitle: 'Virtual Unit',
-                unitId: 'virtual-unit',
-                unitCount: 4,
-            }
+    describe('unit navigation', () => {
+
+        it ('should enable next if available', async done => {
+            await send({
+                type: "vopStartCommand",
+                unitDefinition: "<h1>Virtual Unit</h1>",
+                sessionId: "1",
+                playerConfig: {
+                    unitNumber: 1,
+                    unitCount: 4,
+                }
+            });
+
+            const nextUnit = await driver.findElement(By.css('#next-unit'));
+            const prevUnit = await driver.findElement(By.css('#prev-unit'));
+            const lastUnit = await driver.findElement(By.css('#last-unit'));
+            const firstUnit = await driver.findElement(By.css('#first-unit'));
+
+            expect(await nextUnit.isEnabled()).toBeTrue();
+            expect(await prevUnit.isEnabled()).toBeFalse();
+            expect(await lastUnit.isEnabled()).toBeTrue();
+            expect(await firstUnit.isEnabled()).toBeFalse();
+
+            done();
         });
 
-        const nextUnit = await driver.findElement(By.css('#next-unit'));
-        const prevUnit = await driver.findElement(By.css('#prev-unit'));
-        const lastUnit = await driver.findElement(By.css('#last-unit'));
-        const firstUnit = await driver.findElement(By.css('#first-unit'));
+        it ('should enable previous if available', async done => {
+            await driver.get('file:' + playerPath);
 
-        expect(await nextUnit.isEnabled()).toBeTrue();
-        expect(await prevUnit.isEnabled()).toBeFalse();
-        expect(await lastUnit.isEnabled()).toBeTrue();
-        expect(await firstUnit.isEnabled()).toBeFalse();
+            await send({
+                type: "vopStartCommand",
+                unitDefinition: "<h1>Virtual Unit</h1>",
+                sessionId: "1",
+                playerConfig: {
+                    unitNumber: 4,
+                    unitCount: 4,
+                }
+            });
 
-        done();
+            const nextUnit = await driver.findElement(By.css('#next-unit'));
+            const prevUnit = await driver.findElement(By.css('#prev-unit'));
+            const lastUnit = await driver.findElement(By.css('#last-unit'));
+            const firstUnit = await driver.findElement(By.css('#first-unit'));
+
+            expect(await nextUnit.isEnabled()).toBeFalse();
+            expect(await prevUnit.isEnabled()).toBeTrue();
+            expect(await lastUnit.isEnabled()).toBeFalse();
+            expect(await firstUnit.isEnabled()).toBeTrue();
+
+            done();
+        });
+
+        it ('should enable both if available', async done => {
+            await send({
+                type: "vopStartCommand",
+                unitDefinition: "<h1>Virtual Unit</h1>",
+                sessionId: "1",
+                playerConfig: {
+                    unitNumber: 2,
+                    unitCount: 4,
+                }
+            });
+
+            const nextUnit = await driver.findElement(By.css('#next-unit'));
+            const prevUnit = await driver.findElement(By.css('#prev-unit'));
+            const lastUnit = await driver.findElement(By.css('#last-unit'));
+            const firstUnit = await driver.findElement(By.css('#first-unit'));
+
+            expect(await nextUnit.isEnabled()).toBeTrue();
+            expect(await prevUnit.isEnabled()).toBeTrue();
+            expect(await lastUnit.isEnabled()).toBeTrue();
+            expect(await firstUnit.isEnabled()).toBeTrue();
+
+            done();
+        });
     });
 });
