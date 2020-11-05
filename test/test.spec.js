@@ -29,9 +29,7 @@ describe('basic test', () => {
     });
 
     beforeEach(async done => {
-        await driver.get('file:' + playerPath);
-        const body = await driver.findElement(By.css('body'));
-        console.log(await body.getText());
+        await driver.get('file:' + playerPath);;
         done();
     })
 
