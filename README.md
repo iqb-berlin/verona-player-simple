@@ -1,6 +1,8 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
+[![Travis (.com)](https://img.shields.io/travis/com/iqb-berlin/verona-player-simple?style=flat-square)](https://travis-ci.com/iqb-berlin/verona-player-simple)
 
-# verona-player-html
+
+# verona-player-simple
 This is a simple, dependency-less, vanilla-js-written, but full-featured unit player,
 mainly as showcase for developers and for software-testing.
 
@@ -11,7 +13,21 @@ and can be used for units containing simple any content in HTML-format.
 Unit Description ist the <code>form</code>-content as HTML. Just give some names to the form element,
 and the player does the rest. Use some special Ids for some special buttons.
 
-# Development rules for units
+## Running the player
+* You need a Verona-Host-System to run this Software, for example the 
+[IQB-Testcenter](https://github.com/iqb-berlin/testcenter-setup) or the 
+[Verona-Player-Testbed](https://github.com/iqb-berlin/verona-player-testbed).
+* The whole player is `verona-simple-player-1.html`, there is no build-process or whatever. 
+
+## development
+
+### testing the player
+`
+npm install
+npm test
+`
+
+### Development rules for units
 The Unit can contain any HTMl-content, even `<script>`- and `<style>`-tags!
 * Don't use the `<form>`-element, since the whole unit will put into one.
 * use the `<fieldset>` to define pages if you want to have a multi-page unit.
@@ -22,7 +38,3 @@ The Unit can contain any HTMl-content, even `<script>`- and `<style>`-tags!
   an event called `sent:{MessageName}` gets thrown afterwards. Use these events to hook into the player's
   functionality if you want to.
 * that's it.
-
-
-### testing
-npx webdriver-manager update --versions.chrome=`chromium --product-version` # replace "chrome" with "google-chrome" if you use that
