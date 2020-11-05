@@ -14,5 +14,6 @@ install:
   - npm install
 
 script:
-  - echo "{\"headless\": true}" >> test/config.json
+  - ls
+  - echo "{\"headless\": true}" > test/config.json
   - npm test
