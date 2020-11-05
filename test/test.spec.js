@@ -1,11 +1,6 @@
 require('selenium-webdriver');
 
 const testConfig = require("./config.json");
-console.log('---');
-console.log(testConfig);
-console.log('---');
-console.log(testConfig.headless);
-console.log('---');
 
 const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By} = require("selenium-webdriver");
@@ -20,7 +15,7 @@ if (testConfig.headless) {
 const playerPath = __dirname + '/../verona-simple-player-1.html';
 
 const send = async message => {
-    await driver.executeScript(`window.postMessage(${JSON.stringify(message)});`);
+    await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
 }
 
 describe('basic test', () => {
