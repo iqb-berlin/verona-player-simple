@@ -12,8 +12,7 @@ addons:
 
 install:
   - npm install
+  - mv test/config.travis.json test/config.json
 
 script:
-  - ls
-  - echo "{\"headless\": true}" > test/config.json
   - npm test
