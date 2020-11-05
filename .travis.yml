@@ -1,0 +1,19 @@
+language: node_js
+node_js:
+  - "10.16.3"
+
+sudo: true
+dist: bionic
+
+addons:
+  apt:
+    sources:
+      - firefox
+    packages:
+      - firefox
+
+install:
+  - npm install
+
+script:
+  - npm test
