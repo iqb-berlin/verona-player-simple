@@ -3,7 +3,7 @@ require('selenium-webdriver');
 const testConfig = require("./config.json");
 const logging = require("selenium-webdriver/lib/logging");
 
-const {Options, ServiceBuilder} = require("selenium-webdriver/firefox");
+const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By} = require("selenium-webdriver");
 
 let driver;
@@ -12,12 +12,6 @@ const options = new Options();
 if (testConfig.headless) {
     options.addArguments('-headless');
 }
-
-options.setPreference('devtools.console.stdout.content', true);
-
-const prefs = new logging.Preferences();
-prefs.setLevel(logging.Type.BROWSER, logging.Level.DEBUG);
-options.setLoggingPrefs(prefs);
 
 const playerPath = __dirname + '/../verona-simple-player-1.html';
 
@@ -31,11 +25,6 @@ describe('simple player', () => {
         driver = await new Builder()
             .forBrowser('firefox')
             .setFirefoxOptions(options)
-            .setFirefoxService(
-                new ServiceBuilder()
-                    //.enableVerboseLogging()
-                    .setStdio('inherit')
-            )
             .build();
         done();
     });
@@ -62,9 +51,6 @@ describe('simple player', () => {
 
         const title = await driver.findElement(By.css('h1'));
         expect(await title.getText()).toBe('Virtual Unit');
-
-        let entries = await driver.manage().logs().get(logging.Type.BROWSER);
-        console.log(entries);
 
         done();
     });

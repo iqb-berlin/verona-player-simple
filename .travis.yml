@@ -9,7 +9,6 @@ addons:
   firefox: "78.4.0esr"
 
 install:
-  - firefox --version
   - npm install
   - mv test/config.travis.json test/config.json
 
