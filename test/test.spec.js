@@ -16,7 +16,6 @@ const playerPath = __dirname + '/../verona-simple-player-1.html';
 
 const send = async message => {
     await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
-    await driver.sleep(50);
 }
 
 describe('basic test', () => {
