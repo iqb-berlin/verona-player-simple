@@ -1,6 +1,11 @@
 require('selenium-webdriver');
 
 const testConfig = require("./config.json");
+console.log('---');
+console.log(testConfig);
+console.log('---');
+console.log(testConfig.headless);
+console.log('---');
 
 const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By} = require("selenium-webdriver");
@@ -11,7 +16,6 @@ let options = new Options();
 if (testConfig.headless) {
     options.addArguments('-headless');
 }
-console.log(testConfig);
 
 const playerPath = __dirname + '/../verona-simple-player-1.html';
 
