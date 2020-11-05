@@ -11,6 +11,7 @@ let options = new Options();
 if (testConfig.headless) {
     options.addArguments('-headless');
 }
+console.log(options);
 
 const playerPath = __dirname + '/../verona-simple-player-1.html';
 
@@ -172,6 +173,7 @@ describe('basic test', () => {
 
         expect(await p1.isDisplayed()).toBeTrue();
         expect(await p2.isDisplayed()).toBeTrue();
+
         done();
     });
 
@@ -195,7 +197,34 @@ describe('basic test', () => {
 
         expect(await p1.isDisplayed()).toBeTrue();
         expect(await p2.isDisplayed()).toBeTrue();
+
         done();
     });
 
+    it ('should enable unit-navigation if more than one unit is possible', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<h1>Virtual Unit</h1>",
+            sessionId: "1",
+            playerConfig: {
+                pagingMode: "concat-scroll-snap",
+                unitNumber: 0,
+                unitTitle: 'Virtual Unit',
+                unitId: 'virtual-unit',
+                unitCount: 4,
+            }
+        });
+
+        const nextUnit = await driver.findElement(By.css('#next-unit'));
+        const prevUnit = await driver.findElement(By.css('#prev-unit'));
+        const lastUnit = await driver.findElement(By.css('#last-unit'));
+        const firstUnit = await driver.findElement(By.css('#first-unit'));
+
+        expect(await nextUnit.isEnabled()).toBeTrue();
+        expect(await prevUnit.isEnabled()).toBeFalse();
+        expect(await lastUnit.isEnabled()).toBeTrue();
+        expect(await firstUnit.isEnabled()).toBeFalse();
+
+        done();
+    });
 });
