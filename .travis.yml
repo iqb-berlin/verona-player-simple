@@ -11,6 +11,7 @@ addons:
       - firefox
 
 install:
+  - firefox --version
   - npm install
   - mv test/config.travis.json test/config.json
 
