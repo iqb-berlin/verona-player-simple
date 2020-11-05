@@ -1,13 +1,18 @@
 require('selenium-webdriver');
-require('selenium-webdriver/firefox');
-require('geckodriver');
 
-const fs = require('fs');
+const testConfig = require("./config.json");
+
+const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By} = require("selenium-webdriver");
 
-const playerPath = __dirname + '/../verona-simple-player-1.html';
-
 let driver;
+
+let options = new Options();
+if (testConfig.headless) {
+    options.addArguments('-headless');
+}
+
+const playerPath = __dirname + '/../verona-simple-player-1.html';
 
 const send = async message => {
     await driver.executeScript(`window.postMessage(${JSON.stringify(message)});`);
@@ -16,7 +21,11 @@ const send = async message => {
 describe('basic test', () => {
 
     beforeAll(async done => {
-        driver = await new Builder().forBrowser('firefox').build();
+
+        driver = await new Builder()
+            .forBrowser('firefox')
+            .setFirefoxOptions(options)
+            .build();
         done();
     });
 
