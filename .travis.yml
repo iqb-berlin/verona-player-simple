@@ -6,9 +6,7 @@ sudo: true
 dist: bionic
 
 addons:
-  apt:
-    packages:
-      - firefox
+  firefox: "78"
 
 install:
   - firefox --version
