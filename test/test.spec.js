@@ -1,16 +1,23 @@
 require('selenium-webdriver');
 
 const testConfig = require("./config.json");
+const logging = require("selenium-webdriver/lib/logging");
 
-const {Options} = require("selenium-webdriver/firefox");
+const {Options, ServiceBuilder} = require("selenium-webdriver/firefox");
 const {Builder, By} = require("selenium-webdriver");
 
 let driver;
 
-let options = new Options();
+const options = new Options();
 if (testConfig.headless) {
     options.addArguments('-headless');
 }
+
+options.setPreference('devtools.console.stdout.content', true);
+
+const prefs = new logging.Preferences();
+prefs.setLevel(logging.Type.BROWSER, logging.Level.DEBUG);
+options.setLoggingPrefs(prefs);
 
 const playerPath = __dirname + '/../verona-simple-player-1.html';
 
@@ -18,12 +25,17 @@ const send = async message => {
     await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
 }
 
-describe('basic test', () => {
+describe('simple player', () => {
 
     beforeAll(async done => {
         driver = await new Builder()
             .forBrowser('firefox')
             .setFirefoxOptions(options)
+            .setFirefoxService(
+                new ServiceBuilder()
+                    //.enableVerboseLogging()
+                    .setStdio('inherit')
+            )
             .build();
         done();
     });
@@ -50,10 +62,14 @@ describe('basic test', () => {
 
         const title = await driver.findElement(By.css('h1'));
         expect(await title.getText()).toBe('Virtual Unit');
+
+        let entries = await driver.manage().logs().get(logging.Type.BROWSER);
+        console.log(entries);
+
         done();
     });
 
-    it('block unit on `vopStopCommand` and continue on `vopContinueCommand`', async done => {
+    it('should block unit on `vopStopCommand` and continue on `vopContinueCommand`', async done => {
         await send({
             type: "vopStartCommand",
             unitDefinition: "<h1>Virtual Unit</h1><input name='field'>",
