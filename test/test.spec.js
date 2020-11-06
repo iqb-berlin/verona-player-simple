@@ -241,6 +241,34 @@ describe('simple player', () => {
         done();
     });
 
+    it ('should collect values form form', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input type='text' name='field' value='a' /><input type='text' name='field' value='b' /><p contenteditable>c</p>",
+            sessionId: "1",
+            playerConfig: {
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        await recordMessages();
+
+        await send({
+            type: "vopGetStateRequest",
+            sessionId: "1"
+        });
+
+        const msg = await getLastMessage();
+
+        expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
+            '': 'c',
+            'field': ['a', 'b'],
+        });
+
+        done();
+    });
+
+
 
     it('should execute script in unit', async done => {
         await send({
