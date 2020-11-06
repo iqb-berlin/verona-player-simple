@@ -1,7 +1,6 @@
 require('selenium-webdriver');
 
 const testConfig = require("./config.json");
-const logging = require("selenium-webdriver/lib/logging");
 
 const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By} = require("selenium-webdriver");
@@ -268,8 +267,6 @@ describe('simple player', () => {
         done();
     });
 
-
-
     it('should execute script in unit', async done => {
         await send({
             type: "vopStartCommand",
@@ -477,6 +474,37 @@ describe('simple player', () => {
             },
             unitStateDataTyp: 'verona-simple-player-1.0.0'
         });
+
+        done();
+    });
+
+    it('should send `vopWindowFocusChangedNotification` on focus change', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<iframe id='subframe'></iframe><div id='outside'>outside</div>",
+            sessionId: "1",
+            playerConfig: {
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        await recordMessages();
+
+        const subframe = await driver.findElement(By.css('#subframe'));
+        await subframe.click();
+
+        let msg = await getLastMessage();
+
+        expect(msg.type).toEqual('vopWindowFocusChangedNotification');
+        expect(msg.hasFocus).toBeFalse();
+
+        const player = await driver.findElement(By.css('#outside'));
+        await player.click();
+
+        msg = await getLastMessage();
+
+        expect(msg.type).toEqual('vopWindowFocusChangedNotification');
+        expect(msg.hasFocus).toBeTrue();
 
         done();
     });
