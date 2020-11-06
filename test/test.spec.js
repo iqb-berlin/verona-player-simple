@@ -101,7 +101,6 @@ describe('simple player', () => {
         done();
     });
 
-
     it('ignore command, when sessionId is wrong', async done => {
         await send({
             type: "vopStartCommand",
@@ -482,10 +481,7 @@ describe('simple player', () => {
         await send({
             type: "vopStartCommand",
             unitDefinition: "<iframe id='subframe'></iframe><div id='outside'>outside</div>",
-            sessionId: "1",
-            playerConfig: {
-                stateReportPolicy: "on-demand"
-            }
+            sessionId: "1"
         });
 
         await recordMessages();
@@ -505,6 +501,43 @@ describe('simple player', () => {
 
         expect(msg.type).toEqual('vopWindowFocusChangedNotification');
         expect(msg.hasFocus).toBeTrue();
+
+        done();
+    });
+
+    // TODO test various input types
+    // TODO test logger
+
+    it('should send the correct responseProgress', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input type='number' name='first' /><input type='number' name='second' />",
+            sessionId: "1",
+            playerConfig: {
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        const first = await driver.findElement(By.css('[name="first"]'));
+        const second = await driver.findElement(By.css('[name="second"]'));
+
+        await recordMessages();
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        expect((await getLastMessage()).unitState.responseProgress).toEqual('none');
+
+        await first.sendKeys('not a number');
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        expect((await getLastMessage()).unitState.responseProgress).toEqual('some');
+
+        await second.sendKeys('1');
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        expect((await getLastMessage()).unitState.responseProgress).toEqual('complete');
+
+        await first.clear();
+        await first.sendKeys('1');
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        expect((await getLastMessage()).unitState.responseProgress).toEqual('complete-and-valid');
 
         done();
     });
