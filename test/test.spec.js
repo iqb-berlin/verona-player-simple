@@ -19,6 +19,19 @@ const send = async message => {
     await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
 }
 
+
+const recordMessages = () =>
+    driver.executeScript(() => {
+        window['__messageRecorder__'] = [];
+        window.addEventListener("message", e => window['__messageRecorder__'].push(e.data));
+    });
+
+const getLastMessage = () =>
+    driver.executeScript(() =>
+        window['__messageRecorder__'][window['__messageRecorder__'].length - 1]
+    );
+
+
 describe('simple player', () => {
 
     beforeAll(async done => {
@@ -40,7 +53,6 @@ describe('simple player', () => {
         }
         done();
     });
-
 
     it('should load unit on `vopStartCommand`', async done => {
         await send({
@@ -341,5 +353,103 @@ describe('simple player', () => {
 
             done();
         });
+    });
+
+    it('should send `vopStateChangedNotification` on change', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input id='the-item' name='the-item' type='text'/>",
+            sessionId: "1"
+        });
+
+        await recordMessages();
+
+        const input = await driver.findElement(By.css('#the-item'));
+        await input.sendKeys('something');
+        await driver.sleep(2000); // because there is a debounceTime in player
+
+        const msg = await getLastMessage();
+
+        if (typeof msg !== "object" || msg == null) {
+            fail('message must be an object');
+        }
+
+        msg['timeStamp'] = NaN;
+
+        expect(msg).toEqual({
+            playerState: { currentPage: '1', validPages: {} },
+            sessionId: '1',
+            timeStamp: NaN,
+            type: 'vopStateChangedNotification',
+            unitState: {
+                dataParts: {
+                    complete: {
+                        answers: {
+                            'the-item': 'something'
+                        }
+                    }
+                },
+                presentationProgress: 'complete',
+                responseProgress: 'complete-and-valid'
+            },
+            unitStateDataTyp: 'verona-simple-player-1.0.0'
+        });
+
+        done();
+    });
+
+    it('should support `stateReportPolicy` = `on-demand`', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input id='the-item' name='the-item' type='text'/>",
+            sessionId: "1",
+            playerConfig: {
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        await recordMessages();
+
+        const input = await driver.findElement(By.css('#the-item'));
+        await input.sendKeys('something');
+        await driver.sleep(2000); // because there is a debounceTime in player
+
+        let msg = await getLastMessage();
+
+        expect(msg).toBeNull();
+
+        await send({
+            type: "vopGetStateRequest",
+            sessionId: "1"
+        });
+
+        msg = await getLastMessage();
+
+        if (typeof msg !== "object" || msg == null) {
+            fail('message must be an object');
+        }
+
+        msg['timeStamp'] = NaN;
+
+        expect(msg).toEqual({
+            playerState: { currentPage: '1', validPages: {} },
+            sessionId: '1',
+            timeStamp: NaN,
+            type: 'vopGetStateResponse',
+            unitState: {
+                dataParts: {
+                    complete: {
+                        answers: {
+                            'the-item': 'something'
+                        }
+                    }
+                },
+                presentationProgress: 'complete',
+                responseProgress: 'complete-and-valid'
+            },
+            unitStateDataTyp: 'verona-simple-player-1.0.0'
+        });
+
+        done();
     });
 });
