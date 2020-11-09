@@ -211,7 +211,7 @@ describe('simple player', () => {
         done();
     });
 
-    it ('should load values into the right forms', async done => {
+    it('should load values into the right forms', async done => {
         await send({
             type: "vopStartCommand",
             unitDefinition: "<input type='text'/><input type='text' name='field' /><p contenteditable></p>",
@@ -379,11 +379,15 @@ describe('simple player', () => {
         });
     });
 
+    // STAND make debounce configurable!
     it('should send `vopStateChangedNotification` on change', async done => {
         await send({
             type: "vopStartCommand",
             unitDefinition: "<input id='the-item' name='the-item' type='text'/>",
-            sessionId: "1"
+            sessionId: "1",
+            playerConfig: {
+                debounceStateMessages: 200
+            }
         });
 
         await recordMessages();
@@ -507,6 +511,7 @@ describe('simple player', () => {
 
     // TODO test various input types
     // TODO test logger
+    // presentationComplete
 
     it('should send the correct responseProgress', async done => {
         await send({
@@ -540,5 +545,144 @@ describe('simple player', () => {
         expect((await getLastMessage()).unitState.responseProgress).toEqual('complete-and-valid');
 
         done();
+    });
+
+    describe('logger', () => {
+        it('should log everything when in debug mode', async done => {
+            await send({
+                type: "vopStartCommand",
+                unitDefinition:
+                    `<button id="rich" onclick="Log.rich('rich'); return false">R</button>
+                    <button id="lean" onclick="Log.lean('lean'); return false">L</button>
+                    <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
+                sessionId: "1",
+                playerConfig: {
+                    logPolicy: "debug",
+                    stateReportPolicy: "on-demand"
+                },
+                unitDefinitionType: "verona-simple-player-1.0.0"
+            });
+
+            const richBtn = await driver.findElement(By.css('#rich'));
+            const leanBtn = await driver.findElement(By.css('#lean'));
+            const debugBtn = await driver.findElement(By.css('#debug'));
+
+            await recordMessages();
+
+            await richBtn.click();
+            await leanBtn.click();
+            await debugBtn.click();
+
+            await send({type: "vopGetStateRequest", sessionId: "1"});
+
+            const msg = await getLastMessage();
+
+            expect(msg.log[0].key).toEqual('rich');
+            expect(msg.log[1].key).toEqual('lean');
+            expect(msg.log[2].key).toEqual('debug');
+            done();
+        });
+
+        it('should log rich & lean when in rich mode', async done => {
+            await send({
+                type: "vopStartCommand",
+                unitDefinition:
+                    `<button id="rich" onclick="Log.rich('rich'); return false">R</button>
+                    <button id="lean" onclick="Log.lean('lean'); return false">L</button>
+                    <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
+                sessionId: "1",
+                playerConfig: {
+                    logPolicy: "rich",
+                    stateReportPolicy: "on-demand"
+                },
+                unitDefinitionType: "verona-simple-player-1.0.0"
+            });
+
+            const richBtn = await driver.findElement(By.css('#rich'));
+            const leanBtn = await driver.findElement(By.css('#lean'));
+            const debugBtn = await driver.findElement(By.css('#debug'));
+
+            await recordMessages();
+
+            await richBtn.click();
+            await leanBtn.click();
+            await debugBtn.click();
+
+            await send({type: "vopGetStateRequest", sessionId: "1"});
+
+            const msg = await getLastMessage();
+
+            expect(msg.log[0].key).toEqual('rich');
+            expect(msg.log[1].key).toEqual('lean');
+            expect(msg.log.length).toEqual(2);
+            done();
+        });
+
+        it('should log only lean when in lean mode', async done => {
+            await send({
+                type: "vopStartCommand",
+                unitDefinition:
+                    `<button id="rich" onclick="Log.rich('rich'); return false">R</button>
+                    <button id="lean" onclick="Log.lean('lean'); return false">L</button>
+                    <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
+                sessionId: "1",
+                playerConfig: {
+                    logPolicy: "lean",
+                    stateReportPolicy: "on-demand"
+                },
+                unitDefinitionType: "verona-simple-player-1.0.0"
+            });
+
+            const richBtn = await driver.findElement(By.css('#rich'));
+            const leanBtn = await driver.findElement(By.css('#lean'));
+            const debugBtn = await driver.findElement(By.css('#debug'));
+
+            await recordMessages();
+
+            await richBtn.click();
+            await leanBtn.click();
+            await debugBtn.click();
+
+            await send({type: "vopGetStateRequest", sessionId: "1"});
+
+            const msg = await getLastMessage();
+
+            expect(msg.log[0].key).toEqual('lean');
+            expect(msg.log.length).toEqual(1);
+            done();
+        });
+
+        it('should not log only lean when logging is disabled', async done => {
+            await send({
+                type: "vopStartCommand",
+                unitDefinition:
+                    `<button id="rich" onclick="Log.rich('rich'); return false">R</button>
+                    <button id="lean" onclick="Log.lean('lean'); return false">L</button>
+                    <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
+                sessionId: "1",
+                playerConfig: {
+                    logPolicy: "disabled",
+                    stateReportPolicy: "on-demand"
+                },
+                unitDefinitionType: "verona-simple-player-1.0.0"
+            });
+
+            const richBtn = await driver.findElement(By.css('#rich'));
+            const leanBtn = await driver.findElement(By.css('#lean'));
+            const debugBtn = await driver.findElement(By.css('#debug'));
+
+            await recordMessages();
+
+            await richBtn.click();
+            await leanBtn.click();
+            await debugBtn.click();
+
+            await send({type: "vopGetStateRequest", sessionId: "1"});
+
+            const msg = await getLastMessage();
+
+            expect(msg.log).toBeUndefined();
+            done();
+        });
     });
 });
