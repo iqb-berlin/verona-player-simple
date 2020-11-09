@@ -127,8 +127,19 @@
 
 <script>
 
-    let sessionId = "";
+    // some settings, that might be overridden for testing per query-params in URL
+    const playerSettings = Object.assign(
+        {
+            debounceStateMessages: 1000,
+            debounceKeyboardEvents: 100
+        },
+        location.search
+            .substr(1)
+            .split("&")
+            .reduce((carry, item) => {const tmp = item.split("="); carry[tmp[0]] = tmp[1]; return carry;}, {})
+    );
 
+    // verona2 supported settings
     let playerConfig = {
         logPolicy: 'eager', // "disabled" | "lean" | "rich" | "debug"
         unitNumber: 0,
@@ -137,8 +148,10 @@
         unitCount: Infinity,
         stateReportPolicy: "eager", // none" | "eager" | "on-demand"
         pagingMode: "separate", // "separate" | "concat-scroll" | "concat-scroll-snap"
-        debounceStateMessages: 1000 // this is not Verona2-standard
     }
+
+
+    let sessionId = "";
 
     const isDefined = v => (typeof v !== "undefined");
 
@@ -180,7 +193,8 @@
                 }
             };
 
-            _sendVopStateChangedNotification = Time.debounce(() => this._send(this._createStateMsg()), parseInt(playerConfig.debounceStateMessages, 10));
+            _sendVopStateChangedNotification =
+                Time.debounce(() => this._send(this._createStateMsg()), parseInt(playerSettings.debounceStateMessages, 10));
 
             vopGetStateResponse = () => {
                 const msg = this._createStateMsg(true);
@@ -685,7 +699,9 @@
     });
 
     PlayerUI.addEventListener('change', PlayerUI.itemElements, Message.send.vopStateChangedNotification);
-    PlayerUI.addEventListener('keyup', PlayerUI.itemElements, Time.debounce(Message.send.vopStateChangedNotification, 100));
+    PlayerUI.addEventListener('keyup', PlayerUI.itemElements,
+        Time.debounce(Message.send.vopStateChangedNotification, parseInt(playerSettings.debounceKeyboardEvents), 10)
+    );
     PlayerUI.addEventListener('mouseover', PlayerUI.itemElements, event => PlayerUI.markElementTouched(event.target));
     PlayerUI.addEventListener('keyup', PlayerUI.itemElements, event => PlayerUI.markElementTouched(event.target));
 

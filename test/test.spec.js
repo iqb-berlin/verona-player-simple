@@ -18,7 +18,6 @@ const send = async message => {
     await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
 }
 
-
 const recordMessages = () =>
     driver.executeScript(() => {
         window['__messageRecorder__'] = [];
@@ -29,6 +28,14 @@ const getLastMessage = () =>
     driver.executeScript(() =>
         window['__messageRecorder__'][window['__messageRecorder__'].length - 1]
     );
+
+const loadPlayer = async playerSettings => {
+    const query = playerSettings
+        ? Object.keys(playerSettings).reduce((carry, item) => carry + `&${item}=${playerSettings[item]}`, '?')
+        : '';
+
+    await driver.get('file:' + playerPath + query);
+}
 
 
 describe('simple player', () => {
@@ -42,7 +49,7 @@ describe('simple player', () => {
     });
 
     beforeEach(async done => {
-        await driver.get('file:' + playerPath);
+        await loadPlayer();
         done();
     })
 
@@ -301,7 +308,6 @@ describe('simple player', () => {
         done();
     });
 
-
     describe('unit navigation', () => {
 
         it('should enable next if available', async done => {
@@ -379,53 +385,6 @@ describe('simple player', () => {
         });
     });
 
-    // STAND make debounce configurable!
-    it('should send `vopStateChangedNotification` on change', async done => {
-        await send({
-            type: "vopStartCommand",
-            unitDefinition: "<input id='the-item' name='the-item' type='text'/>",
-            sessionId: "1",
-            playerConfig: {
-                debounceStateMessages: 200
-            }
-        });
-
-        await recordMessages();
-
-        const input = await driver.findElement(By.css('#the-item'));
-        await input.sendKeys('something');
-        await driver.sleep(2000); // because there is a debounceTime in player
-
-        const msg = await getLastMessage();
-
-        if (typeof msg !== "object" || msg == null) {
-            fail('message must be an object');
-        }
-
-        msg['timeStamp'] = NaN;
-
-        expect(msg).toEqual({
-            playerState: { currentPage: '1', validPages: {} },
-            sessionId: '1',
-            timeStamp: NaN,
-            type: 'vopStateChangedNotification',
-            unitState: {
-                dataParts: {
-                    complete: {
-                        answers: {
-                            'the-item': 'something'
-                        }
-                    }
-                },
-                presentationProgress: 'complete',
-                responseProgress: 'complete-and-valid'
-            },
-            unitStateDataTyp: 'verona-simple-player-1.0.0'
-        });
-
-        done();
-    });
-
     it('should support `stateReportPolicy` = `on-demand`', async done => {
         await send({
             type: "vopStartCommand",
@@ -440,7 +399,6 @@ describe('simple player', () => {
 
         const input = await driver.findElement(By.css('#the-item'));
         await input.sendKeys('something');
-        await driver.sleep(2000); // because there is a debounceTime in player
 
         let msg = await getLastMessage();
 
@@ -464,6 +422,59 @@ describe('simple player', () => {
             sessionId: '1',
             timeStamp: NaN,
             type: 'vopGetStateResponse',
+            unitState: {
+                dataParts: {
+                    complete: {
+                        answers: {
+                            'the-item': 'something'
+                        }
+                    }
+                },
+                presentationProgress: 'complete',
+                responseProgress: 'complete-and-valid'
+            },
+            unitStateDataTyp: 'verona-simple-player-1.0.0'
+        });
+
+        done();
+    });
+
+    it('should support `stateReportPolicy` = `eager`', async done => {
+
+        await loadPlayer({
+            debounceStateMessages: 0,
+            debounceKeyboardEvents: 0
+        });
+
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input id='the-item' name='the-item' type='text'/>",
+            sessionId: "1",
+            playerConfig: {
+                stateReportPolicy: "eager"
+            }
+        });
+
+        const input = await driver.findElement(By.css('#the-item'));
+
+        await recordMessages();
+
+        await input.sendKeys('something');
+        await driver.sleep(250);
+
+        let msg = await getLastMessage();
+
+        if (typeof msg !== "object" || msg == null) {
+            fail('message must be an object');
+        }
+
+        msg['timeStamp'] = NaN;
+
+        expect(msg).toEqual({
+            playerState: { currentPage: '1', validPages: {} },
+            sessionId: '1',
+            timeStamp: NaN,
+            type: 'vopStateChangedNotification',
             unitState: {
                 dataParts: {
                     complete: {
