@@ -3,7 +3,7 @@ require('selenium-webdriver');
 const testConfig = require("./config.json");
 
 const {Options} = require("selenium-webdriver/firefox");
-const {Builder, By} = require("selenium-webdriver");
+const {Builder, By, Key} = require("selenium-webdriver");
 
 const {recordMessages, getLastMessage} = require('iqb-dev-components');
 
@@ -19,27 +19,6 @@ const playerPath = __dirname + '/../verona-simple-player-1.html';
 const send = async message => {
     await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
 }
-//
-// const recordMessages = () =>
-//     driver.executeScript(() => {
-//         window.__messageRecorder__ = [];
-//         window.addEventListener("message", e => window.__messageRecorder__.push(e.data));
-//     });
-//
-// const getLastMessage = (timeout = 150) =>
-//     driver.executeScript(timeout => new Promise(resolve => {
-//         if (window.__messageRecorder__.length) {
-//             resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
-//         } else {
-//             setTimeout(() => {
-//                 if (window.__messageRecorder__.length) {
-//                     resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
-//                 } else {
-//                     resolve(null);
-//                 }
-//             }, timeout);
-//         }
-//     }), timeout);
 
 const loadPlayer = async playerSettings => {
     const query = playerSettings
@@ -258,7 +237,7 @@ describe('simple player', () => {
         done();
     });
 
-    it ('should collect values form form', async done => {
+    it('should collect values from form', async done => {
         await send({
             type: "vopStartCommand",
             unitDefinition: "<input type='text' name='field' value='a' /><input type='text' name='field' value='b' /><p contenteditable>c</p>",
@@ -284,6 +263,81 @@ describe('simple player', () => {
 
         done();
     });
+
+    it('should support various form elements', async done => {
+
+        await loadPlayer({
+            debounceStateMessages: 0,
+            debounceKeyboardEvents: 0
+        });
+
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <textarea name="text-area"></textarea>
+                <select name="multi-select" size="3" multiple>
+                    <option value="a">A</option>
+                    <option value="b">B</option>
+                    <option value="c">C</option>
+                </select>
+                <input type="radio" name="radio-group" value="a" />
+                <input type="radio" name="radio-group" value="b" />
+                <input type="radio" name="radio-group" value="c" />
+                <input type="checkbox" name="check-box-a" />
+                <input type="checkbox" name="check-box-b" />`,
+            sessionId: "1",
+            unitState: {
+                dataParts: {
+                    all: {
+                        answers: {
+                            'check-box-a': 'on',
+                            'radio-group': 'b',
+                            'multi-select': ['b', 'c']
+                        }
+                    }
+                }
+            }
+        });
+
+        const textArea = await driver.findElement(By.css('[name="text-area"]'));
+        const multiSelectA = await driver.findElement(By.css('[name="multi-select"] [value="a"]'));
+        const multiSelectB = await driver.findElement(By.css('[name="multi-select"] [value="b"]'));
+        const multiSelectC = await driver.findElement(By.css('[name="multi-select"] [value="c"]'));
+        const radioGroupA = await driver.findElement(By.css('[name="radio-group"][value="a"]'));
+        const checkBoxA = await driver.findElement(By.css('[name="check-box-a"]'));
+        const checkBoxB = await driver.findElement(By.css('[name="check-box-b"]'));
+
+        await recordMessages(driver);
+
+        textArea.sendKeys('text area content');
+        multiSelectA.click();
+
+        await multiSelectA.click();
+        await driver.actions()
+            .move(multiSelectB)
+            .keyDown(Key.SHIFT)
+            .click()
+            .keyUp(Key.SHIFT)
+            .perform();
+
+        await radioGroupA.click();
+
+        await checkBoxA.click();
+        await checkBoxB.click();
+
+        const msg = await getLastMessage(driver);
+
+        expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
+            'text-area': 'text area content',
+            'multi-select': [ 'b', 'c' ],
+            'radio-group': 'a',
+            'check-box-b': 'on',
+        });
+
+        done();
+    });
+
+
 
     it ('debounce returning messages', async done => {
 
