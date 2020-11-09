@@ -283,6 +283,35 @@ describe('simple player', () => {
         done();
     });
 
+    it ('debounce returning messages', async done => {
+
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input type='text' name='field' value='' />",
+            sessionId: "1",
+        });
+
+        const field = await driver.findElement(By.css('[name="field"]'));
+
+        await recordMessages();
+
+        await field.sendKeys('first input'); // debounce 1000
+
+        const message1 = await getLastMessage(100); // wait 100 for message; none should be there
+
+        await field.sendKeys(' second input'); // debounce 1000
+
+        const message2 = await getLastMessage(1200); // after 1000, message should be sent
+
+        expect(message1).toBeNull();
+
+        expect(message2.unitState.dataParts.complete.answers || {}).toEqual({
+            field: 'first input second input',
+        });
+
+        done();
+    });
+
     it('should execute script in unit', async done => {
         await send({
             type: "vopStartCommand",
