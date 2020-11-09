@@ -5,6 +5,8 @@ const testConfig = require("./config.json");
 const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By} = require("selenium-webdriver");
 
+const {recordMessages, getLastMessage} = require('iqb-dev-components');
+
 let driver;
 
 const options = new Options();
@@ -17,27 +19,27 @@ const playerPath = __dirname + '/../verona-simple-player-1.html';
 const send = async message => {
     await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
 }
-
-const recordMessages = () =>
-    driver.executeScript(() => {
-        window.__messageRecorder__ = [];
-        window.addEventListener("message", e => window.__messageRecorder__.push(e.data));
-    });
-
-const getLastMessage = (timeout = 150) =>
-    driver.executeScript(timeout => new Promise(resolve => {
-        if (window.__messageRecorder__.length) {
-            resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
-        } else {
-            setTimeout(() => {
-                if (window.__messageRecorder__.length) {
-                    resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
-                } else {
-                    resolve(null);
-                }
-            }, timeout);
-        }
-    }), timeout);
+//
+// const recordMessages = () =>
+//     driver.executeScript(() => {
+//         window.__messageRecorder__ = [];
+//         window.addEventListener("message", e => window.__messageRecorder__.push(e.data));
+//     });
+//
+// const getLastMessage = (timeout = 150) =>
+//     driver.executeScript(timeout => new Promise(resolve => {
+//         if (window.__messageRecorder__.length) {
+//             resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
+//         } else {
+//             setTimeout(() => {
+//                 if (window.__messageRecorder__.length) {
+//                     resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
+//                 } else {
+//                     resolve(null);
+//                 }
+//             }, timeout);
+//         }
+//     }), timeout);
 
 const loadPlayer = async playerSettings => {
     const query = playerSettings
@@ -266,14 +268,14 @@ describe('simple player', () => {
             }
         });
 
-        await recordMessages();
+        await recordMessages(driver);
 
         await send({
             type: "vopGetStateRequest",
             sessionId: "1"
         });
 
-        const msg = await getLastMessage();
+        const msg = await getLastMessage(driver);
 
         expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
             '': 'c',
@@ -293,15 +295,15 @@ describe('simple player', () => {
 
         const field = await driver.findElement(By.css('[name="field"]'));
 
-        await recordMessages();
+        await recordMessages(driver);
 
         await field.sendKeys('first input'); // debounce 1000
 
-        const message1 = await getLastMessage(100); // wait 100 for message; none should be there
+        const message1 = await getLastMessage(driver,100); // wait 100 for message; none should be there
 
         await field.sendKeys(' second input'); // debounce 1000
 
-        const message2 = await getLastMessage(1200); // after 1000, message should be sent
+        const message2 = await getLastMessage(driver, 1200); // after 1000, message should be sent
 
         expect(message1).toBeNull();
 
@@ -434,12 +436,12 @@ describe('simple player', () => {
             }
         });
 
-        await recordMessages();
+        await recordMessages(driver);
 
         const input = await driver.findElement(By.css('#the-item'));
         await input.sendKeys('something');
 
-        let msg = await getLastMessage();
+        let msg = await getLastMessage(driver);
 
         expect(msg).toBeNull();
 
@@ -448,7 +450,7 @@ describe('simple player', () => {
             sessionId: "1"
         });
 
-        msg = await getLastMessage();
+        msg = await getLastMessage(driver);
 
         if (typeof msg !== "object" || msg == null) {
             fail('message must be an object');
@@ -496,12 +498,12 @@ describe('simple player', () => {
 
         const input = await driver.findElement(By.css('#the-item'));
 
-        await recordMessages();
+        await recordMessages(driver);
 
         await input.sendKeys('something');
         await driver.sleep(250);
 
-        let msg = await getLastMessage();
+        let msg = await getLastMessage(driver);
 
         if (typeof msg !== "object" || msg == null) {
             fail('message must be an object');
@@ -538,12 +540,12 @@ describe('simple player', () => {
             sessionId: "1"
         });
 
-        await recordMessages();
+        await recordMessages(driver);
 
         const subframe = await driver.findElement(By.css('#subframe'));
         await subframe.click();
 
-        let msg = await getLastMessage();
+        let msg = await getLastMessage(driver);
 
         expect(msg.type).toEqual('vopWindowFocusChangedNotification');
         expect(msg.hasFocus).toBeFalse();
@@ -551,7 +553,7 @@ describe('simple player', () => {
         const player = await driver.findElement(By.css('#outside'));
         await player.click();
 
-        msg = await getLastMessage();
+        msg = await getLastMessage(driver);
 
         expect(msg.type).toEqual('vopWindowFocusChangedNotification');
         expect(msg.hasFocus).toBeTrue();
@@ -575,23 +577,23 @@ describe('simple player', () => {
         const first = await driver.findElement(By.css('[name="first"]'));
         const second = await driver.findElement(By.css('[name="second"]'));
 
-        await recordMessages();
+        await recordMessages(driver);
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage()).unitState.responseProgress).toEqual('none');
+        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('none');
 
         await first.sendKeys('not a number');
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage()).unitState.responseProgress).toEqual('some');
+        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('some');
 
         await second.sendKeys('1');
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage()).unitState.responseProgress).toEqual('complete');
+        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('complete');
 
         await first.clear();
         await first.sendKeys('1');
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage()).unitState.responseProgress).toEqual('complete-and-valid');
+        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('complete-and-valid');
 
         done();
     });
@@ -616,7 +618,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages();
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -624,7 +626,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage();
+            const msg = await getLastMessage(driver);
 
             expect(msg.log[0].key).toEqual('rich');
             expect(msg.log[1].key).toEqual('lean');
@@ -651,7 +653,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages();
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -659,7 +661,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage();
+            const msg = await getLastMessage(driver);
 
             expect(msg.log[0].key).toEqual('rich');
             expect(msg.log[1].key).toEqual('lean');
@@ -686,7 +688,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages();
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -694,7 +696,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage();
+            const msg = await getLastMessage(driver);
 
             expect(msg.log[0].key).toEqual('lean');
             expect(msg.log.length).toEqual(1);
@@ -720,7 +722,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages();
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -728,7 +730,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage();
+            const msg = await getLastMessage(driver);
 
             expect(msg.log).toBeUndefined();
             done();
