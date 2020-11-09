@@ -20,14 +20,24 @@ const send = async message => {
 
 const recordMessages = () =>
     driver.executeScript(() => {
-        window['__messageRecorder__'] = [];
-        window.addEventListener("message", e => window['__messageRecorder__'].push(e.data));
+        window.__messageRecorder__ = [];
+        window.addEventListener("message", e => window.__messageRecorder__.push(e.data));
     });
 
-const getLastMessage = () =>
-    driver.executeScript(() =>
-        window['__messageRecorder__'][window['__messageRecorder__'].length - 1]
-    );
+const getLastMessage = (timeout = 150) =>
+    driver.executeScript(timeout => new Promise(resolve => {
+        if (window.__messageRecorder__.length) {
+            resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
+        } else {
+            setTimeout(() => {
+                if (window.__messageRecorder__.length) {
+                    resolve(window.__messageRecorder__[window.__messageRecorder__.length - 1]);
+                } else {
+                    resolve(null);
+                }
+            }, timeout);
+        }
+    }), timeout);
 
 const loadPlayer = async playerSettings => {
     const query = playerSettings
@@ -521,7 +531,6 @@ describe('simple player', () => {
     });
 
     // TODO test various input types
-    // TODO test logger
     // presentationComplete
 
     it('should send the correct responseProgress', async done => {
