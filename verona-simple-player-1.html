@@ -136,7 +136,8 @@
         unitId: 'unit',
         unitCount: Infinity,
         stateReportPolicy: "eager", // none" | "eager" | "on-demand"
-        pagingMode: "separate" // "separate" | "concat-scroll" | "concat-scroll-snap"
+        pagingMode: "separate", // "separate" | "concat-scroll" | "concat-scroll-snap"
+        debounceStateMessages: 1000 // this is not Verona2-standard
     }
 
     const isDefined = v => (typeof v !== "undefined");
@@ -179,7 +180,7 @@
                 }
             };
 
-            _sendVopStateChangedNotification = Time.debounce(() => this._send(this._createStateMsg()), 500);
+            _sendVopStateChangedNotification = Time.debounce(() => this._send(this._createStateMsg()), parseInt(playerConfig.debounceStateMessages, 10));
 
             vopGetStateResponse = () => {
                 const msg = this._createStateMsg(true);
@@ -570,8 +571,10 @@
         }
 
         lean = (type, message) => {
-            console.log(message);
-            this._log(type, message);
+            if (["debug", "rich", "lean"].indexOf(playerConfig.logPolicy) > -1) {
+                console.log(message);
+                this._log(type, message);
+            }
         }
 
         getAll = () => [...this._logStash.sent.map(msg => {msg.sent = true; return msg}), ...this._logStash.new];
@@ -682,7 +685,7 @@
     });
 
     PlayerUI.addEventListener('change', PlayerUI.itemElements, Message.send.vopStateChangedNotification);
-    PlayerUI.addEventListener('keyup', PlayerUI.itemElements, Time.debounce(Message.send.vopStateChangedNotification, 1000));
+    PlayerUI.addEventListener('keyup', PlayerUI.itemElements, Time.debounce(Message.send.vopStateChangedNotification, 100));
     PlayerUI.addEventListener('mouseover', PlayerUI.itemElements, event => PlayerUI.markElementTouched(event.target));
     PlayerUI.addEventListener('keyup', PlayerUI.itemElements, event => PlayerUI.markElementTouched(event.target));
 
