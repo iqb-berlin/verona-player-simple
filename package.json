@@ -2,13 +2,13 @@
   "name": "verona-player-html",
   "version": "1.0.0",
   "description": "A dependency-free, vanilla-js Verona2-Player which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
-  "dependencies": {
+  "dependencies": {},
+  "devDependencies": {
     "chromedriver": "^86.0.0",
     "geckodriver": "^1.20.0",
     "jasmine": "^3.6.3",
     "selenium-webdriver": "^4.0.0-alpha.7"
   },
-  "devDependencies": {},
   "scripts": {
     "test": "clear && npx jasmine --config=test/jasmine.json"
   },
