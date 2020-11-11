@@ -265,7 +265,6 @@ describe('simple player', () => {
     });
 
     it('should support various form elements', async done => {
-
         await loadPlayer({
             debounceStateMessages: 0,
             debounceKeyboardEvents: 0
@@ -302,7 +301,6 @@ describe('simple player', () => {
         const textArea = await driver.findElement(By.css('[name="text-area"]'));
         const multiSelectA = await driver.findElement(By.css('[name="multi-select"] [value="a"]'));
         const multiSelectB = await driver.findElement(By.css('[name="multi-select"] [value="b"]'));
-        const multiSelectC = await driver.findElement(By.css('[name="multi-select"] [value="c"]'));
         const radioGroupA = await driver.findElement(By.css('[name="radio-group"][value="a"]'));
         const checkBoxA = await driver.findElement(By.css('[name="check-box-a"]'));
         const checkBoxB = await driver.findElement(By.css('[name="check-box-b"]'));
@@ -340,7 +338,6 @@ describe('simple player', () => {
 
 
     it ('debounce returning messages', async done => {
-
         await send({
             type: "vopStartCommand",
             unitDefinition: "<input type='text' name='field' value='' />",
@@ -535,7 +532,6 @@ describe('simple player', () => {
     });
 
     it('should support `stateReportPolicy` = `eager`', async done => {
-
         await loadPlayer({
             debounceStateMessages: 0,
             debounceKeyboardEvents: 0
@@ -615,9 +611,6 @@ describe('simple player', () => {
         done();
     });
 
-    // TODO test various input types
-    // presentationComplete
-
     it('should send the correct responseProgress', async done => {
         await send({
             type: "vopStartCommand",
@@ -648,6 +641,132 @@ describe('simple player', () => {
         await first.sendKeys('1');
         await send({type: "vopGetStateRequest", sessionId: "1"});
         expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('complete-and-valid');
+
+        done();
+    });
+
+    it('should send the correct `presentationProgress` in paginated mode', async done => {
+        await loadPlayer({
+            debounceStateMessages: 0,
+            debounceKeyboardEvents: 0
+        });
+
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<fieldset><legend id='p1'>Page 1</legend></fieldset><fieldset><legend id='p2'>Page 2</legend></fieldset>",
+            sessionId: "1",
+            playerConfig: {
+                pagingMode: "separate",
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        await recordMessages(driver);
+
+        const nextPage = await driver.findElement(By.css('#next-page'));
+
+        await send({type: "vopGetStateRequest", sessionId: "1"})
+        const message1 = await getLastMessage(driver);
+
+        await nextPage.click();
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message2 = await getLastMessage(driver);
+
+        expect(message1.unitState.presentationProgress).toEqual('some');
+        expect(message2.unitState.presentationProgress).toEqual('complete');
+
+        done();
+    });
+
+    it('should send the correct `presentationProgress` in scroll-mode', async done => {
+        await loadPlayer({
+            debounceStateMessages: 0,
+            debounceKeyboardEvents: 0
+        });
+
+        const longText = () => Array.from(
+            {length: 2000},
+            (_, i) => Array.from({length: 3 + i % 10}, () => 'x').join("")
+        ).join(" ");
+
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <fieldset id="p1">${longText()}</fieldset>
+                <fieldset id="p2">${longText()}</fieldset>
+                <fieldset id="p3">${longText()}</fieldset>`,
+            sessionId: "1",
+            playerConfig: {
+                pagingMode: "concat-scroll",
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        const p2 = await driver.findElement(By.css('#p2'));
+        const unit = await driver.findElement(By.css('#unit'));
+
+        await recordMessages(driver);
+
+        await driver.executeScript("arguments[0].scrollIntoView();", p2);
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message1 = await getLastMessage(driver);
+
+        await driver.executeScript(async () => {
+            const unit = arguments[0];
+            unit.scrollTo(0, 0);
+            for (let i = 0; i <= 100; i += 1) {
+                await new Promise(resolve => setTimeout(resolve, 10));
+                unit.scrollTo(0, i * unit.scrollHeight / 100);
+            }
+        }, unit);
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message2 = await getLastMessage(driver);
+
+        expect(message1.unitState.presentationProgress).toEqual('some');
+        expect(message2.unitState.presentationProgress).toEqual('complete');
+
+        done();
+    });
+
+    it('should send the correct `presentationProgress` in scroll-snap-mode', async done => {
+        await loadPlayer({
+            debounceStateMessages: 0,
+            debounceKeyboardEvents: 0
+        });
+
+        const longText = () => Array.from(
+            {length: 2000},
+            (_, i) => Array.from({length: 3 + i % 10}, () => 'x').join("")
+        ).join(" ");
+
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <fieldset id="p1">${longText()}</fieldset>
+                <fieldset id="p2">${longText()}</fieldset>
+                <fieldset id="p3">${longText()}</fieldset>`,
+            sessionId: "1",
+            playerConfig: {
+                pagingMode: "concat-scroll-snap",
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        const unit = await driver.findElement(By.css('#unit'));
+
+        await recordMessages(driver);
+
+        for (let i = 0; i < 20; i++) {
+            unit.sendKeys(Key.PAGE_DOWN); // scrollTp in combination with snap-scroll skips foot-anchor-points
+        }
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message1 = await getLastMessage(driver);
+
+        expect(message1.unitState.presentationProgress).toEqual('some');
 
         done();
     });

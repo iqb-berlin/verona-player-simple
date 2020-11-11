@@ -71,13 +71,8 @@
         }
 
         #unit.paged.separate {
-            padding-top: 3.2em;
-            overflow: hidden;
+            overflow-y: auto;
             height: 100vh;
-        }
-
-        #unit.paged fieldset {
-            display: none
         }
 
         #unit.paged fieldset:first-of-type {
@@ -90,7 +85,7 @@
         }
 
         #unit.concat-scroll-snap {
-            scroll-snap-type: y mandatory;
+            scroll-snap-type: y proximity;
         }
 
         #unit.concat-scroll-snap fieldset {
@@ -149,7 +144,6 @@
         stateReportPolicy: "eager", // none" | "eager" | "on-demand"
         pagingMode: "separate", // "separate" | "concat-scroll" | "concat-scroll-snap"
     }
-
 
     let sessionId = "";
 
@@ -284,8 +278,8 @@
 
         progressFactors = {
             pages: {
-                complete: () => Pages.seenPages.length === Pages.pageCount,
-                some: () => Pages.seenPages.length > 0
+                complete: () => Object.values(Pages.seenPages).filter(p => p.enter && p.bottom).length === Pages.pageCount,
+                some: () => Object.values(Pages.seenPages).filter(p => p.enter || p.bottom).length > 0
             },
         }
 
@@ -295,7 +289,6 @@
 
             this._setUnit(data["unitDefinition"] || new Error("unitDefinition missing"));
             this._setPlayerConfig(data["playerConfig"] || {});
-            this._setPlayerState(data["playerState"] || {});
             this._setUnitData(data["unitState"] || {});
 
             PlayerUI.togglePageNavButtons();
@@ -306,6 +299,8 @@
             } else {
                 // Message.send.vopStateChangedNotification();
             }
+
+            this._setPlayerState(data["playerState"] || {});
         }
 
         getData = () => ({
@@ -373,7 +368,7 @@
 
         _setPlayerConfig = newPlayerConfig => {
             playerConfig = Object.assign(playerConfig, newPlayerConfig);
-            Pages.setPagingMode(playerConfig.pagingMode);
+            Pages.setPagingMode();
         }
 
         _setPlayerState = playerState => {
@@ -384,9 +379,7 @@
              * so the following is just an assumption of how it may change and will not work.
              * See https://github.com/verona-interfaces/player/issues/23
              */
-            if (typeof playerState.currentPage !== "undefined") {
-                Pages.goto(playerState.currentPage)
-            }
+            Pages.goto(playerState.currentPage || 1);
         }
     }
 
@@ -473,15 +466,21 @@
     }
 
     const Pages = new class {
-        currentPage = 1;
-        pageCount = 1;
-        validPages = {1: "main"}
-        seenPages = [1];
-        _observer = null;
+        currentPage = 0;
+        pageCount = 0;
+        validPages = {};
+        hasPages = false;
+        seenPages = {
+            // 1: {
+            //     enter: true,
+            //     bottom: false
+            // }
+        };
 
         get = () => {
             const pageElements = document.querySelectorAll("fieldset");
             this.pageCount = Math.max(1, pageElements.length);
+            this.hasPages = pageElements.length;
             this.validPages = [...pageElements].reduce((carry, pageElement) => {
                 const pageNr = 1 + Object.keys(carry).length;
                 const legendElem = pageElement.querySelector('legend');
@@ -490,14 +489,11 @@
             }, {});
         }
 
-        setPagingMode = mode => {
-            document.querySelector('#unit').classList.remove(playerConfig.pagingMode);
-            document.querySelector('#unit').classList.add(mode);
-            playerConfig.pagingMode = mode;
-            switch (mode) {
+        setPagingMode = () => {
+            document.querySelector('#unit').classList.add(playerConfig.pagingMode);
+            switch (playerConfig.pagingMode) {
                 case 'separate':
-                    this._observer = null;
-                    break;
+                    // break;
                 case 'concat-scroll-snap':
                 case 'concat-scroll':
                     this.setScrollObserver();
@@ -506,6 +502,10 @@
         }
 
         goto = target => {
+            if (!this.hasPages) {
+                return;
+            }
+
             if (target === '#next') {
                 this.currentPage++;
             } else if (target === '#previous') {
@@ -533,32 +533,49 @@
 
         enterPage = newPage => {
             this.currentPage = newPage;
-            if (this.seenPages.indexOf(this.currentPage) === -1) {
-                this.seenPages.push(this.currentPage);
-            }
-
+            this.seenPages[newPage].enter = true;
             Message.send.vopStateChangedNotification();
         }
 
-        setScrollObserver = () => {
-            this._observer = new IntersectionObserver(
-                entries => {
-                    entries.forEach((entry) => {
-                        if (entry.isIntersecting) {
-                            this.enterPage(entry.target.dataset.pagenr);
-                        }
-                    });
-                },
-                {
-                    root: null,
-                    threshold: 0.8,
-                    rootMargin: '25px'
-                }
-            );
-            document.querySelectorAll('fieldset').forEach((pageElem, index) => {
+        setScrollObserver = includeEnterObserver => {
+            const pageContainer = this.hasPages ? 'fieldset' : '#unit';
+            document.querySelectorAll(pageContainer).forEach((pageElem, index) => {
                 pageElem.dataset.pagenr = (index + 1).toString(10);
-                this._observer.observe(pageElem);
+                this.seenPages[pageElem.dataset.pagenr] = {
+                    enter: !this.hasPages,
+                    bottom: false
+                }
+                if (includeEnterObserver) {
+                    this._newObserver(this._pageIntersection, pageElem);
+                }
+                const pageBottomAnchor = document.createElement('div');
+                pageElem.appendChild(pageBottomAnchor);
+                this._newObserver(this._pageBottomIntersection, pageBottomAnchor);
             });
+        }
+
+        _newObserver = (callback, elem) => {
+            new IntersectionObserver(
+                entries => entries.filter(entry => entry.isIntersecting).forEach(callback),
+                {
+                    root: document.querySelector('#unit'),
+                    threshold: 0,
+                    rootMargin: '0%'
+                }
+            ).observe(elem);
+        }
+
+        _pageIntersection = intersectionEvent => {
+            const pageId = parseInt(intersectionEvent.target.dataset.pagenr, 10);
+            this.currentPage = pageId;
+            this.seenPages[pageId].enter = true;
+            Message.send.vopStateChangedNotification();
+        }
+
+        _pageBottomIntersection = intersectionEvent => {
+            const pageId = parseInt(intersectionEvent.target.parentElement.dataset.pagenr, 10);
+            this.seenPages[pageId].bottom = true;
+            Message.send.vopStateChangedNotification();
         }
     }
 
