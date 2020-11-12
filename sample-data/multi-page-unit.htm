@@ -1,23 +1,43 @@
 <fieldset style="background: lawngreen">
-    <legend>Random long content</legend>
+    <h5>Random long content</h5>
     <span class="long-content"></span>
 </fieldset>
 <fieldset style="background: darkseagreen">
-    <legend>Some small content</legend>
+    <h5>Some small content</h5>
     Lorem ipsum...
 </fieldset>
 <fieldset style="background: lightseagreen">
-    <legend>Random long content</legend>
+    <h5>Random long content</h5>
     <span class="long-content"></span>
 </fieldset>
 <fieldset style="background: mediumspringgreen">
-    <legend>Some small content</legend>
+    <h5>Some small content</h5>
     Lorem ipsum...
 </fieldset>
 <fieldset style="background: darkolivegreen">
-    <legend>Random long content</legend>
+    <h5>Random long content</h5>
     <span class="long-content"></span>
 </fieldset>
+<div id="page-display">0</div>
+
+<style>
+    #page-display {
+        position: absolute;
+        background: orange;
+        box-shadow: 0 0 5px 0 rgba(0,0,0,0.75);
+        font-size: large;
+        height: 30px;
+        width: 30px;
+        line-height: 30px;
+        text-align: center;
+        margin: 4px;
+        border-radius: 34px;
+        z-index: 30000;
+        top: 20px;
+        right: 20px;
+    }
+</style>
+
 <script>
     document.addEventListener('vopStartCommand', () => {
         document.querySelectorAll(".long-content").forEach(elem => elem.innerHTML +=
@@ -29,5 +49,10 @@
                 ).join("")
             ).join(" ")
         );
+        document.querySelector('#unit').addEventListener('scroll', () => {
+             document.querySelector('#page-display').innerHTML = Pages.currentPage.toString(10);
+        });
     });
+
+
 </script>
