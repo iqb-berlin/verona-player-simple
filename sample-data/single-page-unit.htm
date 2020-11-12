@@ -1,0 +1,13 @@
+<p id="long-content"><b>This is random content to have an example with a lot of content: </b>Lorem ipsum </p>
+<script>
+    document.addEventListener('vopStartCommand', () => {
+        document.querySelector("#long-content").innerHTML +=
+            Array.from(
+                {length: 750},
+                () => Array.from(
+                    {length: 3 + Math.round(Math.random() * 6)},
+                    () => String.fromCharCode(97 + Math.round(Math.random() * 25))
+                ).join("")
+            ).join(" ");
+    });
+</script>

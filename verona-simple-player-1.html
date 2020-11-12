@@ -44,10 +44,6 @@
             height: 100vh; overflow: hidden; font-family: sans-serif; margin: 0;
         }
 
-        fieldset {
-            min-height: 80vh; margin-bottom: 2em;
-        }
-
         #shield {
             display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 51000
         }
@@ -67,7 +63,9 @@
 
         #unit.paged.separate fieldset {
             overflow-y: auto;
-            height: 84vh;
+            height: calc(100% - 100px);
+            padding: 50px 20px;
+            border: 0;
         }
 
         #unit.concat-scroll-snap {
@@ -298,7 +296,13 @@
                     }, {})
         });
 
-        getPresentationProgress = () => Object.keys(this.progressFactors)
+        getPresentationProgress = () => {
+            const p = this.getPresentationProgressC();
+            console.log("P", p, Pages.seenPages);
+            return p;
+        }
+
+        getPresentationProgressC = () => Object.keys(this.progressFactors)
             .reduce((carry, key) => {
                 if ((carry === 'complete') && this.progressFactors[key].complete()) {
                     return 'complete';
@@ -456,17 +460,12 @@
         pageCount = 0;
         validPages = {};
         hasPages = false;
-        seenPages = {
-            // 1: {
-            //     enter: true,
-            //     bottom: false
-            // }
-        };
+        seenPages = {};
 
         get = () => {
             const pageElements = document.querySelectorAll("fieldset");
             this.pageCount = Math.max(1, pageElements.length);
-            this.hasPages = pageElements.length;
+            this.hasPages = !!pageElements.length;
             this.validPages = [...pageElements].reduce((carry, pageElement) => {
                 const pageNr = 1 + Object.keys(carry).length;
                 const legendElem = pageElement.querySelector('legend');
@@ -477,14 +476,7 @@
 
         setPagingMode = () => {
             document.querySelector('#unit').classList.add(playerConfig.pagingMode);
-            switch (playerConfig.pagingMode) {
-                case 'separate':
-                    // break;
-                case 'concat-scroll-snap':
-                case 'concat-scroll':
-                    this.setScrollObserver();
-                    break;
-            }
+            this.setScrollObserver();
         }
 
         goto = target => {
@@ -523,7 +515,7 @@
             Message.send.vopStateChangedNotification();
         }
 
-        setScrollObserver = includeEnterObserver => {
+        setScrollObserver = () => {
             const pageContainer = this.hasPages ? 'fieldset' : '#unit';
             document.querySelectorAll(pageContainer).forEach((pageElem, index) => {
                 pageElem.dataset.pagenr = (index + 1).toString(10);
@@ -531,7 +523,7 @@
                     enter: !this.hasPages,
                     bottom: false
                 }
-                if (includeEnterObserver) {
+                if (this.hasPages) {
                     this._newObserver(this._pageIntersection, pageElem);
                 }
                 const pageBottomAnchor = document.createElement('div');

@@ -1,0 +1,33 @@
+<fieldset style="background: lawngreen">
+    <legend>Random long content</legend>
+    <span class="long-content"></span>
+</fieldset>
+<fieldset style="background: darkseagreen">
+    <legend>Some small content</legend>
+    Lorem ipsum...
+</fieldset>
+<fieldset style="background: lightseagreen">
+    <legend>Random long content</legend>
+    <span class="long-content"></span>
+</fieldset>
+<fieldset style="background: mediumspringgreen">
+    <legend>Some small content</legend>
+    Lorem ipsum...
+</fieldset>
+<fieldset style="background: darkolivegreen">
+    <legend>Random long content</legend>
+    <span class="long-content"></span>
+</fieldset>
+<script>
+    document.addEventListener('vopStartCommand', () => {
+        document.querySelectorAll(".long-content").forEach(elem => elem.innerHTML +=
+            Array.from(
+                {length: 1750},
+                () => Array.from(
+                    {length: 3 + Math.round(Math.random() * 6)},
+                    () => String.fromCharCode(97 + Math.round(Math.random() * 25))
+                ).join("")
+            ).join(" ")
+        );
+    });
+</script>
