@@ -49,10 +49,8 @@
                 ).join("")
             ).join(" ")
         );
-        document.querySelector('#unit').addEventListener('scroll', () => {
-             document.querySelector('#page-display').innerHTML = Pages.currentPage.toString(10);
-        });
     });
-
-
+    document.addEventListener('queued:vopStateChangedNotification', () => {
+        document.querySelector('#page-display').innerHTML = Pages.currentPage.toString(10);
+    });
 </script>

@@ -75,6 +75,11 @@
         #unit.concat-scroll-snap fieldset {
             scroll-snap-align: start;
         }
+
+        .page-bottom-anchor {
+            display: block;
+            height: 50px;
+        }
     </style>
 
 </head>
@@ -146,9 +151,12 @@
             }
         }
 
-        debounce = (callback, limit) => {
+        debounce = (callback, limit, debounceCallback) => {
             let handle = null;
             return function() {
+                if (typeof debounceCallback === "function") {
+                    debounceCallback.apply(this, arguments);
+                }
                 clearTimeout(handle);
                 handle = setTimeout(() => {
                     callback.apply(this, arguments);
@@ -171,8 +179,11 @@
                 }
             };
 
-            _sendVopStateChangedNotification =
-                Time.debounce(() => this._send(this._createStateMsg()), parseInt(playerSettings.debounceStateMessages, 10));
+            _sendVopStateChangedNotification = Time.debounce(
+                () => this._send(this._createStateMsg()),
+                parseInt(playerSettings.debounceStateMessages, 10),
+                () => document.dispatchEvent(new CustomEvent('queued:vopStateChangedNotification', {}))
+            );
 
             vopGetStateResponse = () => {
                 const msg = this._createStateMsg(true);
@@ -204,10 +215,6 @@
             }
 
             _send = msg => {
-                if (msg.type === 'vopStateChangedNotification') {
-                    console.log('sent:' + msg.type, msg);
-
-                }
                 window.parent.postMessage(msg, '*');
                 document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
             }
@@ -243,7 +250,6 @@
         }
 
         receive = (type, data) => {
-            console.log("received", type)
             if (sessionId && (data.sessionId !== sessionId)) {
                 throw new Error("Wrong sessionId");
             }
@@ -296,13 +302,7 @@
                     }, {})
         });
 
-        getPresentationProgress = () => {
-            const p = this.getPresentationProgressC();
-            console.log("P", p, Pages.seenPages);
-            return p;
-        }
-
-        getPresentationProgressC = () => Object.keys(this.progressFactors)
+        getPresentationProgress = () => Object.keys(this.progressFactors)
             .reduce((carry, key) => {
                 if ((carry === 'complete') && this.progressFactors[key].complete()) {
                     return 'complete';
@@ -358,7 +358,7 @@
 
         _setPlayerConfig = newPlayerConfig => {
             playerConfig = Object.assign(playerConfig, newPlayerConfig);
-            Pages.setPagingMode();
+            Pages.applyPagingMode();
         }
 
         _setPlayerState = playerState => {
@@ -455,16 +455,12 @@
         }
     }
 
-    // STAND: pages objekt überarbeiten, public / private, Enterpage etc.
-    // Auäßere Page-Nagiation (im scroll-modues) scheint nicht so ganz zu funktionieren
-    // Problem mit diesem legend-kack
     const Pages = new class {
         currentPage = 0;
         pageCount = 0;
-        validPages = {};
         hasPages = false;
+        validPages = {};
         seenPages = {};
-
         visiblePages = {};
 
         get = () => {
@@ -477,11 +473,12 @@
                 carry[pageNr.toString()] = (legendElem) ? legendElem.innerText : 'Page-' + pageNr;
                 return carry
             }, {});
+            this._initPageStates();
         }
 
-        setPagingMode = () => {
+        applyPagingMode = () => {
             document.querySelector('#unit').classList.add(playerConfig.pagingMode);
-            this.setScrollObserver();
+            this._setScrollObserver();
         }
 
         goto = target => {
@@ -504,36 +501,47 @@
             const pageElem = document.querySelector(`fieldset:nth-of-type(${this.currentPage})`);
 
             if (playerConfig.pagingMode === "separate") {
-                document.querySelectorAll("fieldset")
-                    .forEach(fieldsetElement => {fieldsetElement.style.display = 'none'});
-                pageElem.style.display = 'block';
+                this._showPage(pageElem);
                 PlayerUI.togglePageNavButtons();
-                this.enterPage(this.currentPage);
+                this._changePage(this.currentPage);
             } else {
-                pageElem.scrollIntoView({left: 0, block: 'start', behavior: 'smooth'});
+                pageElem.scrollIntoView({block: 'start', behavior: 'smooth'});
             }
         }
 
-        enterPage = newPage => {
+        _showPage = pageElem => {
+            document.querySelectorAll("fieldset")
+                .forEach(fieldsetElement => {fieldsetElement.style.display = 'none'});
+            pageElem.style.display = 'block';
+        }
+
+        _changePage = newPage => {
             this.currentPage = newPage;
             this.seenPages[newPage].enter = true;
             Message.send.vopStateChangedNotification();
         }
 
-        setScrollObserver = () => {
-            const pageContainer = this.hasPages ? 'fieldset' : '#unit';
-            document.querySelectorAll(pageContainer).forEach((pageElem, index) => {
+        _initPageStates = () => {
+            const pageElemType = this.hasPages ? 'fieldset' : '#unit';
+            document.querySelectorAll(pageElemType).forEach((pageElem, index) => {
                 pageElem.dataset.pagenr = (index + 1).toString(10);
                 this.seenPages[pageElem.dataset.pagenr] = {
                     enter: !this.hasPages,
                     bottom: false
                 }
                 this.visiblePages[pageElem.dataset.pagenr] = false;
+            });
+        }
+
+        _setScrollObserver = () => {
+            const pageElemType = this.hasPages ? 'fieldset' : '#unit';
+            document.querySelectorAll(pageElemType).forEach(pageElem => {
                 if (this.hasPages) {
                     this._newObserver(this._pageIntersection, pageElem);
                 }
                 const pageBottomAnchor = document.createElement('div');
                 pageElem.appendChild(pageBottomAnchor);
+                pageBottomAnchor.classList.add('page-bottom-anchor');
                 this._newObserver(this._pageBottomIntersection, pageBottomAnchor);
             });
         }
@@ -543,28 +551,27 @@
                 entries => entries.forEach(callback),
                 {
                     root: document.querySelector('#unit'),
-                    threshold: 0,
+                    threshold: 0.2,
                     rootMargin: '0%'
                 }
             ).observe(elem);
         }
 
-        _pageIntersection = intersectionEvent => {
-            const pageId = parseInt(intersectionEvent.target.dataset.pagenr, 10);
-
-            this.visiblePages[pageId] = intersectionEvent.isIntersecting;
-            Pages.currentPage = Math.min(...Object.keys(this.visiblePages).filter(i => this.visiblePages[i]));
-
-            this.seenPages[pageId].enter = true;
-
+        _pageIntersection = intersectionEntry => {
+            const pageId = parseInt(intersectionEntry.target.dataset.pagenr, 10);
+            if (playerConfig.pagingMode !== "separate") {
+                this.visiblePages[pageId] = intersectionEntry.isIntersecting;
+                this.currentPage = Math.min(...Object.keys(this.visiblePages).filter(i => this.visiblePages[i]));
+            }
+            this.seenPages[pageId].enter = this.seenPages[pageId].enter || intersectionEntry.isIntersecting;
             Message.send.vopStateChangedNotification();
         }
 
-        _pageBottomIntersection = intersectionEvent => {
-            if (!intersectionEvent.isIntersecting) {
+        _pageBottomIntersection = intersectionEntry => {
+            if (!intersectionEntry.isIntersecting) {
                 return;
             }
-            const pageId = parseInt(intersectionEvent.target.parentElement.dataset.pagenr, 10);
+            const pageId = parseInt(intersectionEntry.target.parentElement.dataset.pagenr, 10);
             this.seenPages[pageId].bottom = true;
             Message.send.vopStateChangedNotification();
         }
