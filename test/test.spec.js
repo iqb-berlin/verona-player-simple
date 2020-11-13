@@ -510,7 +510,7 @@ describe('simple player', () => {
         msg['timeStamp'] = NaN;
 
         expect(msg).toEqual({
-            playerState: { currentPage: '1', validPages: {} },
+            playerState: { currentPage: '0', validPages: {} },
             sessionId: '1',
             timeStamp: NaN,
             type: 'vopGetStateResponse',
@@ -562,7 +562,6 @@ describe('simple player', () => {
         msg['timeStamp'] = NaN;
 
         expect(msg).toEqual({
-            playerState: { currentPage: '1', validPages: {} },
             sessionId: '1',
             timeStamp: NaN,
             type: 'vopStateChangedNotification',
