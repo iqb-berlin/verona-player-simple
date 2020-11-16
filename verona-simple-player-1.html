@@ -285,7 +285,7 @@
             answers: () => Answers.get()
         }
 
-        progressFactors = {
+        presentationProgressFactors = {
             pages: {
                 complete: () => Object.values(Pages.seenPages).filter(p => p.enter && p.bottom).length === Pages.pageCount,
                 some: () => Object.values(Pages.seenPages).filter(p => p.enter || p.bottom).length > 0
@@ -321,17 +321,18 @@
                     }, {})
         });
 
-        getPresentationProgress = () => Object.keys(this.progressFactors)
+        getPresentationProgress = () => Object.keys(this.presentationProgressFactors)
             .reduce((carry, key) => {
-                if ((carry === 'complete') && this.progressFactors[key].complete()) {
+                if ((carry === 'complete') && this.presentationProgressFactors[key].complete()) {
                     return 'complete';
-                } else if ((carry !== 'none') || this.progressFactors[key].some()) {
+                } else if ((carry !== 'none') || this.presentationProgressFactors[key].some()) {
                     return 'some';
                 } else {
                     return 'none'
                 }
             }, 'complete');
 
+        // TODO make extensible like PresentationProgress
         getResponseProgress = () => {
             /**
              * The state of being done for an item is not well defined in Verona2.

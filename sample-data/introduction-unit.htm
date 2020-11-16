@@ -220,7 +220,7 @@
           });
         }
 
-        Unit.progressFactors['audio'] = {
+        Unit.presentationProgressFactors['audio'] = {
           complete: () => SoundModule.getState().length === SoundModule.getState().position + 1,
           some: () => SoundModule.getState().length > 1
         }
