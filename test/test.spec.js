@@ -367,7 +367,7 @@ describe('simple player', () => {
         done();
     });
 
-    fit('should collect values from element from extension', async done => {
+    it('should collect values from element from extension', async done => {
         await send({
             type: "vopStartCommand",
             unitDefinition: `
