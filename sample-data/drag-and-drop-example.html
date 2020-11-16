@@ -1,0 +1,67 @@
+<style>
+    .draggable {
+        border-radius: 15px;
+        height: 30px;
+        width: 30px;
+        line-height: 30px;
+        text-align: center;
+        margin: 2px;
+    }
+    #draggable-1 {
+        background: lightblue;
+    }
+    #draggable-2 {
+        background: lightsalmon;
+    }
+    #draggable-3 {
+        background: lightcoral;
+    }
+    #draggable-4 {
+        background: lightgreen;
+    }
+    .drop-zone {
+        border: silver;
+        background: grey;
+        height: 34px;
+        width: 500px;
+        border-radius: 3px;
+        padding: 2px;
+    }
+    .drop-zone .draggable {
+        display: inline-block;
+    }
+</style>
+
+<script>
+    const collected = [];
+
+    const allowDrop = ev => {
+        ev.preventDefault();
+    }
+
+    const drag = ev => {
+        ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    const drop = ev => {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData("text");
+        ev.target.appendChild(document.getElementById(data));
+        collected.push(data);
+    }
+
+    Unit.dataPartsCollectors.dragDrop = () => collected;
+</script>
+
+<body>
+
+<h2>Which balls belong into the box? Drag them into it!</h2>
+
+<div class="drop-zone" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+
+<div id="draggable-1" class="draggable" draggable="true" ondragstart="drag(event)">1</div>
+<div id="draggable-2" class="draggable" draggable="true" ondragstart="drag(event)">2</div>
+<div id="draggable-3" class="draggable" draggable="true" ondragstart="drag(event)">3</div>
+<div id="draggable-4" class="draggable" draggable="true" ondragstart="drag(event)">4</div>
+
+
