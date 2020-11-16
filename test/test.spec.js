@@ -1,3 +1,23 @@
+/**
+ * stand:
+ *
+ * test-stabilität
+ * * mit dem filter nach message type deutliche rhöt aber nicht 100% leider
+ * * losg / process.stops müssen noch raus
+ * * https://github.com/iqb-berlin/iqb-dev-components/pull/2 muss angenommen werden
+ * * default timeout muss wieder runter gesetzt werden
+ *
+ * scrollen
+ * * ist toppi jetzt glaube ich
+ * * breiter testen
+ *
+ * fehlende tests
+ * * erweiterbarkeit presentation-complete
+ * * erweiterbarkeit response-complete
+ *
+ */
+
+
 require('selenium-webdriver');
 
 const testConfig = require("./config.json");
@@ -26,6 +46,13 @@ const loadPlayer = async playerSettings => {
         : '';
 
     await driver.get('file:' + playerPath + query);
+}
+
+const debug = () =>  {
+    console.log('--------------------------------------');
+    console.trace();
+    console.log('--------------------------------------');
+    process.exit(1);
 }
 
 
@@ -247,7 +274,7 @@ describe('simple player', () => {
             }
         });
 
-        await recordMessages(driver);
+        await recordMessages(driver, 'vopGetStateResponse');
 
         await send({
             type: "vopGetStateRequest",
@@ -255,6 +282,11 @@ describe('simple player', () => {
         });
 
         const msg = await getLastMessage(driver);
+
+        if (!msg.unitState) {
+            console.log(msg);
+            debug();
+        }
 
         expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
             '': 'c',
@@ -305,7 +337,7 @@ describe('simple player', () => {
         const checkBoxA = await driver.findElement(By.css('[name="check-box-a"]'));
         const checkBoxB = await driver.findElement(By.css('[name="check-box-b"]'));
 
-        await recordMessages(driver);
+        await recordMessages(driver, 'vopStateChangedNotification');
 
         textArea.sendKeys('text area content');
         multiSelectA.click();
@@ -323,7 +355,7 @@ describe('simple player', () => {
         await checkBoxA.click();
         await checkBoxB.click();
 
-        const msg = await getLastMessage(driver);
+        const msg = await getLastMessage(driver, 'vopStateChangedNotification');
 
         expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
             'text-area': 'text area content',
@@ -346,7 +378,7 @@ describe('simple player', () => {
 
         const field = await driver.findElement(By.css('[name="field"]'));
 
-        await recordMessages(driver);
+        await recordMessages(driver, "vopStateChangedNotification");
 
         await field.sendKeys('first input'); // debounce 1000
 
@@ -510,7 +542,6 @@ describe('simple player', () => {
         msg['timeStamp'] = NaN;
 
         expect(msg).toEqual({
-            playerState: { currentPage: '0', validPages: {} },
             sessionId: '1',
             timeStamp: NaN,
             type: 'vopGetStateResponse',
@@ -525,6 +556,10 @@ describe('simple player', () => {
                 presentationProgress: 'complete',
                 responseProgress: 'complete-and-valid'
             },
+            playerState: {
+                currentPage: 0,
+                validPages: {0: ''}
+            },
             unitStateDataTyp: 'verona-simple-player-1.0.0'
         });
 
@@ -533,7 +568,7 @@ describe('simple player', () => {
 
     it('should support `stateReportPolicy` = `eager`', async done => {
         await loadPlayer({
-            debounceStateMessages: 0,
+            debounceStateMessages: 150,
             debounceKeyboardEvents: 0
         });
 
@@ -548,15 +583,15 @@ describe('simple player', () => {
 
         const input = await driver.findElement(By.css('#the-item'));
 
-        await recordMessages(driver);
+        await recordMessages(driver, 'vopStateChangedNotification');
 
         await input.sendKeys('something');
-        await driver.sleep(250);
 
-        let msg = await getLastMessage(driver);
+        let msg = await getLastMessage(driver, 1500);
 
-        if (typeof msg !== "object" || msg == null) {
-            fail('message must be an object');
+        if (!msg.unitState) {
+            console.log(msg);
+            debug();
         }
 
         msg['timeStamp'] = NaN;
@@ -576,6 +611,10 @@ describe('simple player', () => {
                 presentationProgress: 'complete',
                 responseProgress: 'complete-and-valid'
             },
+            playerState: {
+                currentPage: 0,
+                validPages: {0: ''}
+            },
             unitStateDataTyp: 'verona-simple-player-1.0.0'
         });
 
@@ -589,7 +628,7 @@ describe('simple player', () => {
             sessionId: "1"
         });
 
-        await recordMessages(driver);
+        await recordMessages(driver, 'vopWindowFocusChangedNotification');
 
         const subframe = await driver.findElement(By.css('#subframe'));
         await subframe.click();
@@ -623,7 +662,7 @@ describe('simple player', () => {
         const first = await driver.findElement(By.css('[name="first"]'));
         const second = await driver.findElement(By.css('[name="second"]'));
 
-        await recordMessages(driver);
+        await recordMessages(driver, 'vopGetStateResponse');
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
         expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('none');
@@ -639,7 +678,14 @@ describe('simple player', () => {
         await first.clear();
         await first.sendKeys('1');
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('complete-and-valid');
+        const msg = await getLastMessage(driver);
+
+        if (msg.unitState.responseProgress !== 'complete-and-valid') {
+            console.log(msg);
+            debug();
+        }
+
+        expect((msg).unitState.responseProgress).toEqual('complete-and-valid');
 
         done();
     });
@@ -660,7 +706,7 @@ describe('simple player', () => {
             }
         });
 
-        await recordMessages(driver);
+        await recordMessages(driver, "vopGetStateResponse");
 
         const nextPage = await driver.findElement(By.css('#next-page'));
 
@@ -705,12 +751,16 @@ describe('simple player', () => {
         const p2 = await driver.findElement(By.css('#p2'));
         const unit = await driver.findElement(By.css('#unit'));
 
-        await recordMessages(driver);
+        await recordMessages(driver, 'vopGetStateResponse');
 
         await driver.executeScript("arguments[0].scrollIntoView();", p2);
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
         const message1 = await getLastMessage(driver);
+        if (!message1.unitState) {
+            console.log(message1);
+            debug();
+        }
 
         await driver.executeScript(async () => {
             const unit = arguments[0];
@@ -723,6 +773,10 @@ describe('simple player', () => {
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
         const message2 = await getLastMessage(driver);
+        if (!message2.unitState) {
+            console.log(message2);
+            debug();
+        }
 
         expect(message1.unitState.presentationProgress).toEqual('some');
         expect(message2.unitState.presentationProgress).toEqual('complete');
@@ -756,7 +810,7 @@ describe('simple player', () => {
 
         const unit = await driver.findElement(By.css('#unit'));
 
-        await recordMessages(driver);
+        await recordMessages(driver, 'vopGetStateResponse');
 
         for (let i = 0; i < 20; i++) {
             unit.sendKeys(Key.PAGE_DOWN); // scrollTp in combination with snap-scroll skips foot-anchor-points
@@ -790,7 +844,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver);
+            await recordMessages(driver, 'vopGetStateResponse');
 
             await richBtn.click();
             await leanBtn.click();
@@ -825,7 +879,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver);
+            await recordMessages(driver, 'vopGetStateResponse');
 
             await richBtn.click();
             await leanBtn.click();
@@ -860,7 +914,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver);
+            await recordMessages(driver, 'vopGetStateResponse');
 
             await richBtn.click();
             await leanBtn.click();
@@ -894,7 +948,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver);
+            await recordMessages(driver, 'vopGetStateResponse');
 
             await richBtn.click();
             await leanBtn.click();
