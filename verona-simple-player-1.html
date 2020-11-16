@@ -180,9 +180,16 @@
             };
 
             _sendVopStateChangedNotification = Time.debounce(
-                () => this._send(this._createStateMsg()),
+                () => {
+                    const message = this._createStateMsg();
+                    if (message.playerState || message.unitState || message.log) {
+                        this._send(message);
+                    }
+                },
                 parseInt(playerSettings.debounceStateMessages, 10),
-                () => document.dispatchEvent(new CustomEvent('queued:vopStateChangedNotification', {}))
+                () => {
+                    document.dispatchEvent(new CustomEvent('queued:vopStateChangedNotification', {}))
+                }
             );
 
             vopGetStateResponse = () => {
