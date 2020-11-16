@@ -367,7 +367,49 @@ describe('simple player', () => {
         done();
     });
 
+    fit('should collect values from element from extension', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <script>
+                    let special = false;
+                    Unit.dataPartsCollectors.special = () => special ? 'yes' : 'no';
+                    PlayerUI.addEventListener('click', '#specialControl', () => \{
+                        special = true;
+                    \});
+                </script>
+                <div id="specialControl">X</div>
+            `,
+            sessionId: "1",
+            playerConfig: {
+                stateReportPolicy: "on-demand"
+            }
+        });
 
+        const specialControl = await driver.findElement(By.css('#specialControl'));
+
+        await recordMessages(driver, 'vopGetStateResponse');
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message1 = await getLastMessage(driver, 'vopStateChangedNotification');
+
+        await specialControl.click();
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message2 = await getLastMessage(driver, 'vopStateChangedNotification');
+
+        expect(message1.unitState.dataParts.complete).toEqual({
+            answers: {},
+            special: 'no'
+        });
+
+        expect(message2.unitState.dataParts.complete).toEqual({
+            answers: {},
+            special: 'yes'
+        });
+
+        done();
+    });
 
     it ('debounce returning messages', async done => {
         await send({
@@ -720,6 +762,77 @@ describe('simple player', () => {
 
         expect(message1.unitState.presentationProgress).toEqual('some');
         expect(message2.unitState.presentationProgress).toEqual('complete');
+
+        done();
+    });
+
+    it('should send the correct presentationProgress if extended', async done => {
+        await loadPlayer({
+            debounceStateMessages: 0,
+            debounceKeyboardEvents: 0
+        });
+
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <fieldset>
+                    <legend id='p1'>Page 1</legend>
+                    <div id='special' onclick="increaseSpecialPresentationProgress()">0</div>
+                </fieldset>
+                <fieldset><legend id='p2'>Page 2</legend></fieldset>
+                <script>
+                    let specialPresentationProgress = 0;
+                    const increaseSpecialPresentationProgress = () => \{
+                        specialPresentationProgress++;
+                        document.getElementById('special').innerText = specialPresentationProgress.toString(10);
+                    \} 
+                    Unit.presentationProgressFactors.special = \{
+                        some: () => specialPresentationProgress < 2 && specialPresentationProgress > 0,
+                        complete: () => specialPresentationProgress > 2
+                    \}
+                </script>
+                `,
+            sessionId: "1",
+            playerConfig: {
+                pagingMode: "separate",
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        await recordMessages(driver, "vopGetStateResponse");
+
+        const nextPage = await driver.findElement(By.css('#next-page'));
+        // const prevPage = await driver.findElement(By.css('#previous-page'));
+        const special = await driver.findElement(By.css('#special'));
+
+        await send({type: "vopGetStateRequest", sessionId: "1"})
+        const message1 = await getLastMessage(driver);
+
+        await special.click(); // sppb = 1
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message2 = await getLastMessage(driver);
+
+        await special.click(); // sppb = 2
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message3 = await getLastMessage(driver);
+
+        await special.click(); // sppb = 3
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message4 = await getLastMessage(driver);
+
+        await nextPage.click();
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message5 = await getLastMessage(driver);
+
+        expect(message1.unitState.presentationProgress).toEqual('some');
+        expect(message2.unitState.presentationProgress).toEqual('some');
+        expect(message3.unitState.presentationProgress).toEqual('some');
+        expect(message4.unitState.presentationProgress).toEqual('some');
+        expect(message5.unitState.presentationProgress).toEqual('complete');
 
         done();
     });
