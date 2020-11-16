@@ -167,10 +167,9 @@
 
     const Message = new class {
         send = new class {
-            _lastStateMsg = {
+            _lastStates = {
                 playerState: null,
-                unitState: null,
-                log: null
+                unitState: null
             };
 
             vopStateChangedNotification = () => {
@@ -192,11 +191,7 @@
                 }
             );
 
-            vopGetStateResponse = () => {
-                const msg = this._createStateMsg(true);
-                msg.type = 'vopGetStateResponse';
-                this._send(msg);
-            };
+            vopGetStateResponse = () => this._send(this._createStateMsg(true));
 
             vopReadyNotification = () => {
                 this._send(Object.assign(
@@ -226,34 +221,51 @@
                 document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
             }
 
-            _createStateMsg = (forceIncludeState = false) => {
+            _createStateMsg = (isRequested = false) => {
                 const message = {
-                    type: 'vopStateChangedNotification',
+                    type: isRequested ? 'vopGetStateResponse' : 'vopStateChangedNotification',
                     sessionId: sessionId,
                     timeStamp: Date.now(),
                     unitStateDataTyp: 'verona-simple-player-1.0.0',
                 };
-                const playerState = {
-                    validPages: Pages.validPages,
-                    currentPage: Pages.currentPage.toString()
-                };
-                const unitState = {
-                    dataParts: Unit.getData(),
-                    presentationProgress: Unit.getPresentationProgress(),
-                    responseProgress: Unit.getResponseProgress(),
-                };
-                if (forceIncludeState || JSON.stringify(playerState) !== JSON.stringify(this._lastStateMsg.playerState)) {
+                const playerState = this._getPlayerState();
+                const unitState = this._getUnitState();
+                if (isRequested || (JSON.stringify(playerState) !== JSON.stringify(this._lastStates.playerState))) {
                     message.playerState = playerState;
+                    this._lastStates.playerState = playerState;
                 }
-                if (forceIncludeState || JSON.stringify(unitState) !== JSON.stringify(this._lastStateMsg.unitState)) {
+                if (isRequested || (JSON.stringify(unitState) !== JSON.stringify(this._lastStates.unitState))) {
                     message.unitState = unitState;
+                    this._lastStates.unitState = unitState;
                 }
                 if (Log.hasNew()) {
                     message.log = Log.next();
                 }
-                this._lastStateMsg = message;
                 return message;
             }
+
+            _getPlayerState = () => {
+                const playerState = {};
+                if (Pages.hasPages) {
+                    playerState.validPages = Pages.validPages;
+                    playerState.currentPage = Pages.currentPage.toString()
+                } else {
+                    /**
+                     * `validPages` and `currentPage` is mandatory even if the unit does not have pages.
+                     * - https://verona-interfaces.github.io/player/#operation-subscribe-vopStateChangedNotification
+                     * - https://github.com/verona-interfaces/player/issues/27
+                     */
+                    playerState.validPages = {0: ''};
+                    playerState.currentPage = 0;
+                }
+                return playerState;
+            }
+
+            _getUnitState = () => ({
+                dataParts: Unit.getData(),
+                presentationProgress: Unit.getPresentationProgress(),
+                responseProgress: Unit.getResponseProgress(),
+            });
         }
 
         receive = (type, data) => {
