@@ -227,7 +227,8 @@
                     sessionId: sessionId,
                     timeStamp: Date.now(),
                     unitStateDataTyp: 'verona-simple-player-1.0.0',
-                };
+                }
+
                 const playerState = this._getPlayerState();
                 const unitState = this._getUnitState();
                 if (isRequested || (JSON.stringify(playerState) !== JSON.stringify(this._lastStates.playerState))) {
@@ -241,6 +242,7 @@
                 if (Log.hasNew()) {
                     message.log = Log.next();
                 }
+
                 return message;
             }
 
@@ -476,7 +478,7 @@
     }
 
     const Pages = new class {
-        currentPage = 0;
+        _currentPage = 0;
         pageCount = 0;
         hasPages = false;
         validPages = {};
@@ -496,9 +498,16 @@
             this._initPageStates();
         }
 
-        applyPagingMode = () => {
-            document.querySelector('#unit').classList.add(playerConfig.pagingMode);
-            this._setScrollObserver();
+        get currentPage() {
+            if (playerConfig.pagingMode !== "separate") {
+                const currentPage = Math.min(...Object.keys(this.visiblePages).filter(i => this.visiblePages[i]));
+                if (currentPage === Infinity) {
+                    return 0;
+                } else {
+                    this._currentPage = currentPage;
+                }
+            }
+            return this._currentPage;
         }
 
         goto = target => {
@@ -507,38 +516,38 @@
             }
 
             if (target === '#next') {
-                this.currentPage++;
+                this._currentPage++;
             } else if (target === '#previous') {
-                this.currentPage -= 1;
+                this._currentPage -= 1;
             } else if (target === '#first') {
-                this.currentPage = 1;
+                this._currentPage = 1;
             } else if (target === '#first') {
-                this.currentPage = pageCount ;
+                this._currentPage = pageCount ;
             } else {
-                this.currentPage = parseInt(target);
+                this._currentPage = parseInt(target);
             }
 
-            const pageElem = document.querySelector(`fieldset:nth-of-type(${this.currentPage})`);
+            const pageElem = document.querySelector(`fieldset:nth-of-type(${this._currentPage})`);
 
             if (playerConfig.pagingMode === "separate") {
                 this._showPage(pageElem);
                 PlayerUI.togglePageNavButtons();
-                this._changePage(this.currentPage);
+                this.seenPages[this._currentPage].enter = true;
+                Message.send.vopStateChangedNotification();
             } else {
                 pageElem.scrollIntoView({block: 'start', behavior: 'smooth'});
             }
+        }
+
+        applyPagingMode = () => {
+            document.querySelector('#unit').classList.add(playerConfig.pagingMode);
+            this._setScrollObserver();
         }
 
         _showPage = pageElem => {
             document.querySelectorAll("fieldset")
                 .forEach(fieldsetElement => {fieldsetElement.style.display = 'none'});
             pageElem.style.display = 'block';
-        }
-
-        _changePage = newPage => {
-            this.currentPage = newPage;
-            this.seenPages[newPage].enter = true;
-            Message.send.vopStateChangedNotification();
         }
 
         _initPageStates = () => {
@@ -571,7 +580,7 @@
                 entries => entries.forEach(callback),
                 {
                     root: document.querySelector('#unit'),
-                    threshold: 0.2,
+                    threshold: 0.01,
                     rootMargin: '0%'
                 }
             ).observe(elem);
@@ -581,7 +590,6 @@
             const pageId = parseInt(intersectionEntry.target.dataset.pagenr, 10);
             if (playerConfig.pagingMode !== "separate") {
                 this.visiblePages[pageId] = intersectionEntry.isIntersecting;
-                this.currentPage = Math.min(...Object.keys(this.visiblePages).filter(i => this.visiblePages[i]));
             }
             this.seenPages[pageId].enter = this.seenPages[pageId].enter || intersectionEntry.isIntersecting;
             Message.send.vopStateChangedNotification();

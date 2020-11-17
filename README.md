@@ -25,7 +25,9 @@ Any HTML-content can be used as unit. Examples can be found in this repository i
 
 The Unit can contain any HTML-content (inner Part of `<body>`), even `<script>`- and `<style>`-tags!
 * Don't use the `<form>`-element, since the whole unit will put into one.
-* Use the `<fieldset>` to define pages if you want to have a multi-page unit.
+* Use the `<fieldset>`-element to define a page if you want to have a multi-page unit. In this case on the root-level 
+  there should only be <fieldset>`-elements or absolute/static positioned elements, otherwise it could confuse
+  the page detection.
 * Any `<input>`-, `<textarea>`- and `<select>`-element will be tracked and content stored as well as any element
   containing the `contenteditable`-attribute. In both cases use the name element to set up variable names.
 * The player contains some JS-Classes which can be used in unit-code to extend functionality.
