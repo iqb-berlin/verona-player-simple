@@ -1,23 +1,3 @@
-/**
- * stand:
- *
- * test-stabilität
- * * mit dem filter nach message type deutliche rhöt aber nicht 100% leider
- * * losg / process.stops müssen noch raus
- * * https://github.com/iqb-berlin/iqb-dev-components/pull/2 muss angenommen werden
- * * default timeout muss wieder runter gesetzt werden
- *
- * scrollen
- * * ist toppi jetzt glaube ich
- * * breiter testen
- *
- * fehlende tests
- * # erweiterbarkeit presentation-complete
- * # erweiterbarkeit response-complete
- *
- */
-
-
 require('selenium-webdriver');
 
 const testConfig = require("./config.json");
@@ -26,6 +6,8 @@ const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By, Key} = require("selenium-webdriver");
 
 const {recordMessages, getLastMessage, messageRecorderSettings} = require('iqb-dev-components');
+
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox simply is starting too slow sometimes (1 of 750 times on my machine)
 
 let driver;
 
@@ -80,6 +62,7 @@ describe('simple player', () => {
         }
         done();
     });
+
 
     it('should load unit on `vopStartCommand`', async done => {
         await send({
@@ -788,7 +771,7 @@ describe('simple player', () => {
                     const increaseSpecialPresentationProgress = () => \{
                         specialPresentationProgress++;
                         document.getElementById('special').innerText = specialPresentationProgress.toString(10);
-                    \} 
+                    \}
                     Unit.presentationProgressFactors.special = \{
                         some: () => specialPresentationProgress < 2 && specialPresentationProgress > 0,
                         complete: () => specialPresentationProgress > 2
@@ -840,7 +823,6 @@ describe('simple player', () => {
         done();
     });
 
-    // TODO fix this
     it('should send the correct `presentationProgress` when there are no pages', async done => {
         const longText = () => Array.from(
             {length: 2000},
@@ -872,12 +854,13 @@ describe('simple player', () => {
         const message1 = await getLastMessage(driver);
 
         await driver.executeScript(() => arguments[0].scrollTo(0, arguments[0].scrollHeight), unit);
+        await driver.sleep(50); // give player time to detect changed presentationProgress
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
         const message2 = await getLastMessage(driver);
 
         expect(message1.unitState.presentationProgress).toEqual('some');
-        // expect(message2.unitState.presentationProgress).toEqual('complete');
+        expect(message2.unitState.presentationProgress).toEqual('complete');
         done();
     });
 
