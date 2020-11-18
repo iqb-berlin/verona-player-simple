@@ -307,8 +307,6 @@
 
             if (data['unitDefinitionType'] !== "verona-simple-player-1.0.0") {
                 Log.debug("Unit definition type does not match: " + data['unitDefinitionType']);
-            } else {
-                // Message.send.vopStateChangedNotification();
             }
 
             this._setPlayerState(data["playerState"] || {});
