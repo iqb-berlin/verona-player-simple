@@ -74,15 +74,6 @@ const loadPlayer = async playerSettings => {
 }
 
 
-const debug = () =>  {
-    console.log('--------------------------------------');
-    console.trace();
-    console.log('--------------------------------------');
-    process.exit(1);
-}
-
-
-
 describe('simple player', () => {
 
     beforeAll(async done => {
@@ -311,11 +302,6 @@ describe('simple player', () => {
         });
 
         const msg = await getLastMessage(driver, 'vopGetStateResponse', 1000);
-
-        if (!msg.unitState) {
-            console.log(msg);
-            debug();
-        }
 
         expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
             '': 'c',
@@ -660,11 +646,6 @@ describe('simple player', () => {
 
         let msg = await getLastMessage(driver, 'vopStateChangedNotification', 1500);
 
-        if (!msg.unitState) {
-            console.log(msg);
-            debug();
-        }
-
         msg['timeStamp'] = NaN;
 
         expect(msg).toEqual({
@@ -748,11 +729,6 @@ describe('simple player', () => {
         await first.sendKeys('1');
         await send({type: "vopGetStateRequest", sessionId: "1"});
         const msg = await getLastMessage(driver, 'vopGetStateResponse');
-
-        if (msg.unitState.responseProgress !== 'complete-and-valid') {
-            console.log(msg);
-            debug();
-        }
 
         expect((msg).unitState.responseProgress).toEqual('complete-and-valid');
 
