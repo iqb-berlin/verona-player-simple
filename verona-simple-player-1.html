@@ -68,6 +68,14 @@
             border: 0;
         }
 
+        /* add some whitespace in scollmode, to make it possible to get last pages on the top even if they are small */
+        #unit.paged.concat-scroll:after,
+        #unit.paged.concat-scroll-snap:after {
+            height: 100%;
+            display: block;
+            content: " ";
+        }
+
         #unit.concat-scroll-snap {
             scroll-snap-type: y proximity;
         }
@@ -302,14 +310,14 @@
             this._setPlayerConfig(data["playerConfig"] || {});
             this._setUnitData(data["unitState"] || {});
 
-            PlayerUI.togglePageNavButtons();
-            PlayerUI.toggleUnitNavButtons();
-
             if (data['unitDefinitionType'] !== "verona-simple-player-1.0.0") {
                 Log.debug("Unit definition type does not match: " + data['unitDefinitionType']);
             }
 
             this._setPlayerState(data["playerState"] || {});
+
+            PlayerUI.togglePageNavButtons();
+            PlayerUI.toggleUnitNavButtons();
         }
 
         getData = () => ({
@@ -675,7 +683,7 @@
         }
 
         togglePageNavButtons = () => {
-            document.querySelector('#unit').classList[playerConfig.pagingMode === 'separate' ? 'add' : 'remove']('paged');
+            document.querySelector('#unit').classList[Pages.hasPages ? 'add' : 'remove']('paged');
             this.toggleButton('next-page',
                 Pages.pageCount > 1 && Pages.currentPage < Pages.pageCount,
                 Pages.pageCount > 1 && playerConfig.pagingMode === 'separate'

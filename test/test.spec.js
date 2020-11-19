@@ -45,9 +45,6 @@ const getLastMessage = (webdriver, type = null, timeout = messageRecorderSetting
         }
     }), type, timeout);
 
-// TODO move iqb-dev-components
-const getAllMessages = (webdriver, type) =>
-    webdriver.executeScript(type => window.__messageRecorder__.all.filter(msg => !type || (msg.type === type)), type);
 
 
 
@@ -906,21 +903,20 @@ describe('simple player', () => {
             }
         });
 
+        const messages = [await getLastMessage(driver,"vopStateChangedNotification")];
+
         const unit = await driver.findElement(By.css('#unit'));
 
-        const scrollPoints = [80, 30, 100, 60, 75, 50];
+        const scrollPoints = [80, 30, 90, 55, 70, 50];
 
         for (let point in scrollPoints) {
-            await driver.sleep(50); // give debounced message time to get collected
             await driver.executeScript(
                 () => arguments[0].scrollTo(0, arguments[1] * unit.scrollHeight / 100),
                 unit,
                 scrollPoints[point]
             );
+            messages.push(await getLastMessage(driver,"vopStateChangedNotification"));
         }
-        await driver.sleep(50); // give debounced message time to get collected
-
-        const messages = await getAllMessages(driver, "vopStateChangedNotification");
 
         const pageAndProgress = messages.map(niceMsg => {return [
             (niceMsg.playerState) ? niceMsg.playerState.currentPage : '-',
