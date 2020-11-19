@@ -313,7 +313,7 @@
         }
 
         getData = () => ({
-            complete:
+            all:
                 Object.keys(this.dataPartsCollectors)
                     .reduce((carry, key) => {
                         carry[key] = this.dataPartsCollectors[key]();

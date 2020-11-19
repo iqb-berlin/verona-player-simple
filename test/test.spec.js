@@ -303,7 +303,7 @@ describe('simple player', () => {
 
         const msg = await getLastMessage(driver, 'vopGetStateResponse', 1000);
 
-        expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
+        expect(msg.unitState.dataParts.all.answers || {}).toEqual({
             '': 'c',
             'field': ['a', 'b'],
         });
@@ -372,7 +372,7 @@ describe('simple player', () => {
 
         const msg = await getLastMessage(driver, 'vopStateChangedNotification');
 
-        expect(msg.unitState.dataParts.complete.answers || {}).toEqual({
+        expect(msg.unitState.dataParts.all.answers || {}).toEqual({
             'text-area': 'text area content',
             'multi-select': [ 'b', 'c' ],
             'radio-group': 'a',
@@ -413,12 +413,12 @@ describe('simple player', () => {
         await send({type: "vopGetStateRequest", sessionId: "1"});
         const message2 = await getLastMessage(driver, 'vopGetStateResponse');
 
-        expect(message1.unitState.dataParts.complete).toEqual({
+        expect(message1.unitState.dataParts.all).toEqual({
             answers: {},
             special: 'no'
         });
 
-        expect(message2.unitState.dataParts.complete).toEqual({
+        expect(message2.unitState.dataParts.all).toEqual({
             answers: {},
             special: 'yes'
         });
@@ -447,7 +447,7 @@ describe('simple player', () => {
 
         expect(message1).toBeNull();
 
-        expect(message2.unitState.dataParts.complete.answers || {}).toEqual({
+        expect(message2.unitState.dataParts.all.answers || {}).toEqual({
             field: 'first input second input',
         });
 
@@ -604,7 +604,7 @@ describe('simple player', () => {
             type: 'vopGetStateResponse',
             unitState: {
                 dataParts: {
-                    complete: {
+                    all: {
                         answers: {
                             'the-item': 'something'
                         }
@@ -654,7 +654,7 @@ describe('simple player', () => {
             type: 'vopStateChangedNotification',
             unitState: {
                 dataParts: {
-                    complete: {
+                    all: {
                         answers: {
                             'the-item': 'something'
                         }
