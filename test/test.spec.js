@@ -5,9 +5,52 @@ const testConfig = require("./config.json");
 const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By, Key} = require("selenium-webdriver");
 
-const {recordMessages, getLastMessage, messageRecorderSettings} = require('iqb-dev-components');
+const {messageRecorderSettings} = require('iqb-dev-components');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox simply is starting too slow sometimes (1 of 750 times on my machine)
+messageRecorderSettings.defaultTimeout = 500; // wait until message
+
+// TODO move iqb-dev-components
+const recordMessages = webdriver =>
+    webdriver.executeScript(() => {
+        window.__messageRecorder__ = {
+            'all': [],
+            'last': {}
+        };
+        window.addEventListener("message", e => {
+            window.__messageRecorder__.all.push(e.data);
+            window.__messageRecorder__.last[e.data.type || 'unknown'] = e.data;
+            window.__messageRecorder__.last.all = e.data;
+        });
+    });
+
+// TODO move iqb-dev-components
+const getLastMessage = (webdriver, type = null, timeout = messageRecorderSettings.defaultTimeout) =>
+    webdriver.executeScript((type, timeout) => new Promise(resolve => {
+        const popLastMessage = () => {
+            const msg = window.__messageRecorder__.last[type || 'all'];
+            delete window.__messageRecorder__.last[type || 'all'];
+            resolve(msg);
+        }
+        if (window.__messageRecorder__.last[type || 'all']) {
+            popLastMessage();
+        } else {
+            setTimeout(() => {
+                if (window.__messageRecorder__.last[type || 'all']) {
+                    popLastMessage();
+                } else {
+                    resolve(null);
+                }
+            }, timeout);
+        }
+    }), type, timeout);
+
+// TODO move iqb-dev-components
+const getAllMessages = (webdriver, type) =>
+    webdriver.executeScript(type => window.__messageRecorder__.all.filter(msg => !type || (msg.type === type)), type);
+
+
+
 
 let driver;
 
@@ -30,7 +73,6 @@ const loadPlayer = async playerSettings => {
     await driver.get('file:' + playerPath + query);
 }
 
-const getAllMessages = webdriver => webdriver.executeScript(() => window.__messageRecorder__); // TODO move iqb-dev-components
 
 const debug = () =>  {
     console.log('--------------------------------------');
@@ -39,7 +81,7 @@ const debug = () =>  {
     process.exit(1);
 }
 
-messageRecorderSettings.defaultTimeout = 500;
+
 
 describe('simple player', () => {
 
@@ -251,6 +293,7 @@ describe('simple player', () => {
     });
 
     it('should collect values from form', async done => {
+
         await send({
             type: "vopStartCommand",
             unitDefinition: "<input type='text' name='field' value='a' /><input type='text' name='field' value='b' /><p contenteditable>c</p>",
@@ -260,14 +303,14 @@ describe('simple player', () => {
             }
         });
 
-        await recordMessages(driver, 'vopGetStateResponse');
+        await recordMessages(driver);
 
         await send({
             type: "vopGetStateRequest",
             sessionId: "1"
         });
 
-        const msg = await getLastMessage(driver);
+        const msg = await getLastMessage(driver, 'vopGetStateResponse', 1000);
 
         if (!msg.unitState) {
             console.log(msg);
@@ -374,15 +417,15 @@ describe('simple player', () => {
 
         const specialControl = await driver.findElement(By.css('#specialControl'));
 
-        await recordMessages(driver, 'vopGetStateResponse');
+        await recordMessages(driver);
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message1 = await getLastMessage(driver, 'vopStateChangedNotification');
+        const message1 = await getLastMessage(driver, 'vopGetStateResponse');
 
         await specialControl.click();
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message2 = await getLastMessage(driver, 'vopStateChangedNotification');
+        const message2 = await getLastMessage(driver, 'vopGetStateResponse');
 
         expect(message1.unitState.dataParts.complete).toEqual({
             answers: {},
@@ -397,7 +440,7 @@ describe('simple player', () => {
         done();
     });
 
-    it ('debounce returning messages', async done => {
+    it('debounce returning messages', async done => {
         await send({
             type: "vopStartCommand",
             unitDefinition: "<input type='text' name='field' value='' />",
@@ -406,15 +449,15 @@ describe('simple player', () => {
 
         const field = await driver.findElement(By.css('[name="field"]'));
 
-        await recordMessages(driver, "vopStateChangedNotification");
+        await recordMessages(driver);
 
         await field.sendKeys('first input'); // debounce 1000
 
-        const message1 = await getLastMessage(driver,100); // wait 100 for message; none should be there
+        const message1 = await getLastMessage(driver,"vopStateChangedNotification", 100); // wait 100 for message; none should be there
 
         await field.sendKeys(' second input'); // debounce 1000
 
-        const message2 = await getLastMessage(driver, 1200); // after 1000, message should be sent
+        const message2 = await getLastMessage(driver, "vopStateChangedNotification", 1200); // after 1000, message should be sent
 
         expect(message1).toBeNull();
 
@@ -611,11 +654,11 @@ describe('simple player', () => {
 
         const input = await driver.findElement(By.css('#the-item'));
 
-        await recordMessages(driver, 'vopStateChangedNotification');
+        await recordMessages(driver);
 
         await input.sendKeys('something');
 
-        let msg = await getLastMessage(driver, 1500);
+        let msg = await getLastMessage(driver, 'vopStateChangedNotification', 1500);
 
         if (!msg.unitState) {
             console.log(msg);
@@ -652,26 +695,24 @@ describe('simple player', () => {
     it('should send `vopWindowFocusChangedNotification` on focus change', async done => {
         await send({
             type: "vopStartCommand",
-            unitDefinition: "<iframe id='subframe'></iframe><div id='outside'>outside</div>",
+            unitDefinition: "<iframe id='sub-frame'></iframe><div id='outside'>outside</div>",
             sessionId: "1"
         });
 
-        await recordMessages(driver, 'vopWindowFocusChangedNotification');
+        await recordMessages(driver);
 
-        const subframe = await driver.findElement(By.css('#subframe'));
-        await subframe.click();
+        const subFrame = await driver.findElement(By.css('#sub-frame'));
+        await subFrame.click();
 
-        let msg = await getLastMessage(driver);
+        let msg = await getLastMessage(driver, 'vopWindowFocusChangedNotification');
 
-        expect(msg.type).toEqual('vopWindowFocusChangedNotification');
         expect(msg.hasFocus).toBeFalse();
 
         const player = await driver.findElement(By.css('#outside'));
         await player.click();
 
-        msg = await getLastMessage(driver);
+        msg = await getLastMessage(driver, 'vopWindowFocusChangedNotification');
 
-        expect(msg.type).toEqual('vopWindowFocusChangedNotification');
         expect(msg.hasFocus).toBeTrue();
 
         done();
@@ -690,23 +731,23 @@ describe('simple player', () => {
         const first = await driver.findElement(By.css('[name="first"]'));
         const second = await driver.findElement(By.css('[name="second"]'));
 
-        await recordMessages(driver, 'vopGetStateResponse');
+        await recordMessages(driver);
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('none');
+        expect((await getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress).toEqual('none');
 
         await first.sendKeys('not a number');
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('some');
+        expect((await getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress).toEqual('some');
 
         await second.sendKeys('1');
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        expect((await getLastMessage(driver)).unitState.responseProgress).toEqual('complete');
+        expect((await getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress).toEqual('complete');
 
         await first.clear();
         await first.sendKeys('1');
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const msg = await getLastMessage(driver);
+        const msg = await getLastMessage(driver, 'vopGetStateResponse');
 
         if (msg.unitState.responseProgress !== 'complete-and-valid') {
             console.log(msg);
@@ -734,17 +775,17 @@ describe('simple player', () => {
             }
         });
 
-        await recordMessages(driver, "vopGetStateResponse");
+        await recordMessages(driver);
 
         const nextPage = await driver.findElement(By.css('#next-page'));
 
         await send({type: "vopGetStateRequest", sessionId: "1"})
-        const message1 = await getLastMessage(driver);
+        const message1 = await getLastMessage(driver, "vopGetStateResponse");
 
         await nextPage.click();
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message2 = await getLastMessage(driver);
+        const message2 = await getLastMessage(driver, "vopGetStateResponse");
 
         expect(message1.unitState.presentationProgress).toEqual('some');
         expect(message2.unitState.presentationProgress).toEqual('complete');
@@ -785,34 +826,34 @@ describe('simple player', () => {
             }
         });
 
-        await recordMessages(driver, "vopGetStateResponse");
+        await recordMessages(driver);
 
         const nextPage = await driver.findElement(By.css('#next-page'));
         // const prevPage = await driver.findElement(By.css('#previous-page'));
         const special = await driver.findElement(By.css('#special'));
 
         await send({type: "vopGetStateRequest", sessionId: "1"})
-        const message1 = await getLastMessage(driver);
+        const message1 = await getLastMessage(driver, "vopGetStateResponse");
 
         await special.click(); // sppb = 1
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message2 = await getLastMessage(driver);
+        const message2 = await getLastMessage(driver, "vopGetStateResponse");
 
         await special.click(); // sppb = 2
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message3 = await getLastMessage(driver);
+        const message3 = await getLastMessage(driver, "vopGetStateResponse");
 
         await special.click(); // sppb = 3
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message4 = await getLastMessage(driver);
+        const message4 = await getLastMessage(driver, "vopGetStateResponse");
 
         await nextPage.click();
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message5 = await getLastMessage(driver);
+        const message5 = await getLastMessage(driver, "vopGetStateResponse");
 
         expect(message1.unitState.presentationProgress).toEqual('some');
         expect(message2.unitState.presentationProgress).toEqual('some');
@@ -846,18 +887,18 @@ describe('simple player', () => {
         const theMiddle = await driver.findElement(By.css('#the-middle'));
         const unit = await driver.findElement(By.css('#unit'));
 
-        await recordMessages(driver, 'vopGetStateResponse');
+        await recordMessages(driver);
 
         await driver.executeScript(() => arguments[0].scrollIntoView(), theMiddle);
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message1 = await getLastMessage(driver);
+        const message1 = await getLastMessage(driver, 'vopGetStateResponse');
 
         await driver.executeScript(() => arguments[0].scrollTo(0, arguments[0].scrollHeight), unit);
         await driver.sleep(50); // give player time to detect changed presentationProgress
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message2 = await getLastMessage(driver);
+        const message2 = await getLastMessage(driver, 'vopGetStateResponse');
 
         expect(message1.unitState.presentationProgress).toEqual('some');
         expect(message2.unitState.presentationProgress).toEqual('complete');
@@ -874,7 +915,7 @@ describe('simple player', () => {
             (_, i) => Array.from({length: 3 + i % 10}, () => 'x').join("")
         ).join(" ");
 
-        await recordMessages(driver, 'vopStateChangedNotification');
+        await recordMessages(driver);
 
         await send({
             type: "vopStartCommand",
@@ -903,7 +944,7 @@ describe('simple player', () => {
         }
         await driver.sleep(50); // give debounced message time to get collected
 
-        const messages = await getAllMessages(driver);
+        const messages = await getAllMessages(driver, "vopStateChangedNotification");
 
         const pageAndProgress = messages.map(niceMsg => {return [
             (niceMsg.playerState) ? niceMsg.playerState.currentPage : '-',
@@ -949,14 +990,14 @@ describe('simple player', () => {
 
         const unit = await driver.findElement(By.css('#unit'));
 
-        await recordMessages(driver, 'vopGetStateResponse');
+        await recordMessages(driver);
 
         for (let i = 0; i < 20; i++) {
             unit.sendKeys(Key.PAGE_DOWN); // scrollTo in combination with snap-scroll skips foot-anchor-points
         }
 
         await send({type: "vopGetStateRequest", sessionId: "1"});
-        const message1 = await getLastMessage(driver);
+        const message1 = await getLastMessage(driver, 'vopGetStateResponse');
 
         expect(message1.unitState.presentationProgress).toEqual('some');
 
@@ -983,7 +1024,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver, 'vopGetStateResponse');
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -991,7 +1032,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage(driver);
+            const msg = await getLastMessage(driver, 'vopGetStateResponse');
 
             expect(msg.log[0].key).toEqual('rich');
             expect(msg.log[1].key).toEqual('lean');
@@ -1018,7 +1059,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver, 'vopGetStateResponse');
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -1026,7 +1067,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage(driver);
+            const msg = await getLastMessage(driver, 'vopGetStateResponse');
 
             expect(msg.log[0].key).toEqual('rich');
             expect(msg.log[1].key).toEqual('lean');
@@ -1053,7 +1094,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver, 'vopGetStateResponse');
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -1061,7 +1102,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage(driver);
+            const msg = await getLastMessage(driver, 'vopGetStateResponse');
 
             expect(msg.log[0].key).toEqual('lean');
             expect(msg.log.length).toEqual(1);
@@ -1087,7 +1128,7 @@ describe('simple player', () => {
             const leanBtn = await driver.findElement(By.css('#lean'));
             const debugBtn = await driver.findElement(By.css('#debug'));
 
-            await recordMessages(driver, 'vopGetStateResponse');
+            await recordMessages(driver);
 
             await richBtn.click();
             await leanBtn.click();
@@ -1095,7 +1136,7 @@ describe('simple player', () => {
 
             await send({type: "vopGetStateRequest", sessionId: "1"});
 
-            const msg = await getLastMessage(driver);
+            const msg = await getLastMessage(driver, 'vopGetStateResponse');
 
             expect(msg.log).toBeUndefined();
             done();
