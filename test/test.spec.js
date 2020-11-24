@@ -5,46 +5,10 @@ const testConfig = require("./config.json");
 const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By, Key} = require("selenium-webdriver");
 
-const {messageRecorderSettings} = require('iqb-dev-components');
+const {messageRecorderSettings, recordMessages, getLastMessage} = require('iqb-dev-components');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox simply is starting too slow sometimes (1 of 750 times on my machine)
 messageRecorderSettings.defaultTimeout = 500; // wait until message
-
-// TODO move iqb-dev-components
-const recordMessages = webdriver =>
-    webdriver.executeScript(() => {
-        window.__messageRecorder__ = {
-            'all': [],
-            'last': {}
-        };
-        window.addEventListener("message", e => {
-            window.__messageRecorder__.all.push(e.data);
-            window.__messageRecorder__.last[e.data.type || 'unknown'] = e.data;
-            window.__messageRecorder__.last.all = e.data;
-        });
-    });
-
-// TODO move iqb-dev-components
-const getLastMessage = (webdriver, type = null, timeout = messageRecorderSettings.defaultTimeout) =>
-    webdriver.executeScript((type, timeout) => new Promise(resolve => {
-        const popLastMessage = () => {
-            const msg = window.__messageRecorder__.last[type || 'all'];
-            delete window.__messageRecorder__.last[type || 'all'];
-            resolve(msg);
-        }
-        if (window.__messageRecorder__.last[type || 'all']) {
-            popLastMessage();
-        } else {
-            setTimeout(() => {
-                if (window.__messageRecorder__.last[type || 'all']) {
-                    popLastMessage();
-                } else {
-                    resolve(null);
-                }
-            }, timeout);
-        }
-    }), type, timeout);
-
 
 
 
@@ -94,7 +58,7 @@ describe('simple player', () => {
     });
 
 
-    it('should load unit on `vopStartCommand`', async done => {
+    it('should load an unit on `vopStartCommand`', async done => {
         await send({
             type: "vopStartCommand",
             unitDefinition: "<h1>Virtual Unit</h1>",
@@ -102,6 +66,7 @@ describe('simple player', () => {
         });
 
         const title = await driver.findElement(By.css('h1'));
+
         expect(await title.getText()).toBe('Virtual Unit');
 
         done();
@@ -972,6 +937,8 @@ describe('simple player', () => {
         const message1 = await getLastMessage(driver, 'vopGetStateResponse');
 
         expect(message1.unitState.presentationProgress).toEqual('some');
+
+        // TODO complete
 
         done();
     });
