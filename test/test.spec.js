@@ -5,7 +5,7 @@ const testConfig = require("./config.json");
 const {Options} = require("selenium-webdriver/firefox");
 const {Builder, By, Key} = require("selenium-webdriver");
 
-const MessageRecorder = require('iqb-dev-components');
+const MessageRecorder = require('iqb-dev-components').MessageRecorder;
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox simply is starting too slow sometimes (1 of 750 times on my machine)
 MessageRecorder.defaultWaitingTime = 500;
