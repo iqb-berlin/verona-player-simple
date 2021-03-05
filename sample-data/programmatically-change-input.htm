@@ -1,0 +1,12 @@
+<label for="input">We report changes of input value<input type="text" id="input" name="input"></label>
+<button id="button">even if they are done programmatically!</button>
+
+<script>
+  const input = document.querySelector('#input');
+  const button = document.querySelector('#button');
+
+  button.addEventListener('click', e => {
+    e.preventDefault();
+    input.value = "programmatically changed";
+  });
+</script>

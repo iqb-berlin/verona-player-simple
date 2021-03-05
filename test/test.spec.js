@@ -388,6 +388,50 @@ describe('simple player', () => {
         done();
     });
 
+    it('should collect values even if there are changed programmatically', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: `
+                <input type="text" id="field" name="field">
+                <button id="button">change!</button>
+                
+                <script>
+                  const field = document.querySelector('#field');
+                  const button = document.querySelector('#button');
+                
+                  button.addEventListener('click', e => {
+                    e.preventDefault();
+                    field.value = "programmatically changed";
+                  });
+                </script>
+            `,
+            sessionId: "1"
+        });
+
+        const field = await driver.findElement(By.css('#field'));
+        const button = await driver.findElement(By.css('#button'));
+
+        await MessageRecorder.recordMessages(driver);
+
+        await field.sendKeys('manually changed'); // debounce 1000
+
+        const message1 = await MessageRecorder.getLastMessage(driver,"vopStateChangedNotification", 1200);
+
+        await button.click();
+
+        const message2 = await MessageRecorder.getLastMessage(driver, "vopStateChangedNotification", 1200);
+
+        expect(message1.unitState.dataParts.all.answers || {}).toEqual({
+            field: 'manually changed',
+        });
+
+        expect(message2.unitState.dataParts.all.answers || {}).toEqual({
+            field: 'programmatically changed',
+        });
+
+        done();
+    });
+
     it('debounce returning messages', async done => {
         await send({
             type: "vopStartCommand",
@@ -693,6 +737,36 @@ describe('simple player', () => {
         const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
         expect((msg).unitState.responseProgress).toEqual('complete-and-valid');
+
+        done();
+    });
+
+    it('should send the correct responseProgress on programmatically changed fields', async done => {
+        await send({
+            type: "vopStartCommand",
+            unitDefinition: "<input type='text' name='field' />",
+            sessionId: "1",
+            playerConfig: {
+                stateReportPolicy: "on-demand"
+            }
+        });
+
+        const field = await driver.findElement(By.css('[name="field"]'));
+
+        await MessageRecorder.recordMessages(driver);
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+        expect(message1.unitState.responseProgress).toEqual('none');
+
+        await driver.executeScript(() => {
+            document.querySelector('[name="field"]').value = "programmatically changed value!";
+        });
+
+        await send({type: "vopGetStateRequest", sessionId: "1"});
+        const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+        expect(message2.unitState.responseProgress).toEqual('complete-and-valid');
+
 
         done();
     });
