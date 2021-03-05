@@ -688,7 +688,7 @@
 
     const PlayerUI = new class {
 
-        itemElements = "form select, form textarea, form input, form [contenteditable]";
+        itemElements = "form select:enabled, form textarea:enabled, form input:enabled, form [contenteditable]";
 
         togglePlayerRunning = (running = false) => {
             document.querySelector('#shield').style.display = running ? 'none' : 'block';
