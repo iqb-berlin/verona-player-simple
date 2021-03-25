@@ -1,11 +1,15 @@
-image: node:14.16-buster
+include:
+  - template: Code-Quality.gitlab-ci.yml
+  - template: Security/SAST.gitlab-ci.yml
+  - template: Security/Secret-Detection.gitlab-ci.yml
+  - template: Dependency-Scanning.gitlab-ci.yml
 
-before_script:
-  - apt-get update && apt-get install firefox-esr -y
-  - npm install
+image: node:14.16-buster
 
 test:
   stage: test
   script:
+    - apt-get update && apt-get install firefox-esr -y
+    - npm install
     - export TERM=xterm
     - npm run test
