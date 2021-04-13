@@ -26,6 +26,7 @@
         width: 500px;
         border-radius: 3px;
         padding: 2px;
+        cursor: pointer;
     }
     .drop-zone .draggable {
         display: inline-block;
@@ -48,9 +49,10 @@
         const data = ev.dataTransfer.getData("text");
         ev.target.appendChild(document.getElementById(data));
         collected.push(data);
+        Message.send.vopStateChangedNotification();
     }
 
-    Unit.dataPartsCollectors.dragDrop = () => collected;
+    Unit.dataPartsCollectors.dragDrop = () => [...collected];
 </script>
 
 <body>
