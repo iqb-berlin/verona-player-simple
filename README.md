@@ -1,6 +1,6 @@
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](https://opensource.org/licenses/MIT)
-[![Travis (.com)](https://img.shields.io/travis/com/iqb-berlin/verona-player-simple?style=flat-square)](https://travis-ci.com/iqb-berlin/verona-player-simple)
-![GitHub package.json version](https://img.shields.io/github/package-json/v/iqb-berlin/verona-player-simple?style=flat-square)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![CI](https://scm.cms.hu-berlin.de/iqb/verona-player-simple/-/commits/main)](https://scm.cms.hu-berlin.de/iqb/verona-player-simple)
+![GitHub package.json version](https://img.shields.io/github/package-json/v/iqb-berlin/verona-player-simple)
 
 # verona-player-simple
 This is a simple, dependency-less, vanilla-js-written, but full-featured unit player,
