@@ -1,17 +1,14 @@
 require('selenium-webdriver');
+const {
+  describe, it, jasmine, beforeAll, beforeEach, afterAll, expect, fail
+} = require('jasmine');
+const { Options } = require('selenium-webdriver/firefox');
+const { Builder, By, Key } = require('selenium-webdriver');
+const { MessageRecorder } = require('iqb-dev-components');
+const testConfig = require('./config.json');
 
-const testConfig = require("./config.json");
-
-const {Options} = require("selenium-webdriver/firefox");
-const {Builder, By, Key} = require("selenium-webdriver");
-
-const {MessageRecorder} = require('iqb-dev-components');
-
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox simply is starting too slow sometimes (1 of 750 times on my machine)
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox is starting too slow sometimes (1 of 750 times on my machine)
 MessageRecorder.defaultWaitingTime = 500;
-
-
-
 
 let driver;
 
@@ -20,23 +17,21 @@ if (testConfig.headless) {
   options.addArguments('-headless');
 }
 
-const playerPath = __dirname + '/../verona-simple-player-1.html';
+const playerPath = `${__dirname}/../verona-simple-player-1.html`;
 
 const send = async message => {
   await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
-}
+};
 
 const loadPlayer = async playerSettings => {
   const query = playerSettings
-    ? Object.keys(playerSettings).reduce((carry, item) => carry + `&${item}=${playerSettings[item]}`, '?')
+    ? Object.keys(playerSettings).reduce((carry, item) => `${carry}&${item}=${playerSettings[item]}`, '?')
     : '';
 
-  await driver.get('file:' + playerPath + query);
-}
-
+  await driver.get(`file:${playerPath}${query}`);
+};
 
 describe('simple player', () => {
-
   beforeAll(async done => {
     driver = await new Builder()
       .forBrowser('firefox')
@@ -48,7 +43,7 @@ describe('simple player', () => {
   beforeEach(async done => {
     await loadPlayer();
     done();
-  })
+  });
 
   afterAll(async done => {
     if (!testConfig.keepOpen) {
@@ -57,12 +52,11 @@ describe('simple player', () => {
     done();
   });
 
-
   it('should load an unit on `vopStartCommand`', async done => {
     await send({
-      type: "vopStartCommand",
-      unitDefinition: "<h1>Virtual Unit</h1>",
-      sessionId: "1"
+      type: 'vopStartCommand',
+      unitDefinition: '<h1>Virtual Unit</h1>',
+      sessionId: '1'
     });
 
     const title = await driver.findElement(By.css('h1'));
@@ -74,34 +68,34 @@ describe('simple player', () => {
 
   it('should block unit on `vopStopCommand` and continue on `vopContinueCommand`', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<h1>Virtual Unit</h1><input name='field'>",
-      sessionId: "1"
+      sessionId: '1'
     });
 
     await send({
-      type: "vopStopCommand",
-      sessionId: "1"
+      type: 'vopStopCommand',
+      sessionId: '1'
     });
 
     const input = await driver.findElement(By.css('input[name="field"]'));
 
     try {
       await input.click();
-      fail("should not be clickable anymore");
+      fail('should not be clickable anymore');
     } catch (exception) {
       expect(exception.name).toEqual('ElementClickInterceptedError');
     }
 
     await send({
-      type: "vopContinueCommand",
-      sessionId: "1"
+      type: 'vopContinueCommand',
+      sessionId: '1'
     });
 
     try {
       await input.click();
     } catch (exception) {
-      fail("should not be clickable again");
+      fail('should not be clickable again');
     }
 
     done();
@@ -109,14 +103,14 @@ describe('simple player', () => {
 
   it('ignore command, when sessionId is wrong', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<h1>Virtual Unit</h1><input name='field'>",
-      sessionId: "1"
+      sessionId: '1'
     });
 
     await send({
-      type: "vopStopCommand",
-      sessionId: "wrong"
+      type: 'vopStopCommand',
+      sessionId: 'wrong'
     });
 
     const input = await driver.findElement(By.css('input[name="field"]'));
@@ -124,18 +118,19 @@ describe('simple player', () => {
     try {
       await input.click();
     } catch (expection) {
-      fail("should still be clickable");
+      fail('should still be clickable');
     }
     done();
   });
 
   it('should display paginated unit when pages are available and `pagingMode` = `separate`', async done => {
     await send({
-      type: "vopStartCommand",
-      unitDefinition: "<fieldset><legend id='p1'>Page 1</legend></fieldset><fieldset><legend id='p2'>Page 2</legend></fieldset>",
-      sessionId: "1",
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "separate"
+        pagingMode: 'separate'
       }
     });
 
@@ -171,11 +166,12 @@ describe('simple player', () => {
 
   it('should not display pagination buttons when `pagingMode` = `concat-scroll`', async done => {
     await send({
-      type: "vopStartCommand",
-      unitDefinition: "<fieldset><legend id='p1'>Page 1</legend></fieldset><fieldset><legend id='p2'>Page 2</legend></fieldset>",
-      sessionId: "1",
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "concat-scroll"
+        pagingMode: 'concat-scroll'
       }
     });
 
@@ -195,11 +191,12 @@ describe('simple player', () => {
 
   it('should not display pagination buttons when `pagingMode` = `concat-scroll-snap`', async done => {
     await send({
-      type: "vopStartCommand",
-      unitDefinition: "<fieldset><legend id='p1'>Page 1</legend></fieldset><fieldset><legend id='p2'>Page 2</legend></fieldset>",
-      sessionId: "1",
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "concat-scroll-snap"
+        pagingMode: 'concat-scroll-snap'
       }
     });
 
@@ -219,15 +216,15 @@ describe('simple player', () => {
 
   it('should load values into the right forms', async done => {
     await send({
-      type: "vopStartCommand",
-      unitDefinition: "<input type='text'/><input type='text' name='field' /><p contenteditable></p>",
-      sessionId: "1",
+      type: 'vopStartCommand',
+      unitDefinition: '<input type="text" /><input type="text" name="field" /><p contenteditable></p>',
+      sessionId: '1',
       unitState: {
         dataParts: {
           all: {
             answers: {
               '': ['firstContent', 'thirdContent'],
-              'field': 'secondContent',
+              field: 'secondContent'
             }
           }
         }
@@ -246,28 +243,29 @@ describe('simple player', () => {
   });
 
   it('should collect values from form', async done => {
-
     await send({
-      type: "vopStartCommand",
-      unitDefinition: "<input type='text' name='field' value='a' /><input type='text' name='field' value='b' /><p contenteditable>c</p>",
-      sessionId: "1",
+      type: 'vopStartCommand',
+      unitDefinition:
+        `<input type="text" name="field" value="a" />
+        <input type="text" name="field" value="b" /><p contenteditable>c</p>`,
+      sessionId: '1',
       playerConfig: {
-        stateReportPolicy: "on-demand"
+        stateReportPolicy: 'on-demand'
       }
     });
 
     await MessageRecorder.recordMessages(driver);
 
     await send({
-      type: "vopGetStateRequest",
-      sessionId: "1"
+      type: 'vopGetStateRequest',
+      sessionId: '1'
     });
 
     const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse', 1000);
 
     expect(msg.unitState.dataParts.all.answers || {}).toEqual({
       '': 'c',
-      'field': ['a', 'b'],
+      field: ['a', 'b']
     });
 
     done();
@@ -280,7 +278,7 @@ describe('simple player', () => {
     });
 
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
                 <textarea name="text-area"></textarea>
                 <select name="multi-select" size="3" multiple>
@@ -293,7 +291,7 @@ describe('simple player', () => {
                 <input type="radio" name="radio-group" value="c" />
                 <input type="checkbox" name="check-box-a" />
                 <input type="checkbox" name="check-box-b" />`,
-      sessionId: "1",
+      sessionId: '1',
       unitState: {
         dataParts: {
           all: {
@@ -336,9 +334,9 @@ describe('simple player', () => {
 
     expect(msg.unitState.dataParts.all.answers || {}).toEqual({
       'text-area': 'text area content',
-      'multi-select': [ 'b', 'c' ],
+      'multi-select': ['b', 'c'],
       'radio-group': 'a',
-      'check-box-b': 'on',
+      'check-box-b': 'on'
     });
 
     done();
@@ -346,20 +344,20 @@ describe('simple player', () => {
 
   it('should collect values from element from extension', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
-                <script>
-                    let special = false;
-                    Unit.dataPartsCollectors.special = () => special ? 'yes' : 'no';
-                    PlayerUI.addEventListener('click', '#specialControl', () => \{
-                        special = true;
-                    \});
-                </script>
-                <div id="specialControl">X</div>
-            `,
-      sessionId: "1",
+        <script>
+          let special = false;
+          Unit.dataPartsCollectors.special = () => special ? 'yes' : 'no';
+          PlayerUI.addEventListener('click', '#specialControl', () => {
+              special = true;
+          });
+        </script>
+        <div id="specialControl">X</div>
+    `,
+      sessionId: '1',
       playerConfig: {
-        stateReportPolicy: "on-demand"
+        stateReportPolicy: 'on-demand'
       }
     });
 
@@ -367,12 +365,12 @@ describe('simple player', () => {
 
     await MessageRecorder.recordMessages(driver);
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     await specialControl.click();
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     expect(message1.unitState.dataParts.all).toEqual({
@@ -390,7 +388,7 @@ describe('simple player', () => {
 
   it('should collect values even if there are changed programmatically', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
                 <input type="text" id="field" name="field">
                 <button id="button">change!</button>
@@ -405,7 +403,7 @@ describe('simple player', () => {
                   });
                 </script>
             `,
-      sessionId: "1"
+      sessionId: '1'
     });
 
     const field = await driver.findElement(By.css('#field'));
@@ -415,18 +413,18 @@ describe('simple player', () => {
 
     await field.sendKeys('manually changed'); // debounce 1000
 
-    const message1 = await MessageRecorder.getLastMessage(driver,"vopStateChangedNotification", 1200);
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1200);
 
     await button.click();
 
-    const message2 = await MessageRecorder.getLastMessage(driver, "vopStateChangedNotification", 1200);
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1200);
 
     expect(message1.unitState.dataParts.all.answers || {}).toEqual({
-      field: 'manually changed',
+      field: 'manually changed'
     });
 
     expect(message2.unitState.dataParts.all.answers || {}).toEqual({
-      field: 'programmatically changed',
+      field: 'programmatically changed'
     });
 
     done();
@@ -434,9 +432,9 @@ describe('simple player', () => {
 
   it('debounce returning messages', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<input type='text' name='field' value='' />",
-      sessionId: "1",
+      sessionId: '1'
     });
 
     const field = await driver.findElement(By.css('[name="field"]'));
@@ -445,16 +443,18 @@ describe('simple player', () => {
 
     await field.sendKeys('first input'); // debounce 1000
 
-    const message1 = await MessageRecorder.getLastMessage(driver,"vopStateChangedNotification", 100); // wait 100 for message; none should be there
+    // wait 100 for message; none should be there
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 100);
 
     await field.sendKeys(' second input'); // debounce 1000
 
-    const message2 = await MessageRecorder.getLastMessage(driver, "vopStateChangedNotification", 1200); // after 1000, message should be sent
+    // after 1000, message should be sent
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1200);
 
     expect(message1).toBeNull();
 
     expect(message2.unitState.dataParts.all.answers || {}).toEqual({
-      field: 'first input second input',
+      field: 'first input second input'
     });
 
     done();
@@ -462,15 +462,15 @@ describe('simple player', () => {
 
   it('should execute script in unit', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
-                <script>
-                    document.addEventListener('vopStartCommand', () =>
-                        document.querySelector('#unit p').innerHTML = 'rewritten'
-                    );
-                </script>
-                <p>original</p>`,
-      sessionId: "1",
+        <script>
+          document.addEventListener('vopStartCommand', () =>
+            document.querySelector('#unit p').innerHTML = 'rewritten'
+          );
+        </script>
+        <p>original</p>`,
+      sessionId: '1'
     });
 
     const unit = await driver.findElement(By.css('#unit p'));
@@ -483,10 +483,10 @@ describe('simple player', () => {
 
   it('should apply style in unit', async done => {
     await send({
-      type: "vopStartCommand",
-      unitDefinition: `
-                <style>#thing {background-color: rgb(143, 188, 143)}</style><p id="thing">should be green</p>`,
-      sessionId: "1",
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<style>#thing {background-color: rgb(143, 188, 143)}</style><p id="thing">should be green</p>',
+      sessionId: '1'
     });
 
     const thing = await driver.findElement(By.css('#thing'));
@@ -496,15 +496,14 @@ describe('simple player', () => {
   });
 
   describe('unit navigation', () => {
-
     it('should enable next if available', async done => {
       await send({
-        type: "vopStartCommand",
-        unitDefinition: "<h1>Virtual Unit</h1>",
-        sessionId: "1",
+        type: 'vopStartCommand',
+        unitDefinition: '<h1>Virtual Unit</h1>',
+        sessionId: '1',
         playerConfig: {
           unitNumber: 1,
-          unitCount: 4,
+          unitCount: 4
         }
       });
 
@@ -522,15 +521,15 @@ describe('simple player', () => {
     });
 
     it('should enable previous if available', async done => {
-      await driver.get('file:' + playerPath);
+      await driver.get(`file:${playerPath}`);
 
       await send({
-        type: "vopStartCommand",
-        unitDefinition: "<h1>Virtual Unit</h1>",
-        sessionId: "1",
+        type: 'vopStartCommand',
+        unitDefinition: '<h1>Virtual Unit</h1>',
+        sessionId: '1',
         playerConfig: {
           unitNumber: 4,
-          unitCount: 4,
+          unitCount: 4
         }
       });
 
@@ -549,12 +548,12 @@ describe('simple player', () => {
 
     it('should enable both if available', async done => {
       await send({
-        type: "vopStartCommand",
-        unitDefinition: "<h1>Virtual Unit</h1>",
-        sessionId: "1",
+        type: 'vopStartCommand',
+        unitDefinition: '<h1>Virtual Unit</h1>',
+        sessionId: '1',
         playerConfig: {
           unitNumber: 2,
-          unitCount: 4,
+          unitCount: 4
         }
       });
 
@@ -574,11 +573,11 @@ describe('simple player', () => {
 
   it('should support `stateReportPolicy` = `on-demand`', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<input id='the-item' name='the-item' type='text'/>",
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        stateReportPolicy: "on-demand"
+        stateReportPolicy: 'on-demand'
       }
     });
 
@@ -592,17 +591,17 @@ describe('simple player', () => {
     expect(msg).toBeNull();
 
     await send({
-      type: "vopGetStateRequest",
-      sessionId: "1"
+      type: 'vopGetStateRequest',
+      sessionId: '1'
     });
 
     msg = await MessageRecorder.getLastMessage(driver);
 
-    if (typeof msg !== "object" || msg == null) {
+    if (typeof msg !== 'object' || msg == null) {
       fail('message must be an object');
     }
 
-    msg['timeStamp'] = NaN;
+    msg.timeStamp = NaN;
 
     expect(msg).toEqual({
       sessionId: '1',
@@ -621,7 +620,7 @@ describe('simple player', () => {
       },
       playerState: {
         currentPage: 0,
-        validPages: {0: ''}
+        validPages: { 0: '' }
       },
       unitStateDataTyp: 'verona-simple-player-1.0.0'
     });
@@ -636,11 +635,11 @@ describe('simple player', () => {
     });
 
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<input id='the-item' name='the-item' type='text'/>",
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        stateReportPolicy: "eager"
+        stateReportPolicy: 'eager'
       }
     });
 
@@ -650,9 +649,8 @@ describe('simple player', () => {
 
     await input.sendKeys('something');
 
-    let msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1500);
-
-    msg['timeStamp'] = NaN;
+    const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1500);
+    msg.timeStamp = NaN;
 
     expect(msg).toEqual({
       sessionId: '1',
@@ -671,7 +669,7 @@ describe('simple player', () => {
       },
       playerState: {
         currentPage: 0,
-        validPages: {0: ''}
+        validPages: { 0: '' }
       },
       unitStateDataTyp: 'verona-simple-player-1.0.0'
     });
@@ -681,9 +679,9 @@ describe('simple player', () => {
 
   it('should send `vopWindowFocusChangedNotification` on focus change', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<iframe id='sub-frame'></iframe><div id='outside'>outside</div>",
-      sessionId: "1"
+      sessionId: '1'
     });
 
     await MessageRecorder.recordMessages(driver);
@@ -707,11 +705,11 @@ describe('simple player', () => {
 
   it('should send the correct responseProgress', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<input type='number' name='first' /><input type='number' name='second' />",
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        stateReportPolicy: "on-demand"
+        stateReportPolicy: 'on-demand'
       }
     });
 
@@ -720,20 +718,23 @@ describe('simple player', () => {
 
     await MessageRecorder.recordMessages(driver);
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress).toEqual('none');
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress)
+      .toEqual('none');
 
     await first.sendKeys('not a number');
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress).toEqual('some');
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress)
+      .toEqual('some');
 
     await second.sendKeys('1');
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress).toEqual('complete');
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress)
+      .toEqual('complete');
 
     await first.clear();
     await first.sendKeys('1');
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     expect((msg).unitState.responseProgress).toEqual('complete-and-valid');
@@ -743,28 +744,27 @@ describe('simple player', () => {
 
   it('should send the correct responseProgress on programmatically changed fields', async done => {
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: "<input type='text' name='field' />",
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        stateReportPolicy: "on-demand"
+        stateReportPolicy: 'on-demand'
       }
     });
 
     await MessageRecorder.recordMessages(driver);
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
     expect(message1.unitState.responseProgress).toEqual('none');
 
     await driver.executeScript(() => {
-      document.querySelector('[name="field"]').value = "programmatically changed value!";
+      document.querySelector('[name="field"]').value = 'programmatically changed value!';
     });
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
     expect(message2.unitState.responseProgress).toEqual('complete-and-valid');
-
 
     done();
   });
@@ -776,12 +776,13 @@ describe('simple player', () => {
     });
 
     await send({
-      type: "vopStartCommand",
-      unitDefinition: "<fieldset><legend id='p1'>Page 1</legend></fieldset><fieldset><legend id='p2'>Page 2</legend></fieldset>",
-      sessionId: "1",
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "separate",
-        stateReportPolicy: "on-demand"
+        pagingMode: 'separate',
+        stateReportPolicy: 'on-demand'
       }
     });
 
@@ -789,13 +790,13 @@ describe('simple player', () => {
 
     const nextPage = await driver.findElement(By.css('#next-page'));
 
-    await send({type: "vopGetStateRequest", sessionId: "1"})
-    const message1 = await MessageRecorder.getLastMessage(driver, "vopGetStateResponse");
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     await nextPage.click();
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    const message2 = await MessageRecorder.getLastMessage(driver, "vopGetStateResponse");
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
     expect(message2.unitState.presentationProgress).toEqual('complete');
@@ -810,7 +811,7 @@ describe('simple player', () => {
     });
 
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
         <fieldset>
             <legend id='p1'>Page 1</legend>
@@ -819,19 +820,19 @@ describe('simple player', () => {
         <fieldset><legend id='p2'>Page 2</legend></fieldset>
         <script>
             let specialPresentationProgress = 0;
-            const increaseSpecialPresentationProgress = () => \{
+            const increaseSpecialPresentationProgress = () => {
                 specialPresentationProgress++;
                 document.getElementById('special').innerText = specialPresentationProgress.toString(10);
-            \}
-            Unit.presentationProgressFactors.special = \{
+            };
+            Unit.presentationProgressFactors.special = {
                 some: () => specialPresentationProgress < 2 && specialPresentationProgress > 0,
                 complete: () => specialPresentationProgress > 2
-            \}
+            };
         </script>`,
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "separate",
-        stateReportPolicy: "on-demand"
+        pagingMode: 'separate',
+        stateReportPolicy: 'on-demand'
       }
     });
 
@@ -841,28 +842,28 @@ describe('simple player', () => {
     // const prevPage = await driver.findElement(By.css('#previous-page'));
     const special = await driver.findElement(By.css('#special'));
 
-    await send({type: "vopGetStateRequest", sessionId: "1"})
-    const message1 = await MessageRecorder.getLastMessage(driver, "vopGetStateResponse");
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     await special.click(); // sppb = 1
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    const message2 = await MessageRecorder.getLastMessage(driver, "vopGetStateResponse");
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     await special.click(); // sppb = 2
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    const message3 = await MessageRecorder.getLastMessage(driver, "vopGetStateResponse");
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    const message3 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     await special.click(); // sppb = 3
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    const message4 = await MessageRecorder.getLastMessage(driver, "vopGetStateResponse");
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    const message4 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     await nextPage.click();
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
-    const message5 = await MessageRecorder.getLastMessage(driver, "vopGetStateResponse");
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    const message5 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
     expect(message2.unitState.presentationProgress).toEqual('some');
@@ -875,21 +876,21 @@ describe('simple player', () => {
 
   it('should send the correct `presentationProgress` when there are no pages', async done => {
     const longText = () => Array.from(
-      {length: 2000},
-      (_, i) => Array.from({length: 3 + i % 10}, () => 'x').join("")
-    ).join(" ");
+      { length: 2000 },
+      (_, i) => Array.from({ length: 3 + (i % 10) }, () => 'x').join('')
+    ).join(' ');
 
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
           Long Story, Chapter one ${longText()}
           <hr id="the-middle">
           Long Story, Chapter two ${longText()}
       `,
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "separate",
-        stateReportPolicy: "on-demand"
+        pagingMode: 'separate',
+        stateReportPolicy: 'on-demand'
       }
     });
 
@@ -898,15 +899,15 @@ describe('simple player', () => {
 
     await MessageRecorder.recordMessages(driver);
 
-    await driver.executeScript(() => arguments[0].scrollIntoView(), theMiddle);
+    await driver.executeScript(e => e.scrollIntoView(), theMiddle);
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
-    await driver.executeScript(() => arguments[0].scrollTo(0, arguments[0].scrollHeight), unit);
+    await driver.executeScript(e => e.scrollTo(0, e.scrollHeight), unit);
     await driver.sleep(50); // give player time to detect changed presentationProgress
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
@@ -916,48 +917,51 @@ describe('simple player', () => {
 
   it('should send the correct `presentationProgress` and `currentPage` in scroll-mode', async done => {
     await loadPlayer({
-      debounceStateMessages: 25, // don't set debounce time completely to zero, since page detection relies on it
+      debounceStateMessages: 25 // don't set debounce time completely to zero, since page detection relies on it
     });
 
     const longText = length => Array.from(
-      {length: length},
-      (_, i) => Array.from({length: 3 + i % 10}, () => 'x').join("")
-    ).join(" ");
+      { length },
+      (_, i) => Array.from({ length: 3 + (i % 10) }, () => 'x').join('')
+    ).join(' ');
 
     await MessageRecorder.recordMessages(driver);
 
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
         <fieldset>${longText(2000)}</fieldset>
         <fieldset>${longText(1000)}</fieldset>
         <fieldset>${longText(25)}</fieldset>
         <fieldset>${longText(2000)}</fieldset>`,
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "concat-scroll",
+        pagingMode: 'concat-scroll'
       }
     });
 
-    const messages = [await MessageRecorder.getLastMessage(driver,"vopStateChangedNotification")];
+    const messages = [await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification')];
 
     const unit = await driver.findElement(By.css('#unit'));
 
     const scrollPoints = [80, 30, 90, 55, 70, 50];
 
-    for (let point in scrollPoints) {
+    // eslint-disable-next-line guard-for-in,no-restricted-syntax
+    for (const point in scrollPoints) {
+      // eslint-disable-next-line no-await-in-loop
       await driver.executeScript(
-        () => arguments[0].scrollTo(0, arguments[1] * unit.scrollHeight / 100),
+        (a, b) => a.scrollTo(0, b * (unit.scrollHeight / 100)),
         unit,
         scrollPoints[point]
       );
-      messages.push(await MessageRecorder.getLastMessage(driver,"vopStateChangedNotification"));
+      // eslint-disable-next-line no-await-in-loop
+      messages.push(await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification'));
     }
 
-    const pageAndProgress = messages.map(niceMsg => {return [
+    const pageAndProgress = messages.map(niceMsg => [
       (niceMsg.playerState) ? niceMsg.playerState.currentPage : '-',
       (niceMsg.unitState) ? niceMsg.unitState.presentationProgress : '-'
-    ]});
+    ]);
 
     expect(pageAndProgress).toEqual([
       ['1', 'some'],
@@ -979,20 +983,20 @@ describe('simple player', () => {
     });
 
     const longText = () => Array.from(
-      {length: 2000},
-      (_, i) => Array.from({length: 3 + i % 10}, () => 'x').join("")
-    ).join(" ");
+      { length: 2000 },
+      (_, i) => Array.from({ length: 3 + (i % 10) }, () => 'x').join('')
+    ).join(' ');
 
     await send({
-      type: "vopStartCommand",
+      type: 'vopStartCommand',
       unitDefinition: `
         <fieldset id="p1">${longText()}</fieldset>
         <fieldset id="p2">${longText()}</fieldset>
         <fieldset id="p3">${longText()}</fieldset>`,
-      sessionId: "1",
+      sessionId: '1',
       playerConfig: {
-        pagingMode: "concat-scroll-snap",
-        stateReportPolicy: "on-demand"
+        pagingMode: 'concat-scroll-snap',
+        stateReportPolicy: 'on-demand'
       }
     });
 
@@ -1000,11 +1004,12 @@ describe('simple player', () => {
 
     await MessageRecorder.recordMessages(driver);
 
+    // eslint-disable-next-line no-plusplus
     for (let i = 0; i < 20; i++) {
       unit.sendKeys(Key.PAGE_DOWN); // scrollTo in combination with snap-scroll skips foot-anchor-points
     }
 
-    await send({type: "vopGetStateRequest", sessionId: "1"});
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
@@ -1017,17 +1022,17 @@ describe('simple player', () => {
   describe('logger', () => {
     it('should log everything when in debug mode', async done => {
       await send({
-        type: "vopStartCommand",
+        type: 'vopStartCommand',
         unitDefinition: `
           <button id="rich" onclick="Log.rich('rich'); return false">R</button>
           <button id="lean" onclick="Log.lean('lean'); return false">L</button>
           <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
-        sessionId: "1",
+        sessionId: '1',
         playerConfig: {
-          logPolicy: "debug",
-          stateReportPolicy: "on-demand"
+          logPolicy: 'debug',
+          stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: "verona-simple-player-1.0.0"
+        unitDefinitionType: 'verona-simple-player-1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1040,7 +1045,7 @@ describe('simple player', () => {
       await leanBtn.click();
       await debugBtn.click();
 
-      await send({type: "vopGetStateRequest", sessionId: "1"});
+      await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
       const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
@@ -1052,17 +1057,17 @@ describe('simple player', () => {
 
     it('should log rich & lean when in rich mode', async done => {
       await send({
-        type: "vopStartCommand",
+        type: 'vopStartCommand',
         unitDefinition: `
           <button id="rich" onclick="Log.rich('rich'); return false">R</button>
           <button id="lean" onclick="Log.lean('lean'); return false">L</button>
           <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
-        sessionId: "1",
+        sessionId: '1',
         playerConfig: {
-          logPolicy: "rich",
-          stateReportPolicy: "on-demand"
+          logPolicy: 'rich',
+          stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: "verona-simple-player-1.0.0"
+        unitDefinitionType: 'verona-simple-player-1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1075,7 +1080,7 @@ describe('simple player', () => {
       await leanBtn.click();
       await debugBtn.click();
 
-      await send({type: "vopGetStateRequest", sessionId: "1"});
+      await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
       const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
@@ -1087,17 +1092,17 @@ describe('simple player', () => {
 
     it('should log only lean when in lean mode', async done => {
       await send({
-        type: "vopStartCommand",
+        type: 'vopStartCommand',
         unitDefinition: `
           <button id="rich" onclick="Log.rich('rich'); return false">R</button>
           <button id="lean" onclick="Log.lean('lean'); return false">L</button>
           <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
-        sessionId: "1",
+        sessionId: '1',
         playerConfig: {
-          logPolicy: "lean",
-          stateReportPolicy: "on-demand"
+          logPolicy: 'lean',
+          stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: "verona-simple-player-1.0.0"
+        unitDefinitionType: 'verona-simple-player-1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1110,7 +1115,7 @@ describe('simple player', () => {
       await leanBtn.click();
       await debugBtn.click();
 
-      await send({type: "vopGetStateRequest", sessionId: "1"});
+      await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
       const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
@@ -1121,17 +1126,17 @@ describe('simple player', () => {
 
     it('should not log only lean when logging is disabled', async done => {
       await send({
-        type: "vopStartCommand",
+        type: 'vopStartCommand',
         unitDefinition: `
           <button id="rich" onclick="Log.rich('rich'); return false">R</button>
           <button id="lean" onclick="Log.lean('lean'); return false">L</button>
           <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
-        sessionId: "1",
+        sessionId: '1',
         playerConfig: {
-          logPolicy: "disabled",
-          stateReportPolicy: "on-demand"
+          logPolicy: 'disabled',
+          stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: "verona-simple-player-1.0.0"
+        unitDefinitionType: 'verona-simple-player-1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1144,7 +1149,7 @@ describe('simple player', () => {
       await leanBtn.click();
       await debugBtn.click();
 
-      await send({type: "vopGetStateRequest", sessionId: "1"});
+      await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
       const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
@@ -1153,24 +1158,25 @@ describe('simple player', () => {
     });
   });
 
-
   describe('Player (regression tests)', () => {
     it('should prevent implicit form submission', async done => {
       // see: https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#default-button
       await send({
-        type: "vopStartCommand",
+        type: 'vopStartCommand',
         unitDefinition: `
           <form>
             <input id='input' type="text">
-            <button onclick="document.querySelector('form').innerHTML='button-clicked-by-implicit-submission'">B</button>
+            <button onclick="document.querySelector('form').innerHTML='button-clicked-by-implicit-submission'">
+              B
+            </button>
           </form>`,
-        sessionId: "1",
+        sessionId: '1'
       });
 
       const form = await driver.findElement(By.css('form'));
       const input = await driver.findElement(By.id('input'));
 
-      await input.sendKeys("xxx", Key.ENTER);
+      await input.sendKeys('xxx', Key.ENTER);
 
       expect(await form.getText()).not.toEqual('button-clicked-by-implicit-submission');
       done();

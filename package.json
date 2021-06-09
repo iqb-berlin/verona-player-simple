@@ -8,7 +8,8 @@
     "geckodriver": "^1.20.0",
     "jasmine": "^3.6.3",
     "selenium-webdriver": "^4.0.0-alpha.7",
-    "iqb-dev-components": "1.3.9"
+    "iqb-dev-components": "1.3.9",
+    "@iqb/eslint-config": "0.0.12"
   },
   "scripts": {
     "test": "clear && npx jasmine --config=test/jasmine.json"
@@ -16,6 +17,9 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/iqb-berlin/verona-player-html.git"
+  },
+  "eslintConfig": {
+    "extends": "@iqb/eslint-config/javascript"
   },
   "author": "Philipp Franck",
   "license": "MIT",
