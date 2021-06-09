@@ -740,6 +740,13 @@
             return infoBoxElem;
         }
 
+        preventFromImplicitSubmission = event => {
+            const keyCode = event.charCode || event.keyCode || 0;
+            if (keyCode === 13) {
+                event.preventDefault();
+            }
+        }
+
         addEventListener = (eventName, selector, listener) => {
             document.querySelector('body').addEventListener(eventName, event => {
                 if (event.target.matches(selector)) {
@@ -770,6 +777,8 @@
     window.addEventListener('focus', () => {
         Message.send.vopWindowFocusChangedNotification(document.hasFocus());
     });
+
+    PlayerUI.addEventListener('keypress', PlayerUI.itemElements, PlayerUI.preventFromImplicitSubmission);
 
     PlayerUI.addEventListener('change', PlayerUI.itemElements, Message.send.vopStateChangedNotification);
     PlayerUI.addEventListener('programmaticallyChange', PlayerUI.itemElements, event => {
