@@ -374,12 +374,17 @@
        * the element.
        * See: https://github.com/verona-interfaces/player/issues/25
        */
-      const elements = [...document.querySelectorAll(PlayerUI.itemElements)];
-      const touchedCount = elements.filter(formElem => formElem.dataset.touched).length;
-      const validCount = elements.filter(formElem => !isDefined(formElem.validity) || formElem.validity.valid).length;
-      if (elements.length === touchedCount && touchedCount === validCount) {
+      const elementsByName = {};
+      [...document.querySelectorAll(PlayerUI.itemElements)].forEach(item => {
+        elementsByName[item.getName()] = item;
+      });
+
+      const touchedCount = Object.values(elementsByName).filter(formElem => formElem.dataset.touched).length;
+      const validCount = Object.values(elementsByName).filter(formElem => !isDefined(formElem.validity) || formElem.validity.valid).length;
+      // TODO reduce elements of same name
+      if (Object.values(elementsByName).length === touchedCount && touchedCount === validCount) {
         return 'complete-and-valid'
-      } else if (elements.length === touchedCount) {
+      } else if (Object.values(elementsByName).length === touchedCount) {
         return 'complete'
       } else if (touchedCount) {
         return 'some'

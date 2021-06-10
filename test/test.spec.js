@@ -1168,7 +1168,7 @@ describe('simple player', () => {
       done();
     });
 
-    xit('mark a radio-group as touched when on elem of the group is touched', async done => {
+    fit('mark a radio-group as touched when on elem of the group is touched', async done => {
       await loadPlayer({
         debounceStateMessages: 0,
         debounceKeyboardEvents: 0
