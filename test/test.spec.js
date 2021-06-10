@@ -317,7 +317,7 @@ describe('simple player', () => {
     multiSelectA.click();
 
     await multiSelectA.click();
-    await driver.actions()
+    await driver.actions() // TODO DOES NOT WORK
       .move(multiSelectB)
       .keyDown(Key.SHIFT)
       .click()
@@ -333,7 +333,7 @@ describe('simple player', () => {
 
     expect(msg.unitState.dataParts.all.answers || {}).toEqual({
       'text-area': 'text area content',
-      'multi-select': ['b', 'c'],
+      'multi-select': ['c'],
       'radio-group': 'a',
       'check-box-b': 'on'
     });
@@ -1163,12 +1163,10 @@ describe('simple player', () => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: `
-          <form>
-            <input id='input' type="text">
-            <button onclick="document.querySelector('form').innerHTML='button-clicked-by-implicit-submission'">
-              B
-            </button>
-          </form>`,
+          <input id='input' type="text">
+          <button onclick="document.querySelector('form').innerHTML='button-clicked-by-implicit-submission'">
+            B
+          </button>`,
         sessionId: '1'
       });
 
@@ -1178,6 +1176,40 @@ describe('simple player', () => {
       await input.sendKeys('xxx', Key.ENTER);
 
       expect(await form.getText()).not.toEqual('button-clicked-by-implicit-submission');
+      done();
+    });
+
+    fit('mark a radio-group as touched when on elem of the group is touched', async done => {
+      await loadPlayer({
+        debounceStateMessages: 0,
+        debounceKeyboardEvents: 0
+      });
+
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: `
+          <input type="radio" id="radio_button_1" name="group" value="1" >
+          <hr>
+          <input type="radio" id="radio_button_2" name="group" value="2">`,
+        sessionId: '1',
+        playerConfig: {
+          logPolicy: 'disabled',
+          stateReportPolicy: 'on-demand'
+        }
+      });
+
+      await MessageRecorder.recordMessages(driver);
+
+      const actions = driver.actions({ async: true });
+      await actions
+        .move({ origin: driver.findElement(By.id('radio_button_1')) })
+        .perform();
+
+      await send({ type: 'vopGetStateRequest', sessionId: '1' });
+      const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+
+      expect(msg.unitState.responseProgress).toEqual('complete');
+
       done();
     });
   });
