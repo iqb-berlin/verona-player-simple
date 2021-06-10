@@ -1,7 +1,6 @@
+/* eslint-disable no-undef */ // TODO find a solution to import it, describe etc. in a way eslint can see
 require('selenium-webdriver');
-const {
-  describe, it, jasmine, beforeAll, beforeEach, afterAll, expect, fail
-} = require('jasmine');
+const jasmine = require('jasmine');
 const { Options } = require('selenium-webdriver/firefox');
 const { Builder, By, Key } = require('selenium-webdriver');
 const { MessageRecorder } = require('iqb-dev-components');
