@@ -484,14 +484,13 @@ describe('simple player', () => {
   });
 
   describe('unit navigation', () => {
-    it('should enable next if available', async done => {
+    it('should enable the buttons given in enabledNavigationTargets', async done => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: '<h1>Virtual Unit</h1>',
         sessionId: '1',
         playerConfig: {
-          unitNumber: 1,
-          unitCount: 4
+          enabledNavigationTargets: ['#next', '#prev']
         }
       });
 
@@ -501,59 +500,9 @@ describe('simple player', () => {
       const firstUnit = await driver.findElement(By.css('#first-unit'));
 
       expect(await nextUnit.isEnabled()).toBeTrue();
-      expect(await prevUnit.isEnabled()).toBeFalse();
-      expect(await lastUnit.isEnabled()).toBeTrue();
-      expect(await firstUnit.isEnabled()).toBeFalse();
-
-      done();
-    });
-
-    it('should enable previous if available', async done => {
-      await driver.get(`file:${playerPath}`);
-
-      await send({
-        type: 'vopStartCommand',
-        unitDefinition: '<h1>Virtual Unit</h1>',
-        sessionId: '1',
-        playerConfig: {
-          unitNumber: 4,
-          unitCount: 4
-        }
-      });
-
-      const nextUnit = await driver.findElement(By.css('#next-unit'));
-      const prevUnit = await driver.findElement(By.css('#prev-unit'));
-      const lastUnit = await driver.findElement(By.css('#last-unit'));
-      const firstUnit = await driver.findElement(By.css('#first-unit'));
-
-      expect(await nextUnit.isEnabled()).toBeFalse();
       expect(await prevUnit.isEnabled()).toBeTrue();
       expect(await lastUnit.isEnabled()).toBeFalse();
-      expect(await firstUnit.isEnabled()).toBeTrue();
-
-      done();
-    });
-
-    it('should enable both if available', async done => {
-      await send({
-        type: 'vopStartCommand',
-        unitDefinition: '<h1>Virtual Unit</h1>',
-        sessionId: '1',
-        playerConfig: {
-          unitNumber: 2,
-          unitCount: 4
-        }
-      });
-
-      const nextUnit = await driver.findElement(By.css('#next-unit'));
-      const prevUnit = await driver.findElement(By.css('#prev-unit'));
-      const lastUnit = await driver.findElement(By.css('#last-unit'));
-      const firstUnit = await driver.findElement(By.css('#first-unit'));
-
-      expect(await nextUnit.isEnabled()).toBeTrue();
-      expect(await prevUnit.isEnabled()).toBeTrue();
-      expect(await lastUnit.isEnabled()).toBeTrue();
-      expect(await firstUnit.isEnabled()).toBeTrue();
+      expect(await firstUnit.isEnabled()).toBeFalse();
 
       done();
     });
@@ -1146,7 +1095,7 @@ describe('simple player', () => {
     });
   });
 
-  describe('Player (regression tests)', () => {
+  describe('(regression tests)', () => {
     it('should prevent implicit form submission', async done => {
       // see: https://html.spec.whatwg.org/multipage/form-control-infrastructure.html#default-button
       await send({

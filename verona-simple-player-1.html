@@ -161,7 +161,7 @@
     unitNumber: 0,
     unitTitle: 'Unit',
     unitId: 'unit',
-    unitCount: Infinity,
+    enabledNavigationTargets: [], // can contain  "next" "previous" "first" "last" "end"
     stateReportPolicy: "eager", // none" | "eager" | "on-demand"
     pagingMode: "separate", // "separate" | "concat-scroll" | "concat-scroll-snap"
   }
@@ -738,10 +738,11 @@
     }
 
     toggleUnitNavButtons = () => {
-      this.toggleButton('first-unit', playerConfig.unitNumber > 1);
-      this.toggleButton('prev-unit', playerConfig.unitNumber > 1);
-      this.toggleButton('next-unit', playerConfig.unitNumber < playerConfig.unitCount);
-      this.toggleButton('last-unit', playerConfig.unitNumber < playerConfig.unitCount);
+      console.log(playerConfig);
+      this.toggleButton('first-unit', playerConfig.enabledNavigationTargets.indexOf('#first') > -1);
+      this.toggleButton('prev-unit', playerConfig.enabledNavigationTargets.indexOf('#prev') > -1);
+      this.toggleButton('next-unit', playerConfig.enabledNavigationTargets.indexOf('#next') > -1);
+      this.toggleButton('last-unit', playerConfig.enabledNavigationTargets.indexOf('#last') > -1);
     }
 
     markElementTouched = elem => {
