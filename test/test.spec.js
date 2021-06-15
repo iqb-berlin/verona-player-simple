@@ -1168,7 +1168,7 @@ describe('simple player', () => {
       done();
     });
 
-    fit('mark a radio-group as touched when on elem of the group is touched', async done => {
+    it('mark a radio-group as touched when one element of the group is touched', async done => {
       await loadPlayer({
         debounceStateMessages: 0,
         debounceKeyboardEvents: 0
@@ -1189,15 +1189,20 @@ describe('simple player', () => {
 
       await MessageRecorder.recordMessages(driver);
 
+      await send({ type: 'vopGetStateRequest', sessionId: '1' });
+      const msg1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+
+      expect(msg1.unitState.responseProgress).toEqual('none');
+
       const actions = driver.actions({ async: true });
       await actions
         .move({ origin: driver.findElement(By.id('radio_button_1')) })
         .perform();
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
-      const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+      const msg2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
 
-      expect(msg.unitState.responseProgress).toEqual('complete');
+      expect(msg2.unitState.responseProgress).toEqual('complete-and-valid');
 
       done();
     });
