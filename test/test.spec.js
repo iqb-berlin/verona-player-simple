@@ -260,7 +260,7 @@ describe('simple player', () => {
       sessionId: '1'
     });
 
-    const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse', 1000);
+    const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1000);
 
     expect(msg.unitState.dataParts.all.answers || {}).toEqual({
       '': 'c',
@@ -354,12 +354,12 @@ describe('simple player', () => {
     await MessageRecorder.recordMessages(driver);
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     await specialControl.click();
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     expect(message1.unitState.dataParts.all).toEqual({
       answers: {},
@@ -594,7 +594,7 @@ describe('simple player', () => {
     expect(msg).toEqual({
       sessionId: '1',
       timeStamp: NaN,
-      type: 'vopGetStateResponse',
+      type: 'vopStateChangedNotification',
       unitState: {
         dataParts: {
           all: {
@@ -707,23 +707,23 @@ describe('simple player', () => {
     await MessageRecorder.recordMessages(driver);
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress)
+    expect((await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification')).unitState.responseProgress)
       .toEqual('none');
 
     await first.sendKeys('not a number');
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress)
+    expect((await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification')).unitState.responseProgress)
       .toEqual('some');
 
     await second.sendKeys('1');
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    expect((await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse')).unitState.responseProgress)
+    expect((await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification')).unitState.responseProgress)
       .toEqual('complete');
 
     await first.clear();
     await first.sendKeys('1');
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     expect((msg).unitState.responseProgress).toEqual('complete-and-valid');
 
@@ -743,7 +743,7 @@ describe('simple player', () => {
     await MessageRecorder.recordMessages(driver);
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
     expect(message1.unitState.responseProgress).toEqual('none');
 
     await driver.executeScript(() => {
@@ -751,7 +751,7 @@ describe('simple player', () => {
     });
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
     expect(message2.unitState.responseProgress).toEqual('complete-and-valid');
 
     done();
@@ -779,12 +779,12 @@ describe('simple player', () => {
     const nextPage = await driver.findElement(By.css('#next-page'));
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     await nextPage.click();
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
     expect(message2.unitState.presentationProgress).toEqual('complete');
@@ -831,27 +831,27 @@ describe('simple player', () => {
     const special = await driver.findElement(By.css('#special'));
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     await special.click(); // sppb = 1
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     await special.click(); // sppb = 2
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message3 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message3 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     await special.click(); // sppb = 3
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message4 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message4 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     await nextPage.click();
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message5 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message5 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
     expect(message2.unitState.presentationProgress).toEqual('some');
@@ -890,13 +890,13 @@ describe('simple player', () => {
     await driver.executeScript(e => e.scrollIntoView(), theMiddle);
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     await driver.executeScript(e => e.scrollTo(0, e.scrollHeight), unit);
     await driver.sleep(50); // give player time to detect changed presentationProgress
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
     expect(message2.unitState.presentationProgress).toEqual('complete');
@@ -998,7 +998,7 @@ describe('simple player', () => {
     }
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    const message1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
     expect(message1.unitState.presentationProgress).toEqual('some');
 
@@ -1035,7 +1035,7 @@ describe('simple player', () => {
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
-      const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+      const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
       expect(msg.log[0].key).toEqual('rich');
       expect(msg.log[1].key).toEqual('lean');
@@ -1070,7 +1070,7 @@ describe('simple player', () => {
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
-      const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+      const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
       expect(msg.log[0].key).toEqual('rich');
       expect(msg.log[1].key).toEqual('lean');
@@ -1105,7 +1105,7 @@ describe('simple player', () => {
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
-      const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+      const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
       expect(msg.log[0].key).toEqual('lean');
       expect(msg.log.length).toEqual(1);
@@ -1139,7 +1139,7 @@ describe('simple player', () => {
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
 
-      const msg = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+      const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
       expect(msg.log).toBeUndefined();
       done();
@@ -1190,7 +1190,7 @@ describe('simple player', () => {
       await MessageRecorder.recordMessages(driver);
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
-      const msg1 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+      const msg1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
       expect(msg1.unitState.responseProgress).toEqual('none');
 
@@ -1200,7 +1200,7 @@ describe('simple player', () => {
         .perform();
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
-      const msg2 = await MessageRecorder.getLastMessage(driver, 'vopGetStateResponse');
+      const msg2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
       expect(msg2.unitState.responseProgress).toEqual('complete-and-valid');
 

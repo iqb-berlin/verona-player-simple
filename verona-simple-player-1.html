@@ -204,9 +204,11 @@
         unitState: null
       };
 
-      vopStateChangedNotification = () => {
+      vopStateChangedNotification = (isRequested = false) => {
         if (playerConfig.stateReportPolicy === "eager") {
           this._sendVopStateChangedNotification();
+        } else if (isRequested === true) {
+          this._send(this._createStateMsg(true));
         }
       };
 
@@ -222,8 +224,6 @@
           document.dispatchEvent(new CustomEvent('queued:vopStateChangedNotification', {}))
         }
       );
-
-      vopGetStateResponse = () => this._send(this._createStateMsg(true));
 
       vopReadyNotification = () => {
         this._send(Object.assign(
@@ -253,24 +253,26 @@
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
       }
 
-      _createStateMsg = (isRequested = false) => {
+      _createStateMsg = (complete = false) => {
         const message = {
-          type: isRequested ? 'vopGetStateResponse' : 'vopStateChangedNotification',
+          type: 'vopStateChangedNotification',
           sessionId: sessionId,
           timeStamp: Date.now(),
           unitStateDataTyp: 'verona-simple-player-1.0.0',
         }
 
         const playerState = this._getPlayerState();
-        const unitState = this._getUnitState();
-        if (isRequested || (JSON.stringify(playerState) !== JSON.stringify(this._lastStates.playerState))) {
+        if (complete || (JSON.stringify(playerState) !== JSON.stringify(this._lastStates.playerState))) {
           message.playerState = playerState;
           this._lastStates.playerState = playerState;
         }
-        if (isRequested || (JSON.stringify(unitState) !== JSON.stringify(this._lastStates.unitState))) {
+
+        const unitState = this._getUnitState();
+        if (complete || (JSON.stringify(unitState) !== JSON.stringify(this._lastStates.unitState))) {
           message.unitState = unitState;
           this._lastStates.unitState = unitState;
         }
+
         if (Log.hasNew()) {
           message.log = Log.next();
         }
@@ -784,7 +786,7 @@
     if (event.detail.stop) {
       PlayerUI.togglePlayerRunning(false);
     }
-    Message.send.vopGetStateResponse();
+    Message.send.vopStateChangedNotification(true);
   }); // not implemented in IQB-testcenter 7.3.1
   document.addEventListener("vopStopCommand", () => PlayerUI.togglePlayerRunning(false)); // not implemented in IQB-testcenter 7.3.1
   document.addEventListener("vopContinueCommand", () => PlayerUI.togglePlayerRunning(true)); // not implemented in IQB-testcenter 7.3.1
