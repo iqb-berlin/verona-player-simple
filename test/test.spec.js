@@ -604,7 +604,7 @@ describe('simple player', () => {
           }
         },
         presentationProgress: 'complete',
-        responseProgress: 'complete-and-valid'
+        responseProgress: 'complete'
       },
       playerState: {
         currentPage: 0,
@@ -653,7 +653,7 @@ describe('simple player', () => {
           }
         },
         presentationProgress: 'complete',
-        responseProgress: 'complete-and-valid'
+        responseProgress: 'complete'
       },
       playerState: {
         currentPage: 0,
@@ -718,14 +718,14 @@ describe('simple player', () => {
     await second.sendKeys('1');
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
     expect((await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification')).unitState.responseProgress)
-      .toEqual('complete');
+      .toEqual('some');
 
     await first.clear();
     await first.sendKeys('1');
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
-    expect((msg).unitState.responseProgress).toEqual('complete-and-valid');
+    expect((msg).unitState.responseProgress).toEqual('complete');
 
     done();
   });
@@ -752,7 +752,7 @@ describe('simple player', () => {
 
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
-    expect(message2.unitState.responseProgress).toEqual('complete-and-valid');
+    expect(message2.unitState.responseProgress).toEqual('complete');
 
     done();
   });
@@ -1202,7 +1202,7 @@ describe('simple player', () => {
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
       const msg2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
-      expect(msg2.unitState.responseProgress).toEqual('complete-and-valid');
+      expect(msg2.unitState.responseProgress).toEqual('complete');
 
       done();
     });

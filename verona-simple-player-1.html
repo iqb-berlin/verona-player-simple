@@ -399,8 +399,6 @@
         .reduce((agg, i) => agg + (i.touched ? i.count : 0), 0);
 
       if (allCount === touchedCount && touchedCount === validCount) {
-        return 'complete-and-valid'
-      } else if (allCount === touchedCount) {
         return 'complete'
       } else if (touchedCount) {
         return 'some'
