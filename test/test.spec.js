@@ -706,6 +706,62 @@ describe('simple player', () => {
     done();
   });
 
+  fit('should validate the form after vopNavigationDeniedNotification with reason responsesIncomplete', async done => {
+
+    /**
+     * stand
+     * - durch die HTML Standard element wird immer gleich validiert, also wird vopNavigationDeniedNotification
+     * eigentlich nicht benötigt -
+     * - dennoch wollen wir das im player implementieren, der vollständigkeit halber
+     * - oder gibts noch mal ne gesamte form validation?
+     * - kann man den Zustand - invalide aber nicht markiert überhaupt erreichen in dem player?
+     * - vllt mit einem eigenen element? https://web.dev/more-capable-form-controls/
+     * ansonsten einfach schlichtes warning anzeigen? oder komplexes, das zu den feldern springen kann etc.?
+     *
+     */
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition: `
+        <label><input name="num" type="number" id="numberField">Number Field</label>
+        <input type="text" name="req" required id="requiredField"><label for="requiredField">Required Field</label>`,
+      sessionId: '1',
+      playerConfig: {
+        enabledNavigationTargets: ['#next', '#prev'],
+        stateReportPolicy: 'on-demand'
+      }
+    });
+
+    const numberField = await driver.findElement(By.id('numberField'));
+
+    numberField.sendKeys('Not a number!');
+
+    await MessageRecorder.recordMessages(driver);
+
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    // const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
+    // expect(message1.unitState.dataParts.all.answers)
+    //   .withContext('Answers should be empty, since the value is invalid.')
+    //   .toEqual({});
+
+    const invalidFieldsBeforeNotification = await driver.findElements(By.css('input:invalid'));
+
+    // The field would't reveal it's invalidity before losing focus by default.
+    // expect(invalidFieldsBeforeNotification.length)
+    //   .withContext(':valid-pseudo-class has not been applied yet')
+    //   .toEqual(0);
+
+    // Now we assume a next button on the host was clicked instead and it denied the navigation since answers was empty.
+    await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'responsesIncomplete' });
+    //
+    // const invalidFieldsAfterNotification = await driver.findElements(By.css('input:invalid'));
+    //
+    // expect(invalidFieldsAfterNotification.length)
+    //   .withContext('Validation should be triggered by vopNavigationDeniedNotification.')
+    //   .toBeGreaterThan(0);
+
+    done();
+  });
+
   it('should send the correct `presentationProgress` in paginated mode', async done => {
     await loadPlayer({
       debounceStateMessages: 0,
