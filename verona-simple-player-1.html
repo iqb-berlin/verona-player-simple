@@ -98,35 +98,58 @@
       display: none
     }
 
-    vsp-pointer {
-      height: 10px;
-      width: 10px;
-      position: absolute;
-      border: solid red;
-      border-width: 0 10px 10px 0;
-      display: inline-block;
-      transform: rotate(-45deg);
-      transform-origin: center;
+    vsp-message [onclick] {
+      cursor: pointer;
     }
 
+    vsp-message [onclick]:hover {
+      text-decoration: underline;
+    }
 
-    /*:invalid {*/
-    /*  border: 3px solid red;*/
-    /*  box-shadow: none;*/
-    /*}*/
+    vsp-pointer {
+      position: absolute;
+      height: 30px;
+      width: 30px;
+    }
 
+    vsp-pointer:after {
+      position: relative;
+      line-height: 25px;
+      text-shadow: 0px 0px 5px rgba(0,0,0,0.75);
+      display: inline-block;
+      transform: scale(2);
+      transform-origin: center;
+      animation: flyin 1.2s ease forwards;
+      opacity: 0;
+      filter: blur(4px);
+      font-size: 30px;
+      content: "►";
+      text-shadow: 0 0 5px 0 rgba(0,0,0,0.75);
+    }
 
-    /*:valid {*/
-    /*  border: 3px solid green;*/
-    /*  box-shadow: none;*/
-    /*}*/
+    vsp-message-close {
+      position: absolute;
+      right: 1em;
+      top: 1em;
+    }
+
+    @keyframes flyin {
+      to {
+        filter: blur(0);
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
   </style>
 </head>
 <body>
 
 <div id="shield"></div>
 
-<vsp-message></vsp-message>
+<vsp-message>
+  <vsp-message-content></vsp-message-content>
+  <vsp-message-close>X</vsp-message-close>
+</vsp-message>
 
 <div style="position:fixed; width: 100%; text-align: center; top: 1em;">
   <button id="prev-page" title="Previous Page" type="button" class="btn btn-outline-primary">↑</button>
@@ -831,12 +854,7 @@
     }
 
     highlightElements = name => {
-      // change page & scroll to
-      // document.querySelectorAll(`[name='${name}']`)
-      //   .forEach(element => {
-      //     element.classList.add('vsp-highlight');
-      //     //setTimeout(() => element.classList.remove('vsp-highlight'), 10000);
-      //   });
+      // TODO change page & scroll to
       const body = document.querySelector('body');
       document.querySelectorAll(`vsp-pointer`)
         .forEach(element => element.parentElement.removeChild(element));
@@ -844,8 +862,10 @@
         .forEach(element => {
           const rect = element.getBoundingClientRect();
           const x = Math.round(rect.left - 30);
-          const y = Math.round(rect.top + (rect.height / 2) - 10);
-          body.innerHTML += `<vsp-pointer style="left:${x}px; top:${y}px; "></vsp-pointer>`
+          const y = Math.round(rect.top + (rect.height / 2) - 15);
+          const vspPointer = document.createElement('vsp-pointer');
+          vspPointer.style = `left:${x}px; top:${y}px`;
+          body.appendChild(vspPointer);
         });
     }
 
@@ -858,12 +878,14 @@
     }
 
     toggleDialog = content => {
-      const dialogElem = document.querySelector('vsp-message');
+      const dialog = document.querySelector('vsp-message');
+      const dialogContent = document.querySelector('vsp-message-content');
       if (!content) {
-        dialogElem.style.display = 'none';
+        // TODo remove highlights
+        dialog.style.display = 'none';
       } else {
-        dialogElem.innerHTML = `<div>${content}</div>`;
-        dialogElem.style.display = 'block';
+        dialogContent.innerHTML = content;
+        dialog.style.display = 'block';
       }
     }
   }
@@ -919,7 +941,7 @@
   PlayerUI.addEventListener('click', '#last-unit', () => {
     Message.send.vopUnitNavigationRequestedNotification("#last");
   });
-  PlayerUI.addEventListener('click', 'vsp-message', () => {
+  PlayerUI.addEventListener('click', 'vsp-message-close', () => {
     PlayerUI.toggleDialog();
   });
 </script>
