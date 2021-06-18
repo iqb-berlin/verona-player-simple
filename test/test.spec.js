@@ -707,27 +707,20 @@ describe('simple player', () => {
   });
 
   fit('should validate the form after vopNavigationDeniedNotification with reason responsesIncomplete', async done => {
-
-    /**
-     * stand
-     * - durch die HTML Standard element wird immer gleich validiert, also wird vopNavigationDeniedNotification
-     * eigentlich nicht benötigt -
-     * - dennoch wollen wir das im player implementieren, der vollständigkeit halber
-     * - oder gibts noch mal ne gesamte form validation?
-     * - kann man den Zustand - invalide aber nicht markiert überhaupt erreichen in dem player?
-     * - vllt mit einem eigenen element? https://web.dev/more-capable-form-controls/
-     * ansonsten einfach schlichtes warning anzeigen? oder komplexes, das zu den feldern springen kann etc.?
-     *
-     */
     await send({
       type: 'vopStartCommand',
       unitDefinition: `
-        <label><input name="num" type="number" id="numberField">Number Field</label>
-        <input type="text" name="req" required id="requiredField"><label for="requiredField">Required Field</label>`,
+        <fieldset>
+          <label><input name="num" type="number" id="numberField">Number Field</label>
+        </fieldset>
+        <fieldset>
+          <input type="text" name="req" required id="requiredField"><label for="requiredField">Required Field</label>\`,
+        </fieldset>`,
       sessionId: '1',
       playerConfig: {
         enabledNavigationTargets: ['#next', '#prev'],
-        stateReportPolicy: 'on-demand'
+        stateReportPolicy: 'on-demand',
+        pagingMode: 'separate'
       }
     });
 

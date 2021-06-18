@@ -90,12 +90,22 @@
     }
 
     vsp-message {
-      box-shadow: 0 0 5px 0 rgba(0,0,0,0.75);
-      background: rgba(0,0,0,0.75);
+      display: none;
+      position: fixed;
+      right: 20px;
+      top: 20px;
+      padding: 10px;
+      width: 300px;
+      max-height: 300px;
+      box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.75);
+      background: rgba(0, 0, 0, 0.75);
       color: white;
-      padding: 0.2em;
-      width: 100%;
-      display: none
+      font-size: small;
+      filter: blur(4px);
+      opacity: 0;
+      transform: scale(2);
+      transform-origin: center;
+      animation: flyin 0.5s ease forwards;
     }
 
     vsp-message [onclick] {
@@ -104,6 +114,7 @@
 
     vsp-message [onclick]:hover {
       text-decoration: underline;
+      color: grey;
     }
 
     vsp-pointer {
@@ -115,22 +126,26 @@
     vsp-pointer:after {
       position: relative;
       line-height: 25px;
-      text-shadow: 0px 0px 5px rgba(0,0,0,0.75);
+      text-shadow: 0 0 5px rgba(0,0,0,0.75);
       display: inline-block;
+      filter: blur(4px);
+      opacity: 0;
       transform: scale(2);
       transform-origin: center;
-      animation: flyin 1.2s ease forwards;
-      opacity: 0;
-      filter: blur(4px);
+      animation: flyin 0.5s ease forwards;
       font-size: 30px;
       content: "►";
-      text-shadow: 0 0 5px 0 rgba(0,0,0,0.75);
     }
 
     vsp-message-close {
       position: absolute;
-      right: 1em;
-      top: 1em;
+      right: 5px;
+      top: 2px;
+      cursor: pointer;
+    }
+
+    vsp-message-close:hover {
+      color: grey
     }
 
     @keyframes flyin {
@@ -140,6 +155,8 @@
         opacity: 1;
       }
     }
+
+
   </style>
 </head>
 <body>
@@ -148,7 +165,7 @@
 
 <vsp-message>
   <vsp-message-content></vsp-message-content>
-  <vsp-message-close>X</vsp-message-close>
+  <vsp-message-close>✖</vsp-message-close>
 </vsp-message>
 
 <div style="position:fixed; width: 100%; text-align: center; top: 1em;">
@@ -634,9 +651,12 @@
       }
 
       const pageElem = document.querySelector(`fieldset:nth-of-type(${this._currentPage})`);
+      this.showPage(pageElem);
+    }
 
+    showPage = pageElem => {
       if (playerConfig.pagingMode === "separate") {
-        this._showPage(pageElem);
+        this._openPage(pageElem);
         PlayerUI.togglePageNavButtons();
         this.seenPages[this._currentPage].enter = true;
         Message.send.vopStateChangedNotification();
@@ -650,7 +670,7 @@
       this._setScrollObserver();
     }
 
-    _showPage = pageElem => {
+    _openPage = pageElem => {
       document.querySelectorAll("fieldset")
         .forEach(fieldsetElement => {fieldsetElement.style.display = 'none'});
       pageElem.style.display = 'block';
@@ -826,39 +846,49 @@
 
     showValidationReport = () => {
       const report = this._createValidationReport();
-      PlayerUI.toggleDialog(`<ul>${report}</ul>`);
+      PlayerUI.toggleMessage(report);
     };
 
-    _createValidationReport = () => {
-      const elements =  [...document.querySelectorAll(PlayerUI.itemElements)];
-
-      const report = elements
-        .filter(element => element.checkValidity)
-        .map(element => {
-          element.checkValidity();
-          const label = element.labels.length ? element.labels[0].innerText : element.name;
-          console.log(element.name, element.labels);
-          return {
-            label: label,
-            name: element.name,
-            message: element.validationMessage
-          }
-        })
-        .filter(entry => entry.message)
-        .map(e =>
-          `<li onclick="PlayerUI.highlightElements('${e.name}')">${e.label}: ${e.message}</li>`
-        )
-        .join('');
-      console.log(report);
-      return report;
-    }
+    _createValidationReport = () => '<div><b>Some Inputs are Invalid</b></div>'
+      + [...document.querySelectorAll(PlayerUI.itemElements)]
+          .filter(element => element.checkValidity)
+          .map(element => {
+            element.checkValidity();
+            return {
+              label: element.labels.length ? element.labels[0].innerText : element.name,
+              name: element.name,
+              message: element.validationMessage
+            }
+          })
+          .filter(entry => entry.message)
+          .map(e =>
+            `<div onclick="PlayerUI.highlightElements('${e.name}')">${e.label}: ${e.message}</div>`
+          )
+          .join('');
 
     highlightElements = name => {
+      this.removeAllPointers();
+      this.addPointers(`[name='${name}']`);
+      this.gotoElement(`[name='${name}']`);
+    }
+
+    gotoElement = selector => {
+      const element = document.querySelector(selector);
+      if (!element) {
+        return;
+      }
+      const pageElem = element.closest('fieldset');
+      if (pageElem) {
+        Pages.showPage(pageElem);
+      }
+      element.scrollIntoView();
+    }
+
+    addPointers = selector => {
       // TODO change page & scroll to
+
       const body = document.querySelector('body');
-      document.querySelectorAll(`vsp-pointer`)
-        .forEach(element => element.parentElement.removeChild(element));
-      document.querySelectorAll(`[name='${name}']`)
+      document.querySelectorAll(selector)
         .forEach(element => {
           const rect = element.getBoundingClientRect();
           const x = Math.round(rect.left - 30);
@@ -869,6 +899,11 @@
         });
     }
 
+    removeAllPointers = () => {
+      document.querySelectorAll(`vsp-pointer`)
+        .forEach(element => element.parentElement.removeChild(element));
+    }
+
     addEventListener = (eventName, selector, listener) => {
       document.querySelector('body').addEventListener(eventName, event => {
         if (event.target.matches(selector)) {
@@ -877,12 +912,12 @@
       });
     }
 
-    toggleDialog = content => {
+    toggleMessage = content => {
       const dialog = document.querySelector('vsp-message');
       const dialogContent = document.querySelector('vsp-message-content');
       if (!content) {
-        // TODo remove highlights
         dialog.style.display = 'none';
+        this.removeAllPointers();
       } else {
         dialogContent.innerHTML = content;
         dialog.style.display = 'block';
@@ -942,7 +977,7 @@
     Message.send.vopUnitNavigationRequestedNotification("#last");
   });
   PlayerUI.addEventListener('click', 'vsp-message-close', () => {
-    PlayerUI.toggleDialog();
+    PlayerUI.toggleMessage();
   });
 </script>
 
