@@ -394,14 +394,6 @@
         if (Pages.hasPages) {
           playerState.validPages = Pages.validPages;
           playerState.currentPage = Pages.currentPage.toString()
-        } else {
-          /** TODo verona3 still?!
-           * `validPages` and `currentPage` is mandatory even if the unit does not have pages.
-           * - https://verona-interfaces.github.io/player/#operation-subscribe-vopStateChangedNotification
-           * - https://github.com/verona-interfaces/player/issues/27
-           */
-          playerState.validPages = {0: ''};
-          playerState.currentPage = 0;
         }
         return playerState;
       }
