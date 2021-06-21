@@ -41,15 +41,28 @@
 
   <style>
     html, body {
-      height: 100vh; overflow: hidden; font-family: sans-serif; margin: 0;
+      height: 100vh;
+      overflow: hidden;
+      font-family: sans-serif;
+      margin: 0;
     }
 
+    /* TODO Use prefixed custom elements / classes for all player elements to avoid confusion with unit code */
     #shield {
-      display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 51000
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 51000
     }
 
     #unit {
-      overflow: auto; height: 100vh; margin: 0 9em;
+      overflow: auto;
+      height: 100vh;
+      margin: 0 9em;
     }
 
     #unit.paged.separate {
@@ -89,18 +102,33 @@
       height: 50px;
     }
 
-    vsp-message {
-      display: none;
+    .vsp-navigation-tier {
       position: fixed;
-      right: 20px;
-      top: 20px;
-      padding: 10px;
-      width: 300px;
-      max-height: 300px;
+    }
+
+    .vsp-navigation-tier button {
+      padding: 2px 6px;
+      cursor: pointer;
+    }
+
+    .vsp-navigation-tier button,
+    vsp-message {
+      border: none;
+      border-radius: 2px;
       box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.75);
       background: rgba(0, 0, 0, 0.75);
       color: white;
       font-size: small;
+    }
+
+    vsp-message {
+      position: fixed;
+      display: none;
+      max-height: 300px;
+      right: 20px;
+      top: 20px;
+      padding: 10px;
+      width: 300px;
       filter: blur(4px);
       opacity: 0;
       transform: scale(2);
@@ -144,8 +172,16 @@
       cursor: pointer;
     }
 
+    .vsp-navigation-tier button:hover,
     vsp-message-close:hover {
       color: grey
+    }
+
+    .vsp-navigation-tier button:disabled {
+      box-shadow: 0 0 5px 0 rgba(100, 100, 100, 0.75);
+      background: rgba(0, 0, 0, 0.75);
+      color: gray;
+      cursor: auto;
     }
 
     @keyframes flyin {
@@ -155,28 +191,26 @@
         opacity: 1;
       }
     }
-
-
   </style>
 </head>
 <body>
 
 <div id="shield"></div>
 
-<div style="position:fixed; width: 100%; text-align: center; top: 1em;">
+<div class="vsp-navigation-tier" style="width: 100%; text-align: center; top: 1em;">
   <button id="prev-page" title="Previous Page" type="button" class="btn btn-outline-primary">↑</button>
 </div>
 
-<div style="position:fixed; bottom: 1em; left: 9em; right: 9em; text-align: center;">
+<div class="vsp-navigation-tier" style="text-align: center; bottom: 1em; left: 9em; right: 9em; ">
   <button id="next-page" title="Next Page" type="button" class="btn btn-outline-primary">↓</button>
 </div>
 
-<div style="position:fixed; top: 50%; left: 1em;">
+<div class="vsp-navigation-tier" style="top: 50%; left: 1em;">
   <button id="first-unit" title="First Unit" type="submit" class="btn btn-primary" value="first" name="target">⇤</button>
   <button id="prev-unit" title="Previous Unit" type="submit" class="btn btn-primary" value="previous" name="target">←</button>
 </div>
 
-<div style="position:fixed; top: 50%; right: 1em;">
+<div class="vsp-navigation-tier" style="top: 50%; right: 1em;">
   <button id="next-unit" title="Next Unit" type="submit" class="btn btn-primary" value="next" name="target">→</button>
   <button id="last-unit" title="Last Unit" type="submit" class="btn btn-primary" value="last" name="target">⇥</button>
 </div>
@@ -791,6 +825,7 @@
     }
 
     toggleButton = (buttonId, enabled, visible = true) => {
+      console.log(buttonId, enabled, visible);
       const button = document.querySelector(`#${buttonId}`);
       if (button) {
         if (enabled) {
