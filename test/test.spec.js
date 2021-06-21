@@ -711,54 +711,104 @@ describe('simple player', () => {
     done();
   });
 
-  it('trigger form validation and response dialog on `vopNavigationDeniedNotification`', async done => {
-    await send({
-      type: 'vopStartCommand',
-      unitDefinition: `
-        <fieldset>
-          <div>${longText()}</div>
-          <label><input name="num" type="number" id="numberField">Number Field</label>
-        </fieldset>
-        <fieldset>
-          <input type="text" name="req" required id="requiredField"><label for="requiredField">Required Field</label>
-        </fieldset>`,
-      sessionId: '1',
-      playerConfig: {
-        enabledNavigationTargets: ['#next', '#prev'],
-        stateReportPolicy: 'on-demand',
-        pagingMode: 'separate'
-      }
+  describe('should show appropriate message on `vopNavigationDeniedNotification`', () => {
+    it('when reason is `responsesIncomplete and also trigger form validation `', async done => {
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: `
+          <fieldset>
+            <div>${longText()}</div>
+            <label><input name="num" type="number" id="numberField">Number Field</label>
+          </fieldset>
+          <fieldset>
+            <input type="text" name="req" required id="requiredField"><label for="requiredField">Required Field</label>
+          </fieldset>`,
+        sessionId: '1',
+        playerConfig: {
+          enabledNavigationTargets: ['#next', '#prev'],
+          stateReportPolicy: 'on-demand',
+          pagingMode: 'separate'
+        }
+      });
+
+      const requiredField = await driver.findElement(By.id('requiredField'));
+      const numberField = await driver.findElement(By.id('numberField'));
+      numberField.sendKeys('Not a number!');
+
+      const vspMessage = await driver.findElement(By.css('vsp-message'));
+      expect(await vspMessage.isDisplayed()).toBeFalse();
+
+      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'responsesIncomplete' });
+      await driver.sleep(30);
+
+      expect(await vspMessage.isDisplayed()).toBeTrue();
+      const vspMessageLinks = await vspMessage.findElements(By.css('[onclick]'));
+      expect(vspMessageLinks.length).toEqual(2);
+
+      await vspMessageLinks[0].click();
+      expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(1);
+      expect(await requiredField.isDisplayed()).toBeFalse();
+      expect(await numberField.isDisplayed()).toBeTrue();
+
+      await vspMessageLinks[1].click();
+      expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(1);
+      expect(await numberField.isDisplayed()).toBeFalse();
+      expect(await requiredField.isDisplayed()).toBeTrue();
+
+      await vspMessage.findElement(By.css('vsp-message-close')).click();
+      expect(await vspMessage.isDisplayed()).toBeFalse();
+      expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(0);
+
+      done();
     });
 
-    const requiredField = await driver.findElement(By.id('requiredField'));
-    const numberField = await driver.findElement(By.id('numberField'));
-    numberField.sendKeys('Not a number!');
+    it('when reason = `presentationIncomplete`, even if presentationComplete is extended', async done => {
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: `
+          <script>
+            let visitedCounter = 2;
+            PlayerUI.presentationReportFactors['special'] = () =>
+              Array.from({ length: visitedCounter }, () => \`<div onclick=''>Special Stuff was not visited</div>\`);
+          </script>
+          <fieldset>
+            <div id="decreaser" onclick="visitedCounter--">This would be a sub-navigation, a gallery or such</div>
+            <div>${longText()}</div>
+            <label><input name="a" id="fieldA">Field A</label>
+          </fieldset>
+          <fieldset>
+            <label><input name="b" id="fieldB">Field B</label>
+          </fieldset>
+          `,
+        sessionId: '1',
+        playerConfig: {
+          stateReportPolicy: 'on-demand',
+          pagingMode: 'separate'
+        }
+      });
 
-    const vspMessage = await driver.findElement(By.css('vsp-message'));
-    expect(await vspMessage.isDisplayed()).toBeFalse();
+      const vspMessage = await driver.findElement(By.css('vsp-message'));
+      expect(await vspMessage.isDisplayed()).toBeFalse();
 
-    await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'responsesIncomplete' });
-    await driver.sleep(30);
+      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'presentationIncomplete' });
+      await driver.sleep(30);
+      expect(await vspMessage.isDisplayed()).toBeTrue();
 
-    expect(await vspMessage.isDisplayed()).toBeTrue();
-    const vspMessageLinks = await vspMessage.findElements(By.css('[onclick]'));
-    expect(vspMessageLinks.length).toEqual(2);
+      // we expect 4 messages: 2 from pages (one not scrolled to bottom, one not seen, 2 from special)
+      expect((await vspMessage.findElements(By.css('[onclick]'))).length).toEqual(4);
 
-    await vspMessageLinks[0].click();
-    expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(1);
-    expect(await requiredField.isDisplayed()).toBeFalse();
-    expect(await numberField.isDisplayed()).toBeTrue();
+      const decreaser = await driver.findElement(By.css('#decreaser'));
+      await decreaser.click();
+      const nextPage = await driver.findElement(By.css('#next-page'));
+      await nextPage.click();
 
-    await vspMessageLinks[1].click();
-    expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(1);
-    expect(await numberField.isDisplayed()).toBeFalse();
-    expect(await requiredField.isDisplayed()).toBeTrue();
+      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'presentationIncomplete' });
+      await driver.sleep(30);
+      expect(await vspMessage.isDisplayed()).toBeTrue();
+      expect((await vspMessage.findElements(By.css('[onclick]'))).length).toEqual(2);
 
-    await vspMessage.findElement(By.css('vsp-message-close')).click();
-    expect(await vspMessage.isDisplayed()).toBeFalse();
-    expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(0);
-
-    done();
+      done();
+    });
   });
 
   it('should send the correct `presentationProgress` in paginated mode', async done => {

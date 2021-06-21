@@ -400,11 +400,10 @@
       pages: {
         complete: () => Object.values(Pages.seenPages).filter(p => p.enter && p.bottom).length === Pages.pageCount,
         some: () => Object.values(Pages.seenPages).filter(p => p.enter || p.bottom).length > 0
-      },
+      }
     }
 
     start = data => {
-
       sessionId = data.sessionId || new Error("session ID missing");
 
       this._setUnit(data["unitDefinition"] || new Error("unitDefinition missing"));
@@ -645,8 +644,8 @@
         this._currentPage -= 1;
       } else if (target === '#first') {
         this._currentPage = 1;
-      } else if (target === '#first') {
-        this._currentPage = pageCount ;
+      } else if (target === '#last') {
+        this._currentPage = this.pageCount - 1;
       } else {
         this._currentPage = parseInt(target);
       }
@@ -783,6 +782,9 @@
   const PlayerUI = new class {
 
     itemElements = "form select:enabled, form textarea:enabled, form input:enabled, form [contenteditable]";
+    presentationReportFactors = {
+      pages: () => this._createPresentationReportForPages()
+    }
 
     togglePlayerRunning = (running = false) => {
       document.querySelector('#shield').style.display = running ? 'none' : 'block';
@@ -841,10 +843,15 @@
       }
     }
 
-    showValidationReport = () => {
-      const report = this._createValidationReport();
-      PlayerUI.toggleMessage(report);
-    };
+    navigationDeniedMessage = reason => {
+      let message = 'Navigation denied due to unknown reason';
+      if (reason === 'responsesIncomplete') {
+        message = this._createValidationReport();
+      } else if (reason === 'presentationIncomplete') {
+        message = this._createPresentationReport();
+      }
+      PlayerUI.toggleMessage(message);
+    }
 
     _createValidationReport = () => '<div><b>Some Inputs are Invalid</b></div>'
       + [...document.querySelectorAll(PlayerUI.itemElements)]
@@ -882,8 +889,6 @@
     }
 
     addPointers = selector => {
-      // TODO change page & scroll to
-
       const body = document.querySelector('body');
       document.querySelectorAll(selector)
         .forEach(element => {
@@ -900,6 +905,27 @@
       document.querySelectorAll(`vsp-pointer`)
         .forEach(element => element.parentElement.removeChild(element));
     }
+
+    _createPresentationReport = () =>
+      '<div><b>Not everything was seen</b></div>' +
+      Object.values(this.presentationReportFactors)
+        .flatMap(reportFunction => reportFunction())
+        .filter(row => row)
+        .join('');
+
+    _createPresentationReportForPages = () =>
+      Object.keys(Pages.seenPages)
+        .map(pageNr => {
+          console.log(Pages.validPages);
+          const msg = `<div onclick="Pages.goto('${pageNr}')">${Pages.validPages[pageNr]}: `;
+          if (Pages.seenPages[pageNr].enter && !Pages.seenPages[pageNr].bottom) {
+            return msg + `Scroll down to see everything</div>`;
+          }
+          if (!Pages.seenPages[pageNr].enter) {
+            return msg + `Page was not entered</div>`;
+          }
+          return "";
+        });
 
     addEventListener = (eventName, selector, listener) => {
       document.querySelector('body').addEventListener(eventName, event => {
@@ -935,7 +961,7 @@
   }); // not implemented in IQB-testcenter 7.3.1
   document.addEventListener("vopStopCommand", () => PlayerUI.togglePlayerRunning(false)); // not implemented in IQB-testcenter 7.3.1
   document.addEventListener("vopContinueCommand", () => PlayerUI.togglePlayerRunning(true)); // not implemented in IQB-testcenter 7.3.1
-  document.addEventListener("vopNavigationDeniedNotification", PlayerUI.showValidationReport);
+  document.addEventListener("vopNavigationDeniedNotification", event => PlayerUI.navigationDeniedMessage(event.detail.reason));
 
   window.addEventListener('blur', () => {
     Message.send.vopWindowFocusChangedNotification(document.hasFocus());
