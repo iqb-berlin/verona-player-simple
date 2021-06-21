@@ -440,9 +440,6 @@
         Log.debug("Unit definition type does not match: " + data['unitDefinitionType']);
       }
 
-      this._setPlayerState(data["playerState"] || {});
-
-      PlayerUI.togglePageNavButtons();
       PlayerUI.toggleUnitNavButtons();
     }
 
@@ -530,17 +527,7 @@
     _setPlayerConfig = newPlayerConfig => {
       playerConfig = Object.assign(playerConfig, newPlayerConfig);
       Pages.applyPagingMode();
-    }
-
-    _setPlayerState = playerState => {
-      /**
-       * Verona 2.1.0 does *not* provide the playerState in vopStartCommand,
-       * nor does IQB-testcenter 7.3 trigger an automatic vopPageNavigationCommand to
-       * start on the last page,
-       * so the following is just an assumption of how it may change and will not work.
-       * See https://github.com/verona-interfaces/player/issues/23
-       */
-      Pages.goto(playerState.currentPage || 1);
+      Pages.goto(newPlayerConfig.startPage || 1);
     }
   }
 
