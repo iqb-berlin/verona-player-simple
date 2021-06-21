@@ -30,6 +30,11 @@ const loadPlayer = async playerSettings => {
   await driver.get(`file:${playerPath}${query}`);
 };
 
+const longText = (length = 2000) => Array.from(
+  { length },
+  (_, i) => Array.from({ length: 3 + (i % 10) }, () => 'x').join('')
+).join(' ');
+
 describe('simple player', () => {
   beforeAll(async done => {
     driver = await new Builder()
@@ -706,15 +711,16 @@ describe('simple player', () => {
     done();
   });
 
-  fit('should validate the form after vopNavigationDeniedNotification with reason responsesIncomplete', async done => {
+  it('trigger form validation and response dialog on `vopNavigationDeniedNotification`', async done => {
     await send({
       type: 'vopStartCommand',
       unitDefinition: `
         <fieldset>
+          <div>${longText()}</div>
           <label><input name="num" type="number" id="numberField">Number Field</label>
         </fieldset>
         <fieldset>
-          <input type="text" name="req" required id="requiredField"><label for="requiredField">Required Field</label>\`,
+          <input type="text" name="req" required id="requiredField"><label for="requiredField">Required Field</label>
         </fieldset>`,
       sessionId: '1',
       playerConfig: {
@@ -724,33 +730,33 @@ describe('simple player', () => {
       }
     });
 
+    const requiredField = await driver.findElement(By.id('requiredField'));
     const numberField = await driver.findElement(By.id('numberField'));
-
     numberField.sendKeys('Not a number!');
 
-    await MessageRecorder.recordMessages(driver);
+    const vspMessage = await driver.findElement(By.css('vsp-message'));
+    expect(await vspMessage.isDisplayed()).toBeFalse();
 
-    await send({ type: 'vopGetStateRequest', sessionId: '1' });
-    // const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
-    // expect(message1.unitState.dataParts.all.answers)
-    //   .withContext('Answers should be empty, since the value is invalid.')
-    //   .toEqual({});
-
-    const invalidFieldsBeforeNotification = await driver.findElements(By.css('input:invalid'));
-
-    // The field would't reveal it's invalidity before losing focus by default.
-    // expect(invalidFieldsBeforeNotification.length)
-    //   .withContext(':valid-pseudo-class has not been applied yet')
-    //   .toEqual(0);
-
-    // Now we assume a next button on the host was clicked instead and it denied the navigation since answers was empty.
     await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'responsesIncomplete' });
-    //
-    // const invalidFieldsAfterNotification = await driver.findElements(By.css('input:invalid'));
-    //
-    // expect(invalidFieldsAfterNotification.length)
-    //   .withContext('Validation should be triggered by vopNavigationDeniedNotification.')
-    //   .toBeGreaterThan(0);
+    await driver.sleep(30);
+
+    expect(await vspMessage.isDisplayed()).toBeTrue();
+    const vspMessageLinks = await vspMessage.findElements(By.css('[onclick]'));
+    expect(vspMessageLinks.length).toEqual(2);
+
+    await vspMessageLinks[0].click();
+    expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(1);
+    expect(await requiredField.isDisplayed()).toBeFalse();
+    expect(await numberField.isDisplayed()).toBeTrue();
+
+    await vspMessageLinks[1].click();
+    expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(1);
+    expect(await numberField.isDisplayed()).toBeFalse();
+    expect(await requiredField.isDisplayed()).toBeTrue();
+
+    await vspMessage.findElement(By.css('vsp-message-close')).click();
+    expect(await vspMessage.isDisplayed()).toBeFalse();
+    expect((await driver.findElements(By.css('vsp-pointer'))).length).toEqual(0);
 
     done();
   });
@@ -861,11 +867,6 @@ describe('simple player', () => {
   });
 
   it('should send the correct `presentationProgress` when there are no pages', async done => {
-    const longText = () => Array.from(
-      { length: 2000 },
-      (_, i) => Array.from({ length: 3 + (i % 10) }, () => 'x').join('')
-    ).join(' ');
-
     await send({
       type: 'vopStartCommand',
       unitDefinition: `
@@ -905,11 +906,6 @@ describe('simple player', () => {
     await loadPlayer({
       debounceStateMessages: 25 // don't set debounce time completely to zero, since page detection relies on it
     });
-
-    const longText = length => Array.from(
-      { length },
-      (_, i) => Array.from({ length: 3 + (i % 10) }, () => 'x').join('')
-    ).join(' ');
 
     await MessageRecorder.recordMessages(driver);
 
@@ -967,11 +963,6 @@ describe('simple player', () => {
       debounceStateMessages: 0,
       debounceKeyboardEvents: 0
     });
-
-    const longText = () => Array.from(
-      { length: 2000 },
-      (_, i) => Array.from({ length: 3 + (i % 10) }, () => 'x').join('')
-    ).join(' ');
 
     await send({
       type: 'vopStartCommand',

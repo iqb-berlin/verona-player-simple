@@ -163,11 +163,6 @@
 
 <div id="shield"></div>
 
-<vsp-message>
-  <vsp-message-content></vsp-message-content>
-  <vsp-message-close>✖</vsp-message-close>
-</vsp-message>
-
 <div style="position:fixed; width: 100%; text-align: center; top: 1em;">
   <button id="prev-page" title="Previous Page" type="button" class="btn btn-outline-primary">↑</button>
 </div>
@@ -185,6 +180,11 @@
   <button id="next-unit" title="Next Unit" type="submit" class="btn btn-primary" value="next" name="target">→</button>
   <button id="last-unit" title="Last Unit" type="submit" class="btn btn-primary" value="last" name="target">⇥</button>
 </div>
+
+<vsp-message>
+  <vsp-message-content></vsp-message-content>
+  <vsp-message-close>✖</vsp-message-close>
+</vsp-message>
 
 <form>
   <div id="unit"><!-- will be filled automatically --></div>
@@ -336,6 +336,7 @@
         }
 
         const playerState = this._getPlayerState();
+        console.log("ps", playerState);
         if (complete || (JSON.stringify(playerState) !== JSON.stringify(this._lastStates.playerState))) {
           message.playerState = playerState;
           this._lastStates.playerState = playerState;
@@ -360,7 +361,7 @@
           playerState.validPages = Pages.validPages;
           playerState.currentPage = Pages.currentPage.toString()
         } else {
-          /**
+          /** TODo verona3 still?!
            * `validPages` and `currentPage` is mandatory even if the unit does not have pages.
            * - https://verona-interfaces.github.io/player/#operation-subscribe-vopStateChangedNotification
            * - https://github.com/verona-interfaces/player/issues/27
@@ -651,10 +652,7 @@
       }
 
       const pageElem = document.querySelector(`fieldset:nth-of-type(${this._currentPage})`);
-      this.showPage(pageElem);
-    }
 
-    showPage = pageElem => {
       if (playerConfig.pagingMode === "separate") {
         this._openPage(pageElem);
         PlayerUI.togglePageNavButtons();
@@ -815,7 +813,6 @@
     }
 
     toggleUnitNavButtons = () => {
-      console.log(playerConfig);
       this.toggleButton('first-unit', playerConfig.enabledNavigationTargets.indexOf('#first') > -1);
       this.toggleButton('prev-unit', playerConfig.enabledNavigationTargets.indexOf('#prev') > -1);
       this.toggleButton('next-unit', playerConfig.enabledNavigationTargets.indexOf('#next') > -1);
@@ -868,8 +865,8 @@
 
     highlightElements = name => {
       this.removeAllPointers();
-      this.addPointers(`[name='${name}']`);
       this.gotoElement(`[name='${name}']`);
+      this.addPointers(`[name='${name}']`);
     }
 
     gotoElement = selector => {
@@ -877,9 +874,9 @@
       if (!element) {
         return;
       }
-      const pageElem = element.closest('fieldset');
-      if (pageElem) {
-        Pages.showPage(pageElem);
+      const page = element.closest('fieldset').dataset.pagenr;
+      if (page) {
+        Pages.goto(page);
       }
       element.scrollIntoView();
     }
