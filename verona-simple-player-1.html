@@ -277,6 +277,11 @@
   let sessionId = "";
 
   const isDefined = v => (typeof v !== "undefined");
+  const isEmpty = object => {
+    // noinspection LoopStatementThatDoesntLoopJS
+    for(let property in object) return false;
+    return true;
+  }
 
   const Time = new class {
     throttle = (callback, limit) => {
@@ -370,10 +375,12 @@
         }
 
         const playerState = this._getPlayerState();
-        console.log("ps", playerState);
         if (complete || (JSON.stringify(playerState) !== JSON.stringify(this._lastStates.playerState))) {
-          message.playerState = playerState;
           this._lastStates.playerState = playerState;
+          console.log('state of the game', playerState);
+          if (!isEmpty(playerState)) {
+            message.playerState = playerState;
+          }
         }
 
         const unitState = this._getUnitState();
@@ -433,7 +440,8 @@
       sessionId = data.sessionId || new Error("session ID missing");
 
       this._setUnit(data["unitDefinition"] || new Error("unitDefinition missing"));
-      this._setPlayerConfig(data["playerConfig"] || {});
+      const playerConfig = data["playerConfig"] || {};
+      this._setPlayerConfig(playerConfig);
       this._setUnitData(data["unitState"] || {});
 
       if (data['unitDefinitionType'] !== "verona-simple-player-1.0.0") {
@@ -441,6 +449,11 @@
       }
 
       PlayerUI.toggleUnitNavButtons();
+      PlayerUI.togglePageNavButtons();
+
+      if (playerConfig['startPage']) {
+        Pages.got(playerConfig.startPage);
+      }
     }
 
     getData = () => ({

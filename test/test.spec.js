@@ -70,6 +70,25 @@ describe('simple player', () => {
     done();
   });
 
+  it('should open the page in `startPage`', async done => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
+      sessionId: '1',
+      playerConfig: {
+        pagingMode: 'separate',
+        startPage: '2'
+      }
+    });
+
+    const page2 = await driver.findElement(By.id('p2'));
+
+    expect (await page2.isDisplayed()).toBeTrue();
+
+    done();
+  });
+
   it('should block unit on `vopStopCommand` and continue on `vopContinueCommand`', async done => {
     await send({
       type: 'vopStartCommand',
@@ -560,10 +579,6 @@ describe('simple player', () => {
         presentationProgress: 'complete',
         responseProgress: 'complete'
       },
-      playerState: {
-        currentPage: 0,
-        validPages: { 0: '' }
-      },
       unitStateDataTyp: 'verona-simple-player-1.0.0'
     });
 
@@ -608,10 +623,6 @@ describe('simple player', () => {
         },
         presentationProgress: 'complete',
         responseProgress: 'complete'
-      },
-      playerState: {
-        currentPage: 0,
-        validPages: { 0: '' }
       },
       unitStateDataTyp: 'verona-simple-player-1.0.0'
     });
