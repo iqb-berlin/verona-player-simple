@@ -84,7 +84,7 @@ describe('simple player', () => {
 
     const page2 = await driver.findElement(By.id('p2'));
 
-    expect (await page2.isDisplayed()).toBeTrue();
+    expect(await page2.isDisplayed()).toBeTrue();
 
     done();
   });
@@ -560,6 +560,7 @@ describe('simple player', () => {
 
     if (typeof msg !== 'object' || msg == null) {
       fail('message must be an object');
+      return;
     }
 
     msg.timeStamp = NaN;
@@ -1256,5 +1257,24 @@ describe('simple player', () => {
 
       done();
     });
+  });
+
+  it('can show it\'s own metadata', async done => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<div id="show" onclick=\'document.querySelector("#unit").appendChild(PlayerUI.getPlayerInfoHTML())\'>I</div>',
+      sessionId: '1',
+      playerConfig: {
+        logPolicy: 'disabled',
+        stateReportPolicy: 'on-demand'
+      }
+    });
+
+    const showButton = driver.findElement(By.id('show'));
+    await showButton.click();
+    const vspMeta = driver.findElement(By.id('vsp-meta'));
+    expect(await vspMeta.isDisplayed()).toBeTrue();
+    done();
   });
 });
