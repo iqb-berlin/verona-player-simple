@@ -774,7 +774,7 @@ describe('simple player', () => {
       done();
     });
 
-    fit('when reason = `presentationIncomplete`, even if presentationComplete is extended', async done => {
+    it('when reason = `presentationIncomplete`, even if presentationComplete is extended', async done => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: `

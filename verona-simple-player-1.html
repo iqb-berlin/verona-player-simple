@@ -687,6 +687,7 @@
       if (playerConfig.pagingMode === "separate") {
         this._openPage(pageElem);
         PlayerUI.togglePageNavButtons();
+        PlayerUI.removeAllPointers();
         this.seenPages[this._currentPage].enter = true;
         Message.send.vopStateChangedNotification();
       } else {
@@ -913,7 +914,7 @@
     highlightElements = name => {
       this.removeAllPointers();
       this.gotoElement(`[name='${name}']`);
-      this.addPointers(`[name='${name}']`);
+      setTimeout(() => this.addPointers(`[name='${name}']`), 15);
     }
 
     gotoElement = selector => {
@@ -939,11 +940,14 @@
           vspPointer.style = `left:${x}px; top:${y}px`;
           body.appendChild(vspPointer);
         });
+      document.querySelector('#unit').addEventListener('scroll', PlayerUI.removeAllPointers);
     }
 
     removeAllPointers = () => {
+      console.log('rem');
       document.querySelectorAll(`vsp-pointer`)
         .forEach(element => element.parentElement.removeChild(element));
+      document.querySelector('#unit').removeEventListener('scroll', PlayerUI.removeAllPointers);
     }
 
     _createPresentationReport = () =>
