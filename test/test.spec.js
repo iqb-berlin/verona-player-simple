@@ -578,9 +578,9 @@ describe('simple player', () => {
           }
         },
         presentationProgress: 'complete',
-        responseProgress: 'complete'
-      },
-      unitStateDataTyp: 'verona-simple-player-1.0.0'
+        responseProgress: 'complete',
+        unitStateDataType: 'iqb-simple-player@1.0.0'
+      }
     });
 
     done();
@@ -623,9 +623,9 @@ describe('simple player', () => {
           }
         },
         presentationProgress: 'complete',
-        responseProgress: 'complete'
-      },
-      unitStateDataTyp: 'verona-simple-player-1.0.0'
+        responseProgress: 'complete',
+        unitStateDataType: 'iqb-simple-player@1.0.0'
+      }
     });
 
     done();
