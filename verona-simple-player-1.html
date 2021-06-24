@@ -383,7 +383,6 @@
         const playerState = this._getPlayerState();
         if (complete || (JSON.stringify(playerState) !== JSON.stringify(this._lastStates.playerState))) {
           this._lastStates.playerState = playerState;
-          console.log('state of the game', playerState);
           if (!isEmpty(playerState)) {
             message.playerState = playerState;
           }
@@ -415,6 +414,7 @@
         dataParts: Unit.getData(),
         presentationProgress: Unit.getPresentationProgress(),
         responseProgress: Unit.getResponseProgress(),
+        // TODO unitStateDataState
       });
     }
 
@@ -823,7 +823,6 @@
     }
 
     toggleButton = (buttonId, enabled, visible = true) => {
-      console.log(buttonId, enabled, visible);
       const button = document.querySelector(`#${buttonId}`);
       if (button) {
         if (enabled) {
@@ -883,32 +882,33 @@
       }
     }
 
-    navigationDeniedMessage = reason => {
-      let message = 'Navigation denied due to unknown reason';
-      if (reason === 'responsesIncomplete') {
-        message = this._createValidationReport();
-      } else if (reason === 'presentationIncomplete') {
-        message = this._createPresentationReport();
+    navigationDeniedMessage = reasons => {
+      let message = '<div><b>Navigation denied</b></div>';
+      if (reasons.indexOf('responsesIncomplete') !== -1) {
+        message += this._createValidationReport();
+      }
+      if (reasons.indexOf('presentationIncomplete') !== -1) {
+        message += this._createPresentationReport();
       }
       PlayerUI.toggleMessage(message);
     }
 
-    _createValidationReport = () => '<div><b>Some Inputs are Invalid</b></div>'
-      + [...document.querySelectorAll(PlayerUI.itemElements)]
-          .filter(element => element.checkValidity)
-          .map(element => {
-            element.checkValidity();
-            return {
-              label: element.labels.length ? element.labels[0].innerText : element.name,
-              name: element.name,
-              message: element.validationMessage
-            }
-          })
-          .filter(entry => entry.message)
-          .map(e =>
-            `<div onclick="PlayerUI.highlightElements('${e.name}')">${e.label}: ${e.message}</div>`
-          )
-          .join('');
+    _createValidationReport = () =>
+      [...document.querySelectorAll(PlayerUI.itemElements)]
+        .filter(element => element.checkValidity)
+        .map(element => {
+          element.checkValidity();
+          return {
+            label: element.labels.length ? element.labels[0].innerText : element.name,
+            name: element.name,
+            message: element.validationMessage
+          }
+        })
+        .filter(entry => entry.message)
+        .map(e =>
+          `<div onclick="PlayerUI.highlightElements('${e.name}')">${e.label}: ${e.message}</div>`
+        )
+        .join('');
 
     highlightElements = name => {
       this.removeAllPointers();
@@ -947,7 +947,6 @@
     }
 
     _createPresentationReport = () =>
-      '<div><b>Not everything was seen</b></div>' +
       Object.values(this.presentationReportFactors)
         .flatMap(reportFunction => reportFunction())
         .filter(row => row)

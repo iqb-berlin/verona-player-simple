@@ -750,7 +750,7 @@ describe('simple player', () => {
       const vspMessage = await driver.findElement(By.css('vsp-message'));
       expect(await vspMessage.isDisplayed()).toBeFalse();
 
-      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'responsesIncomplete' });
+      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['responsesIncomplete'] });
       await driver.sleep(30);
 
       expect(await vspMessage.isDisplayed()).toBeTrue();
@@ -774,7 +774,7 @@ describe('simple player', () => {
       done();
     });
 
-    it('when reason = `presentationIncomplete`, even if presentationComplete is extended', async done => {
+    fit('when reason = `presentationIncomplete`, even if presentationComplete is extended', async done => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: `
@@ -789,7 +789,7 @@ describe('simple player', () => {
             <label><input name="a" id="fieldA">Field A</label>
           </fieldset>
           <fieldset>
-            <label><input name="b" id="fieldB">Field B</label>
+            <label><input name="b" id="fieldB" required>Field B</label>
           </fieldset>
           `,
         sessionId: '1',
@@ -802,7 +802,7 @@ describe('simple player', () => {
       const vspMessage = await driver.findElement(By.css('vsp-message'));
       expect(await vspMessage.isDisplayed()).toBeFalse();
 
-      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'presentationIncomplete' });
+      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['presentationIncomplete'] });
       await driver.sleep(30);
       expect(await vspMessage.isDisplayed()).toBeTrue();
 
@@ -814,10 +814,15 @@ describe('simple player', () => {
       const nextPage = await driver.findElement(By.css('#next-page'));
       await nextPage.click();
 
-      await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: 'presentationIncomplete' });
+      // we expect 3 messages: 1 from pages, 1 from special and 1 from responsesIncomplete
+      await send({
+        type: 'vopNavigationDeniedNotification',
+        sessionId: '1',
+        reason: ['presentationIncomplete', 'responsesIncomplete']
+      });
       await driver.sleep(30);
       expect(await vspMessage.isDisplayed()).toBeTrue();
-      expect((await vspMessage.findElements(By.css('[onclick]'))).length).toEqual(2);
+      expect((await vspMessage.findElements(By.css('[onclick]'))).length).toEqual(3);
 
       done();
     });
