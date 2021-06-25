@@ -508,7 +508,7 @@ describe('simple player', () => {
   });
 
   describe('unit navigation', () => {
-    it('should enable the buttons given in enabledNavigationTargets', async done => {
+    fit('should enable the buttons given in enabledNavigationTargets', async done => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: '<h1>Virtual Unit</h1>',
@@ -522,11 +522,13 @@ describe('simple player', () => {
       const prevUnit = await driver.findElement(By.css('#prev-unit'));
       const lastUnit = await driver.findElement(By.css('#last-unit'));
       const firstUnit = await driver.findElement(By.css('#first-unit'));
+      const endUnit = await driver.findElement(By.css('#end-unit'));
 
       expect(await nextUnit.isEnabled()).toBeTrue();
       expect(await prevUnit.isEnabled()).toBeTrue();
       expect(await lastUnit.isEnabled()).toBeFalse();
       expect(await firstUnit.isEnabled()).toBeFalse();
+      expect(await endUnit.isEnabled()).toBeFalse();
 
       done();
     });

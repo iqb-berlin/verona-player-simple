@@ -219,6 +219,7 @@
 <div class="vsp-navigation-tier" style="top: 50%; right: 1em;">
   <button id="next-unit" title="Next Unit" type="submit" class="btn btn-primary" value="next" name="target">→</button>
   <button id="last-unit" title="Last Unit" type="submit" class="btn btn-primary" value="last" name="target">⇥</button>
+  <button id="end-unit" title="Finish" type="submit" class="btn btn-primary" value="end" name="target">▪</button>
 </div>
 
 <vsp-message>
@@ -849,6 +850,7 @@
       this.toggleButton('prev-unit', playerConfig.enabledNavigationTargets.indexOf('previous') > -1);
       this.toggleButton('next-unit', playerConfig.enabledNavigationTargets.indexOf('next') > -1);
       this.toggleButton('last-unit', playerConfig.enabledNavigationTargets.indexOf('last') > -1);
+      this.toggleButton('end-unit', playerConfig.enabledNavigationTargets.indexOf('end') > -1);
     }
 
     markElementTouched = elem => {
@@ -1036,6 +1038,9 @@
   });
   PlayerUI.addEventListener('click', '#last-unit', () => {
     Message.send.vopUnitNavigationRequestedNotification("last");
+  });
+  PlayerUI.addEventListener('click', '#end-unit', () => {
+    Message.send.vopUnitNavigationRequestedNotification("end");
   });
   PlayerUI.addEventListener('click', 'vsp-message-close', () => {
     PlayerUI.toggleMessage();
