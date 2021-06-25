@@ -449,16 +449,12 @@
       this._setPlayerConfig(playerConfig);
       this._setUnitData(data["unitState"] || {});
 
-      if (data['unitDefinitionType'] !== "verona-simple-player-1.0.0") {
+      if (data['unitDefinitionType'] !== "iqb-simple-html@1.0.0") {
         Log.debug("Unit definition type does not match: " + data['unitDefinitionType']);
       }
 
       PlayerUI.toggleUnitNavButtons();
       PlayerUI.togglePageNavButtons();
-
-      if (playerConfig['startPage']) {
-        Pages.got(playerConfig.startPage);
-      }
     }
 
     getData = () => ({
@@ -545,7 +541,7 @@
     _setPlayerConfig = newPlayerConfig => {
       playerConfig = Object.assign(playerConfig, newPlayerConfig);
       Pages.applyPagingMode();
-      Pages.goto(newPlayerConfig.startPage || 1);
+      Pages.goto(playerConfig.startPage || 1);
     }
   }
 
@@ -695,6 +691,7 @@
     }
 
     applyPagingMode = () => {
+      console.log('app', playerConfig.pagingMode);
       document.querySelector('#unit').classList.add(playerConfig.pagingMode);
       this._setScrollObserver();
     }
@@ -835,6 +832,7 @@
     }
 
     togglePageNavButtons = () => {
+      console.log(Pages.currentPage, Pages.pageCount, playerConfig.pagingMode)
       document.querySelector('#unit').classList[Pages.hasPages ? 'add' : 'remove']('paged');
       this.toggleButton('next-page',
         Pages.pageCount > 1 && Pages.currentPage < Pages.pageCount,
@@ -943,7 +941,6 @@
     }
 
     removeAllPointers = () => {
-      console.log('rem');
       document.querySelectorAll(`vsp-pointer`)
         .forEach(element => element.parentElement.removeChild(element));
       document.querySelector('#unit').removeEventListener('scroll', PlayerUI.removeAllPointers);

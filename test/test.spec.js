@@ -1076,7 +1076,7 @@ describe('simple player', () => {
           logPolicy: 'debug',
           stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: 'verona-simple-player-1.0.0'
+        unitDefinitionType: 'iqb-simple-html@1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1111,7 +1111,7 @@ describe('simple player', () => {
           logPolicy: 'rich',
           stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: 'verona-simple-player-1.0.0'
+        unitDefinitionType: 'iqb-simple-html@1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1146,7 +1146,7 @@ describe('simple player', () => {
           logPolicy: 'lean',
           stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: 'verona-simple-player-1.0.0'
+        unitDefinitionType: 'iqb-simple-html@1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1180,7 +1180,7 @@ describe('simple player', () => {
           logPolicy: 'disabled',
           stateReportPolicy: 'on-demand'
         },
-        unitDefinitionType: 'verona-simple-player-1.0.0'
+        unitDefinitionType: 'iqb-simple-html@1.0.0'
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
