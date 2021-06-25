@@ -514,7 +514,7 @@ describe('simple player', () => {
         unitDefinition: '<h1>Virtual Unit</h1>',
         sessionId: '1',
         playerConfig: {
-          enabledNavigationTargets: ['#next', '#prev']
+          enabledNavigationTargets: ['next', 'previous']
         }
       });
 

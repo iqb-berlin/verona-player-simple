@@ -845,10 +845,10 @@
     }
 
     toggleUnitNavButtons = () => {
-      this.toggleButton('first-unit', playerConfig.enabledNavigationTargets.indexOf('#first') > -1);
-      this.toggleButton('prev-unit', playerConfig.enabledNavigationTargets.indexOf('#prev') > -1);
-      this.toggleButton('next-unit', playerConfig.enabledNavigationTargets.indexOf('#next') > -1);
-      this.toggleButton('last-unit', playerConfig.enabledNavigationTargets.indexOf('#last') > -1);
+      this.toggleButton('first-unit', playerConfig.enabledNavigationTargets.indexOf('first') > -1);
+      this.toggleButton('prev-unit', playerConfig.enabledNavigationTargets.indexOf('previous') > -1);
+      this.toggleButton('next-unit', playerConfig.enabledNavigationTargets.indexOf('next') > -1);
+      this.toggleButton('last-unit', playerConfig.enabledNavigationTargets.indexOf('last') > -1);
     }
 
     markElementTouched = elem => {
@@ -1026,16 +1026,16 @@
   PlayerUI.addEventListener('click', '#prev-page', () => Pages.goto('#previous'));
 
   PlayerUI.addEventListener('click', '#prev-unit', () => {
-    Message.send.vopUnitNavigationRequestedNotification("#previous");
+    Message.send.vopUnitNavigationRequestedNotification("previous");
   });
   PlayerUI.addEventListener('click', '#next-unit', () => {
-    Message.send.vopUnitNavigationRequestedNotification("#next");
+    Message.send.vopUnitNavigationRequestedNotification("next");
   });
   PlayerUI.addEventListener('click', '#first-unit', () => {
-    Message.send.vopUnitNavigationRequestedNotification("#first");
+    Message.send.vopUnitNavigationRequestedNotification("first");
   });
   PlayerUI.addEventListener('click', '#last-unit', () => {
-    Message.send.vopUnitNavigationRequestedNotification("#last");
+    Message.send.vopUnitNavigationRequestedNotification("last");
   });
   PlayerUI.addEventListener('click', 'vsp-message-close', () => {
     PlayerUI.toggleMessage();
