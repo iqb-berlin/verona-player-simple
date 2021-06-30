@@ -753,7 +753,7 @@ describe('simple player', () => {
       expect(await vspMessage.isDisplayed()).toBeFalse();
 
       await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['responsesIncomplete'] });
-      await driver.sleep(30);
+      await driver.sleep(60);
 
       expect(await vspMessage.isDisplayed()).toBeTrue();
       const vspMessageLinks = await vspMessage.findElements(By.css('[onclick]'));
@@ -805,7 +805,7 @@ describe('simple player', () => {
       expect(await vspMessage.isDisplayed()).toBeFalse();
 
       await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['presentationIncomplete'] });
-      await driver.sleep(30);
+      await driver.sleep(60);
       expect(await vspMessage.isDisplayed()).toBeTrue();
 
       // we expect 4 messages: 2 from pages (one not scrolled to bottom, one not seen, 2 from special)
