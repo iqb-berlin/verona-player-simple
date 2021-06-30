@@ -508,7 +508,7 @@ describe('simple player', () => {
   });
 
   describe('unit navigation', () => {
-    fit('should enable the buttons given in enabledNavigationTargets', async done => {
+    it('should enable the buttons given in enabledNavigationTargets', async done => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: '<h1>Virtual Unit</h1>',
