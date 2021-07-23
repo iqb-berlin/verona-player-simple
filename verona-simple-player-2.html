@@ -692,7 +692,6 @@
     }
 
     applyPagingMode = () => {
-      console.log('app', playerConfig.pagingMode);
       document.querySelector('#unit').classList.add(playerConfig.pagingMode);
       this._setScrollObserver();
     }
@@ -833,7 +832,6 @@
     }
 
     togglePageNavButtons = () => {
-      console.log(Pages.currentPage, Pages.pageCount, playerConfig.pagingMode)
       document.querySelector('#unit').classList[Pages.hasPages ? 'add' : 'remove']('paged');
       this.toggleButton('next-page',
         Pages.pageCount > 1 && Pages.currentPage < Pages.pageCount,
@@ -863,7 +861,6 @@
       //infoBoxElem.innerHTML = document.querySelector('#player-info-template').innerHTML;
       //const meta = {...document.querySelector('meta[name="application-name"]').dataset};
       const meta = JSON.parse(document.querySelector("script[type='application/ld+json']").innerText);
-      console.log(meta);
       infoBoxElem.innerHTML = `
         <h1>${meta.name.en} ${meta.version}</h1>
         <p><a href="${meta.maintainer.url}" target="_blank">${meta.maintainer.name.en}</a></p>
