@@ -225,6 +225,7 @@
           some: () => SoundModule.getState().length > 1
         }
         Unit.dataPartsCollectors['audio'] = SoundModule.getState;
+        PlayerUI.presentationReportFactors['audio'] = () => 'Audio has not been played to the end';
 
         document.addEventListener('audioStateChange', event => {
           Message.send.vopStateChangedNotification();
