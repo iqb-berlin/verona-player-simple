@@ -17,7 +17,7 @@ and the player does the rest. Use some special Ids for some special buttons.
 * You need a Verona-Host-System to run this Software, for example the 
 [IQB-Testcenter](https://github.com/iqb-berlin/testcenter-setup) or the 
 [Verona-Player-Testbed](https://github.com/iqb-berlin/verona-player-testbed).
-* The whole player is `verona-simple-player-1.html`, there is no build-process or whatever. 
+* The whole player is `verona-simple-player-2.html`, there is no build-process or whatever. 
 
 ## Development Rules for Units
 
