@@ -662,7 +662,7 @@ describe('simple player', () => {
   it('should send the correct responseProgress', async done => {
     await send({
       type: 'vopStartCommand',
-      unitDefinition: "<input type='number' name='first' /><input type='number' name='second' />",
+      unitDefinition: "<input type='number' name='first' required /><input type='number' name='second' required />",
       sessionId: '1',
       playerConfig: {
         stateReportPolicy: 'on-demand'
@@ -681,7 +681,7 @@ describe('simple player', () => {
     await first.sendKeys('not a number');
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
     expect((await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification')).unitState.responseProgress)
-      .toEqual('some');
+      .toEqual('none');
 
     await second.sendKeys('1');
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
@@ -701,7 +701,7 @@ describe('simple player', () => {
   it('should send the correct responseProgress on programmatically changed fields', async done => {
     await send({
       type: 'vopStartCommand',
-      unitDefinition: "<input type='text' name='field' />",
+      unitDefinition: "<input type='text' name='field' required />",
       sessionId: '1',
       playerConfig: {
         stateReportPolicy: 'on-demand'
@@ -1226,18 +1226,11 @@ describe('simple player', () => {
       done();
     });
 
-    it('mark a radio-group as touched when one element of the group is touched', async done => {
-      await loadPlayer({
-        debounceStateMessages: 0,
-        debounceKeyboardEvents: 0
-      });
-
+    it('can show it\'s own metadata', async done => {
       await send({
         type: 'vopStartCommand',
-        unitDefinition: `
-          <input type="radio" id="radio_button_1" name="group" value="1" >
-          <hr>
-          <input type="radio" id="radio_button_2" name="group" value="2">`,
+        unitDefinition:
+          '<div id="show" onclick=\'document.querySelector("#unit").appendChild(PlayerUI.getPlayerInfoHTML())\'>I</div>',
         sessionId: '1',
         playerConfig: {
           logPolicy: 'disabled',
@@ -1245,43 +1238,11 @@ describe('simple player', () => {
         }
       });
 
-      await MessageRecorder.recordMessages(driver);
-
-      await send({ type: 'vopGetStateRequest', sessionId: '1' });
-      const msg1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
-
-      expect(msg1.unitState.responseProgress).toEqual('none');
-
-      const actions = driver.actions({ async: true });
-      await actions
-        .move({ origin: driver.findElement(By.id('radio_button_1')) })
-        .perform();
-
-      await send({ type: 'vopGetStateRequest', sessionId: '1' });
-      const msg2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
-
-      expect(msg2.unitState.responseProgress).toEqual('complete');
-
+      const showButton = driver.findElement(By.id('show'));
+      await showButton.click();
+      const vspMeta = driver.findElement(By.id('vsp-meta'));
+      expect(await vspMeta.isDisplayed()).toBeTrue();
       done();
     });
-  });
-
-  it('can show it\'s own metadata', async done => {
-    await send({
-      type: 'vopStartCommand',
-      unitDefinition:
-        '<div id="show" onclick=\'document.querySelector("#unit").appendChild(PlayerUI.getPlayerInfoHTML())\'>I</div>',
-      sessionId: '1',
-      playerConfig: {
-        logPolicy: 'disabled',
-        stateReportPolicy: 'on-demand'
-      }
-    });
-
-    const showButton = driver.findElement(By.id('show'));
-    await showButton.click();
-    const vspMeta = driver.findElement(By.id('vsp-meta'));
-    expect(await vspMeta.isDisplayed()).toBeTrue();
-    done();
   });
 });

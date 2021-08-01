@@ -1,6 +1,6 @@
 {
-  "name": "verona-player-html",
-  "version": "2.0.0",
+  "name": "verona-player-simple",
+  "version": "2.1.0",
   "description": "A dependency-free, vanilla-js Verona3-Player which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
   "dependencies": {},
   "devDependencies": {

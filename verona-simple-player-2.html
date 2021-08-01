@@ -479,40 +479,19 @@
       }, 'complete');
 
     // TODO make extensible like PresentationProgress
+    // TODO take care of contenteditable-elements
     getResponseProgress = () => {
-      /**
-       * The state of being done for an item is not well defined in Verona2.
-       * It pretty much open, what for example makes a checkbox-item `done`, when it's unchecked,
-       * since it can not be told if it's left unchecked intentional not not.
-       * For this particular player, we define done as being noticed, to it's enough to hover with the mouse over
-       * the element.
-       * See: https://github.com/verona-interfaces/player/issues/25
-       */
-
       const elements =  [...document.querySelectorAll(PlayerUI.itemElements)];
-
-      const touchedGroupedByName = {};
       const allCount = elements.length;
       let validCount = 0;
 
       elements.forEach(item => {
         validCount += (!isDefined(item.validity) || item.validity.valid) ? 1 : 0;
-        if (!touchedGroupedByName[item.name]) {
-          touchedGroupedByName[item.name] = {
-            count: 0,
-            touched: 0
-          }
-        }
-        touchedGroupedByName[item.name].count += 1;
-        touchedGroupedByName[item.name].touched += (item.dataset.touched ? 1 : 0);
       });
 
-      const touchedCount = Object.values(touchedGroupedByName)
-        .reduce((agg, i) => agg + (i.touched ? i.count : 0), 0);
-
-      if (allCount === touchedCount && touchedCount === validCount) {
+      if (allCount === validCount) {
         return 'complete'
-      } else if (touchedCount) {
+      } else if (validCount) {
         return 'some'
       } else {
         return 'none';
@@ -851,15 +830,9 @@
       this.toggleButton('end-unit', playerConfig.enabledNavigationTargets.indexOf('end') > -1);
     }
 
-    markElementTouched = elem => {
-      elem.dataset.touched = "true";
-    }
-
     getPlayerInfoHTML = () => {
       const infoBoxElem = document.createElement('div');
       infoBoxElem.id = 'vsp-meta';
-      //infoBoxElem.innerHTML = document.querySelector('#player-info-template').innerHTML;
-      //const meta = {...document.querySelector('meta[name="application-name"]').dataset};
       const meta = JSON.parse(document.querySelector("script[type='application/ld+json']").innerText);
       infoBoxElem.innerHTML = `
         <h1>${meta.name.en} ${meta.version}</h1>
@@ -1011,15 +984,10 @@
   PlayerUI.addEventListener('keypress', PlayerUI.itemElements, PlayerUI.preventFromImplicitSubmission);
 
   PlayerUI.addEventListener('change', PlayerUI.itemElements, Message.send.vopStateChangedNotification);
-  PlayerUI.addEventListener('programmaticallyChange', PlayerUI.itemElements, event => {
-    PlayerUI.markElementTouched(event.target);
-    Message.send.vopStateChangedNotification();
-  });
+  PlayerUI.addEventListener('programmaticallyChange', PlayerUI.itemElements, Message.send.vopStateChangedNotification);
   PlayerUI.addEventListener('keyup', PlayerUI.itemElements,
     Time.debounce(Message.send.vopStateChangedNotification, parseInt(playerSettings.debounceKeyboardEvents), 10)
   );
-  PlayerUI.addEventListener('mouseover', PlayerUI.itemElements, event => PlayerUI.markElementTouched(event.target));
-  PlayerUI.addEventListener('keyup', PlayerUI.itemElements, event => PlayerUI.markElementTouched(event.target));
 
   PlayerUI.addEventListener('click', '#next-page', () => Pages.goto('#next'));
   PlayerUI.addEventListener('click', '#prev-page', () => Pages.goto('#previous'));
