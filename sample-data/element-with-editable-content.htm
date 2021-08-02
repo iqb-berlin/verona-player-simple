@@ -1,0 +1,19 @@
+<p>
+    <b>Besides form-elements every element with <code>contenteditable</code>-attribute is considered as item
+        and gets tracked!</b>
+</p>
+<table style="border-collapse: collapse; width: 100%">
+    <tr>
+        <td style="border: 1px solid silver"><div contenteditable>a</div></td>
+        <td style="border: 1px solid silver"><div contenteditable>b</div></td>
+    </tr>
+    <tr>
+        <td style="border: 1px solid silver"><div contenteditable>c</div></td>
+        <td style="border: 1px solid silver"><div contenteditable>d</div></td>
+    </tr>
+</table>
+<p>
+    You can use the <code>name</code>- and <code>required</code>-attributes on <code>contenteditable</code>-elements
+    as if they were form-elements.
+</p>
+<pre contenteditable required name="editable-named-required" style="background: silver; border-radius: 3px; padding: 2px"></pre>

@@ -830,6 +830,64 @@ describe('simple player', () => {
     });
   });
 
+  it('should treat elements with `contenteditable` like form fields regarding `name` and `required`', async done => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition: `
+        <pre contenteditable required name="must-have"></pre>
+        <pre contenteditable name="nice-2-have"></pre>
+        <pre contenteditable id="unnamed"></pre>
+      `,
+      sessionId: '1',
+      playerConfig: {
+        stateReportPolicy: 'on-demand'
+      }
+    });
+
+    const mustHave = await driver.findElement(By.css('[name="must-have"]'));
+    const nice2Have = await driver.findElement(By.css('[name="nice-2-have"]'));
+    const unnamed = await driver.findElement(By.id('unnamed'));
+
+    await MessageRecorder.recordMessages(driver);
+
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    let message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
+    expect(message.unitState.responseProgress).toEqual('some'); // because emtpy non-required text-items are valid
+
+    await nice2Have.sendKeys('something');
+    await unnamed.sendKeys('anything');
+
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
+    expect(message.unitState.responseProgress).toEqual('some');
+    expect(message.unitState.dataParts.all.answers).toEqual({
+      '': 'anything',
+      'must-have': '',
+      'nice-2-have': 'something'
+    });
+
+    await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['responsesIncomplete'] });
+    await driver.sleep(60);
+
+    const vspMessage = await driver.findElement(By.css('vsp-message'));
+
+    const vspMessageLinks = await vspMessage.findElements(By.css('[onclick]'));
+    expect(vspMessageLinks.length).toEqual(1);
+
+    await mustHave.sendKeys('whatever');
+
+    await send({ type: 'vopGetStateRequest', sessionId: '1' });
+    message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
+    expect(message.unitState.responseProgress).toEqual('complete');
+    expect(message.unitState.dataParts.all.answers).toEqual({
+      'must-have': 'whatever',
+      'nice-2-have': 'something',
+      '': 'anything'
+    });
+
+    done();
+  });
+
   it('should send the correct `presentationProgress` in paginated mode', async done => {
     await loadPlayer({
       debounceStateMessages: 0,
@@ -1230,7 +1288,7 @@ describe('simple player', () => {
       await send({
         type: 'vopStartCommand',
         unitDefinition:
-          '<div id="show" onclick=\'document.querySelector("#unit").appendChild(PlayerUI.getPlayerInfoHTML())\'>I</div>',
+          '<div id="go" onclick=\'document.querySelector("#unit").appendChild(PlayerUI.getPlayerInfoHTML())\'>I</div>',
         sessionId: '1',
         playerConfig: {
           logPolicy: 'disabled',
@@ -1238,7 +1296,7 @@ describe('simple player', () => {
         }
       });
 
-      const showButton = driver.findElement(By.id('show'));
+      const showButton = driver.findElement(By.id('go'));
       await showButton.click();
       const vspMeta = driver.findElement(By.id('vsp-meta'));
       expect(await vspMeta.isDisplayed()).toBeTrue();

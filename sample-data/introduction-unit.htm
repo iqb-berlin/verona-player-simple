@@ -49,14 +49,16 @@
     </div>
     <div style="flex: 50%; padding: 2px">
       <p><b>Every standard HTML-form-elements can be used as items</b></p>
+      <label><input name="required-text-field" required />Required Text field </label>
+      <label><input name="readonly-text-field" value="read-only" readonly />Read-Only Text field </label>
       <label><input name="text-field" />Text field </label>
-      <label><input type="radio" name="text-field" value="x"/>Text field </label>
-      <label><input type="radio" name="text-field" value="y" />Text field </label>
+      <label><input type="radio" name="text-field" value="x" />Radio Button with same name as Text field</label>
+      <label><input type="radio" name="text-field" value="y" />Radio Button with same name as Text field</label>
       <label><input type="number" min="2" max="4" name="number-field" />Number field (between 2 and 4)</label>
       <label><input type="date" name="date-field" />Date field </label>
       <label><input type="email" name="email-field" />Email field </label>
       <label><input type="range" min="1" max="10" name="range-field" />Range field (from 1 to 10)</label>
-      <label><input type="radio" name="radio-group" value="a" />Radio group: value-A </label>
+      <label><input type="radio" name="radio-group" value="a" required />Radio group: value-A </label>
       <label><input type="radio" name="radio-group" value="b" />value-B </label>
       <label><input type="radio" name="radio-group" value="c" />value-C </label>
       <label><input type="checkbox" name="check-box" />Checkbox </label>
@@ -274,8 +276,10 @@
       </label>
     </div>
     <div style="flex: 50%; padding: 2px">
-      <p><b>Besides form-elements every element with <code>contenteditable</code>-attribute is considered as item
-        and gets tracked!</b></p>
+      <p>
+        <b>Besides form-elements every element with <code>contenteditable</code>-attribute is considered as item
+        and gets tracked!</b>
+      </p>
       <table style="border-collapse: collapse; width: 100%">
         <tr>
           <td style="border: 1px solid silver"><div contenteditable>a</div></td>
@@ -286,6 +290,11 @@
           <td style="border: 1px solid silver"><div contenteditable>d</div></td>
         </tr>
       </table>
+      <p>
+        You can use the <code>name</code>- and <code>required</code>-attributes on <code>contenteditable</code>-elements
+        as if they were form-elements.
+      </p>
+      <pre contenteditable required name="editable-named-required" style="background: silver; border-radius: 3px; padding: 2px"></pre>
     </div>
   </div>
 </fieldset>

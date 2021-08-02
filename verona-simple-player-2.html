@@ -7,7 +7,7 @@
   <meta
     name="application-name"
     content="verona-simple-player"
-    data-version="2.0.0"
+    data-version="2.1.0"
     data-repository-url="https://github.com/iqb-berlin/verona-player-simple"
     data-api-version="3.0.0"
     data-not-supported-api-features=""
@@ -35,7 +35,7 @@
       "description": {
         "en": "<p>This is a simple, dependency-less, vanilla-js-written, but full-featured unit player, mainly as showcase for developers and for software-testing.</p><p>It does implement the <a href='https://github.com/verona-interface' target='_blank'>Verona 3.0.0</a>-Standard and can be used for units containing simple any content in HTML-format.</p><p>Unit Description ist the <code>form</code>-content as HTML. Just give some names to the form element, and the player does the rest. Use some special Ids for some special buttons.</p>"
       },
-      "version": "2.0.0",
+      "version": "2.1.0",
       "apiVersion": "3.0.0",
       "repository": {
         "type": "git",
@@ -479,14 +479,18 @@
       }, 'complete');
 
     // TODO make extensible like PresentationProgress
-    // TODO take care of contenteditable-elements
     getResponseProgress = () => {
       const elements =  [...document.querySelectorAll(PlayerUI.itemElements)];
       const allCount = elements.length;
       let validCount = 0;
 
       elements.forEach(item => {
-        validCount += (!isDefined(item.validity) || item.validity.valid) ? 1 : 0;
+        if (!item.isContentEditable) {
+          validCount += (!isDefined(item.validity) || item.validity.valid) ? 1 : 0;
+        } else {
+          validCount += (Unit.elementIsRequired(item) && !item.innerText.trim()) ? 0 : 1;
+        }
+        console.log(item, validCount);
       });
 
       if (allCount === validCount) {
@@ -494,6 +498,9 @@
       } else if (validCount) {
         return 'some'
       } else {
+        // Verona3 wants invalid answers to be ignored. Since semantic validity in the simple player is equivalent
+        // to validity in the HTML-sense, empty text-items count always as valid. As a side effect, the responseProgress
+        // of 'none' is impossible as long the unit have non-required text-items.
         return 'none';
       }
     }
@@ -508,6 +515,9 @@
       const all = dataParts.all || {};
       return all[partName] || {};
     }
+
+    elementIsRequired = element => element.getAttribute('required') != null &&
+            (["", "true"].indexOf(element.getAttribute('required').toLowerCase()) > -1);
 
     _setUnitData = unitState => {
       Answers.set(this.selectDataPartFromUnitState(unitState, 'answers'));
@@ -547,15 +557,16 @@
         const name = element.getAttribute("name") || '';
         if (isDefined(carry[name])) {
           carry[name] = Array.isArray(carry[name])
-            ? [...carry[name], element.innerText]
-            : [carry[name], element.innerText];
+            ? [...carry[name], element.innerText.trim()]
+            : [carry[name], element.innerText.trim()];
         } else {
-          carry[name] = element.innerText;
+          carry[name] = element.innerText.trim();
         }
         return carry;
       }, {});
 
     _setAnswer = (name, value, index = 0) => {
+      // TODO use PlayerUI.itemElements
       const elements = document.querySelectorAll(name
         ? `form [name="${name}"]`
         : "form select:not([name]), form textarea:not([name]), form input:not([name]), form [contenteditable]:not([name])"
@@ -865,14 +876,24 @@
 
     _createValidationReport = () =>
       [...document.querySelectorAll(PlayerUI.itemElements)]
-        .filter(element => element.checkValidity)
+        .filter(element => element.checkValidity || element.isContentEditable)
         .map(element => {
-          element.checkValidity();
-          return {
-            label: element.labels.length ? element.labels[0].innerText : element.name,
-            name: element.name,
-            message: element.validationMessage
+          if (element.checkValidity) {
+            element.checkValidity();
+            return {
+              label: element.labels.length ? element.labels[0].innerText : element.name,
+              name: element.name,
+              message: element.validationMessage
+            }
           }
+          if (element.isContentEditable && Unit.elementIsRequired(element) && !element.innerText.trim()) {
+            return {
+              label: element.getAttribute('name') ?? "Editable Element",
+              name: element.getAttribute('name') ?? '',
+              message: "Has no content"
+            }
+          }
+          return false;
         })
         .filter(entry => entry.message)
         .map(e =>
@@ -881,6 +902,7 @@
         .join('');
 
     highlightElements = name => {
+      // TODO nameless elements can not be highlighted
       this.removeAllPointers();
       this.gotoElement(`[name='${name}']`);
       setTimeout(() => this.addPointers(`[name='${name}']`), 15);
