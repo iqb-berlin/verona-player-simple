@@ -1,0 +1,10 @@
+<p>External File Contents:</p>
+<pre id="external-content">external content should appear here</pre>
+<script>
+  document.addEventListener('vopStartCommand', () => {
+    fetch(`${playerConfig.directDownloadUrl}/package.json`).then(
+      async res => {
+        document.querySelector("#external-content").innerHTML = await res.text();
+      });
+  });
+</script>
