@@ -39,7 +39,8 @@
         "repositoryType": "git",
         "licenseType": "MIT",
         "licenseUrl": "https://raw.githubusercontent.com/iqb-berlin/verona-player-simple/main/LICENSE"
-      }
+      },
+      "notSupportedFeatures": []
     }
   </script>
 
@@ -188,6 +189,21 @@
       cursor: auto;
     }
 
+    #vsp-meta dl dd {
+        display: inline;
+        margin: 0;
+    }
+
+    #vsp-meta dl dd:after {
+        display: block;
+        content: '';
+    }
+
+    #vsp-meta dl dt {
+        display: inline-block;
+        min-width: 250px;
+    }
+
     @keyframes flyin {
       to {
         filter: blur(0);
@@ -268,7 +284,8 @@
       .reduce((carry, item) => {const tmp = item.split("="); carry[tmp[0]] = tmp[1]; return carry;}, {})
   );
 
-  // verona2 supported settings
+  const playerMetaData = JSON.parse(document.querySelector('script[type="application/ld+json"]').innerText)
+
   let playerConfig = {
     logPolicy: 'eager', // "disabled" | "lean" | "rich" | "debug"
     unitNumber: 0,
@@ -276,7 +293,9 @@
     unitId: 'unit',
     enabledNavigationTargets: [], // can contain  "next" "previous" "first" "last" "end"
     stateReportPolicy: "eager", // none" | "eager" | "on-demand"
-    pagingMode: "separate", // "separate" | "concat-scroll" | "concat-scroll-snap"
+    pagingMode: "separate", // "separate" | "concat-scroll" | "concat-scroll-snap",
+    startPage: null,
+    directDownloadUrl: null
   }
 
   let sessionId = "";
@@ -344,10 +363,10 @@
       );
 
       vopReadyNotification = () => {
-        this._send(Object.assign(
-          {type: 'vopReadyNotification'},
-          document.querySelector('meta[name="application-name"]').dataset
-        ));
+        this._send({
+          type: 'vopReadyNotification',
+          metadata: playerMetaData
+        });
       };
 
       vopUnitNavigationRequestedNotification = target => {
@@ -842,13 +861,23 @@
     getPlayerInfoHTML = () => {
       const infoBoxElem = document.createElement('div');
       infoBoxElem.id = 'vsp-meta';
-      const meta = JSON.parse(document.querySelector("script[type='application/ld+json']").innerText);
       infoBoxElem.innerHTML = `
-        <h1>${meta.name.en} ${meta.version}</h1>
-        <p><a href="${meta.maintainer.url}" target="_blank">${meta.maintainer.name.en}</a></p>
+        <h1>${playerMetaData.name[0].value} ${playerMetaData.version}</h1>
+        <p>${playerMetaData.description[0].value}</p>
         <dl>
-           <dt>Verona-Version</dt><dl>${meta.apiVersion}</dl>
-           <dt>Not-Supported-Features</dt><dl>${meta.notSupportedFeatures.join()}</dl>
+          <dt>Maintainer</dt>
+          <dd>
+            <a href="${playerMetaData.maintainer.url}" target="_blank">${playerMetaData.maintainer.name[0].value}</a>
+            <a href="mailto:${playerMetaData.maintainer.email}">Email</a>
+          </dd>
+          <dt>Verona-Version</dt>
+          <dd>${playerMetaData.specVersion}</dd>
+          <dt>Not-Supported-Features</dt>
+          <dd>${playerMetaData.notSupportedFeatures.join()}</dd>
+          <dt>Repository</dt>
+          <dd><a href="${playerMetaData.code.repositoryUrl}">${playerMetaData.code.repositoryType}</a></dd>
+          <dt>License</dt>
+          <dd><a href="${playerMetaData.code.licenseUrl}">${playerMetaData.code.licenseType}</a></dd>
         </dl>
       `;
       return infoBoxElem;
