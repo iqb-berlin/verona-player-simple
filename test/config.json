@@ -1,4 +1,4 @@
 {
-    "headless": true,
-    "keepOpen": false
+    "headless": false,
+    "keepOpen": true
 }

@@ -276,7 +276,8 @@
   const playerSettings = Object.assign(
     {
       debounceStateMessages: 1000,
-      debounceKeyboardEvents: 100
+      debounceKeyboardEvents: 100,
+      delayReadyNotification: 0
     },
     location.search
       .substr(1)
@@ -363,10 +364,14 @@
       );
 
       vopReadyNotification = () => {
-        this._send({
-          type: 'vopReadyNotification',
-          metadata: playerMetaData
-        });
+        console.log(playerMetaData);
+        setTimeout(
+          () => this._send({
+            type: 'vopReadyNotification',
+            metadata: playerMetaData
+          }),
+          playerSettings.delayReadyNotification
+        )
       };
 
       vopUnitNavigationRequestedNotification = target => {
@@ -437,7 +442,7 @@
 
     receive = (type, data) => {
       if (sessionId && (data.sessionId !== sessionId)) {
-        throw new Error("Wrong sessionId");
+        throw new Error("Wrong sessionId " + type);
       }
       if (type === "vopStartCommand") {
         Unit.start(data);

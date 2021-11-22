@@ -16,7 +16,7 @@ if (testConfig.headless) {
   options.addArguments('-headless');
 }
 
-const playerPath = `${__dirname}/../verona-simple-player-2.html`;
+const playerPath = `${__dirname}/../verona-player-simple-4.0.0.html`;
 
 const send = async message => {
   await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
@@ -1300,6 +1300,18 @@ describe('simple player', () => {
       await showButton.click();
       const vspMeta = driver.findElement(By.id('vsp-meta'));
       expect(await vspMeta.isDisplayed()).toBeTrue();
+      done();
+    });
+  });
+
+  describe('(verona 4)', () => {
+    it('should send the whole metadata with vopReadyNotification', async done => {
+      await loadPlayer({ delayReadyNotification: 100 });
+      await MessageRecorder.recordMessages(driver);
+      const msg = await MessageRecorder.getLastMessage(driver, 'vopReadyNotification');
+      expect(msg.metadata.type).toEqual('player');
+      expect(msg.metadata.id).toEqual('simple');
+      expect(msg.metadata.code.repositoryUrl).toEqual('https://github.com/iqb-berlin/verona-player-simple');
       done();
     });
   });
