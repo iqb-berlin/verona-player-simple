@@ -37,6 +37,7 @@ const longText = (length = 2000) => Array.from(
 
 describe('simple player', () => {
   beforeAll(async done => {
+    console.log('### beforeAll ###');
     driver = await new Builder()
       .forBrowser('firefox')
       .setFirefoxOptions(options)
