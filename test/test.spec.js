@@ -41,6 +41,7 @@ describe('simple player', () => {
       .forBrowser('firefox')
       .setFirefoxOptions(options)
       .build();
+    console.log(!driver ? '##### driver is not' : '#### ');
     done();
   });
 
