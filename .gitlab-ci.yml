@@ -13,4 +13,4 @@ test:
     - whoami
     - npm install
     - export TERM=xterm
-    - npm run test
+    - sudo -u builder npm run test
