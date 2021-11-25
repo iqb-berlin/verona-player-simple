@@ -44,7 +44,9 @@ describe('simple player', () => {
         .setFirefoxOptions(options)
         .build();
     } catch (e) {
+      console.log("€€€€€€€€€€€");
       console.error(e);
+      console.log("€€€€€€€€€€€");
     }
     console.log(!driver ? '##### driver is not' : '#### ');
     done();

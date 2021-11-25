@@ -10,6 +10,7 @@ test:
   script:
     - apt-get update && apt-get install firefox-esr -y
     - firefox-esr --version
+    - whoami
     - npm install
     - export TERM=xterm
     - npm run test
