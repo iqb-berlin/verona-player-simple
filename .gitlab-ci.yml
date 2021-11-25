@@ -8,7 +8,7 @@ image: node:14.16-buster
 test:
   stage: test
   script:
-    - apt-get update && apt-get install firefox-esr -y
+    - apt-get update && apt-get install firefox-esr sodu -y
     - firefox-esr --version
     - whoami
     - npm install
