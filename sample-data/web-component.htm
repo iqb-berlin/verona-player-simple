@@ -24,7 +24,7 @@
   border: 1px solid grey;
 }
 
-#field > .field {
+.field {
   background-color: lime;
   display: flex;
   justify-content: center;
@@ -32,16 +32,16 @@
   cursor: pointer;
 }
 
-#field > .field:hover {
+.field:hover {
   background: darkgreen;
 }
 
-#field > .field.selected {
+.field.selected {
   color: silver;
   background: darkred;
 }
 
-#field > .field.selected:hover {
+.field.selected:hover {
   background: red;
 }
 
@@ -100,20 +100,36 @@
       this.$labelBottom = this.shadowRoot.querySelector("#label-bottom-content");
       this.$labelLeft = this.shadowRoot.querySelector("#label-left-content");
       this.$labelRight = this.shadowRoot.querySelector("#label-right-content");
+      this.$style = this.shadowRoot.querySelector("style");
+      this.labels = '';
     }
     static get observedAttributes() {
-      return ["size", "label-top", "label-bottom", "label-left", "label-right", "value", "name"];
+      return [
+        "size",
+        "label-top",
+        "label-bottom",
+        "label-left",
+        "label-right",
+        "labels",
+        "value",
+        "name",
+        "inner-style"
+      ];
     }
     attributeChangedCallback(name, oldValue, newValue) {
       switch (name) {
         case "size":
           this._createFields(newValue);
           break;
-        case "value":
-          this._updateValue(newValue);
+        case "labels":
+          try {
+            this.labels = JSON.parse(newValue);
+          } catch (e) {
+            this.labels = '';
+          }
+          this._updateFieldLabels();
           break;
         case "label-top":
-          console.log("top", newValue);
           this.$labelTop.innerText = newValue;
           break;
         case "label-bottom":
@@ -125,6 +141,10 @@
         case "label-right":
           this.$labelRight.innerText = newValue;
           break;
+        case "inner-style":
+          this.$style.innerHTML += newValue;
+          break;
+        case "value":
         default:
           this._updateValue(newValue);
           break;
@@ -147,12 +167,28 @@
     _createField(x, y) {
       const field  = document.createElement('div');
       field.className = 'field';
-      field.dataset.value = `${x}, ${y}`;
-      field.innerText = `${x}, ${y}`;
+      field.dataset.value = this._getFieldValue(x, y);
+      field.innerText = this._getFieldLabel(x, y);
       field.addEventListener('click', () => {
         this._updateValue(field.dataset.value);
       });
       return field;
+    }
+    _getFieldValue(x, y) {
+      return `${x}, ${y}`;
+    }
+    _getCoordinatesFromValue(fieldValue) {
+      return fieldValue.split(',').map(s => parseInt(s.trim()));
+    }
+    _getFieldLabel(x, y) {
+      if (this.labels.length) {
+        if (this.labels[x] && this.labels[x][y]) {
+          return this.labels[x][y];
+        } else {
+          return "";
+        }
+      }
+      return this._getFieldValue(x, y);
     }
     _updateValue(value) {
       this.$field.querySelectorAll('.field.selected')
@@ -168,6 +204,18 @@
 
       this.value = value;
     }
+    _updateFieldLabels() {
+      console.log('l', this.labels);
+      this._shadowRoot.querySelectorAll(`.field`)
+        .forEach(field => {
+          if (!field.dataset) {
+            console.log('f', field);
+            return;
+          }
+          const xy = this._getCoordinatesFromValue(field.dataset.value);
+          field.innerText = this._getFieldLabel(...xy)
+        });
+    }
   }
   window.customElements.define('db-form-field', FormField);
 </script>
@@ -181,6 +229,7 @@
     label-bottom="bottom"
     name="yolo"
     value="0, 0"
+    labels=""
     style="height: 400px; width: 400px"
 ></db-form-field>
 <hr>
@@ -193,4 +242,17 @@
     name="yolo2"
     value="1, 1"
     style="height: 500px; width: 500px"
+></db-form-field>
+<db-form-field
+    id="other-color"
+    size="10"
+    label-top="top"
+    label-left="left"
+    label-right="right"
+    label-bottom="bottom"
+    name="yolo2"
+    value="1, 1"
+    style="height: 500px; width: 500px; background: black; color: white"
+    inner-style=".field { background: orange; color: black }",
+    labels='[[], ["A", "B"]]'
 ></db-form-field>
