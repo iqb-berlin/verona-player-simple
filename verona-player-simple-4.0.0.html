@@ -45,172 +45,172 @@
   </script>
 
   <style>
-    html, body {
-      height: 100vh;
-      overflow: hidden;
-      font-family: sans-serif;
-      margin: 0;
-    }
-
-    /* TODO Use prefixed custom elements / classes for all player elements to avoid confusion with unit code */
-    #shield {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(0,0,0,0.5);
-      z-index: 51000
-    }
-
-    #unit {
-      overflow: auto;
-      height: 100vh;
-      margin: 0 9em;
-    }
-
-    #unit.paged.separate {
-      overflow-y: auto;
-      height: 100vh;
-    }
-
-    #unit.paged fieldset:first-of-type {
-      display: block
-    }
-
-    #unit.paged.separate fieldset {
-      overflow-y: auto;
-      height: calc(100% - 100px);
-      padding: 50px 20px;
-      border: 0;
-    }
-
-    /* add some whitespace in scollmode, to make it possible to get last pages on the top even if they are small */
-    #unit.paged.concat-scroll:after,
-    #unit.paged.concat-scroll-snap:after {
-      height: 100%;
-      display: block;
-      content: " ";
-    }
-
-    #unit.concat-scroll-snap {
-      scroll-snap-type: y proximity;
-    }
-
-    #unit.concat-scroll-snap fieldset {
-      scroll-snap-align: start;
-    }
-
-    .page-bottom-anchor {
-      display: block;
-      height: 50px;
-    }
-
-    .vsp-navigation-tier {
-      position: fixed;
-    }
-
-    .vsp-navigation-tier button {
-      padding: 2px 6px;
-      cursor: pointer;
-    }
-
-    .vsp-navigation-tier button,
-    vsp-message {
-      border: none;
-      border-radius: 2px;
-      box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.75);
-      background: rgba(0, 0, 0, 0.75);
-      color: white;
-      font-size: small;
-    }
-
-    vsp-message {
-      position: fixed;
-      display: none;
-      max-height: 300px;
-      right: 20px;
-      top: 20px;
-      padding: 10px;
-      width: 300px;
-      filter: blur(4px);
-      opacity: 0;
-      transform: scale(2);
-      transform-origin: center;
-      animation: flyin 0.5s ease forwards;
-    }
-
-    vsp-message [onclick] {
-      cursor: pointer;
-    }
-
-    vsp-message [onclick]:hover {
-      text-decoration: underline;
-      color: grey;
-    }
-
-    vsp-pointer {
-      position: absolute;
-      height: 30px;
-      width: 30px;
-    }
-
-    vsp-pointer:after {
-      position: relative;
-      line-height: 25px;
-      text-shadow: 0 0 5px rgba(0,0,0,0.75);
-      display: inline-block;
-      filter: blur(4px);
-      opacity: 0;
-      transform: scale(2);
-      transform-origin: center;
-      animation: flyin 0.5s ease forwards;
-      font-size: 30px;
-      content: "►";
-    }
-
-    vsp-message-close {
-      position: absolute;
-      right: 5px;
-      top: 2px;
-      cursor: pointer;
-    }
-
-    .vsp-navigation-tier button:hover,
-    vsp-message-close:hover {
-      color: grey
-    }
-
-    .vsp-navigation-tier button:disabled {
-      box-shadow: 0 0 5px 0 rgba(100, 100, 100, 0.75);
-      background: rgba(0, 0, 0, 0.75);
-      color: gray;
-      cursor: auto;
-    }
-
-    #vsp-meta dl dd {
-        display: inline;
-        margin: 0;
-    }
-
-    #vsp-meta dl dd:after {
-        display: block;
-        content: '';
-    }
-
-    #vsp-meta dl dt {
-        display: inline-block;
-        min-width: 250px;
-    }
-
-    @keyframes flyin {
-      to {
-        filter: blur(0);
-        transform: scale(1);
-        opacity: 1;
+      html, body {
+          height: 100vh;
+          overflow: hidden;
+          font-family: sans-serif;
+          margin: 0;
       }
-    }
+
+      /* TODO Use prefixed custom elements / classes for all player elements to avoid confusion with unit code */
+      #shield {
+          display: none;
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0,0,0,0.5);
+          z-index: 51000
+      }
+
+      #unit {
+          overflow: auto;
+          height: 100vh;
+          margin: 0 9em;
+      }
+
+      #unit.paged.separate {
+          overflow-y: auto;
+          height: 100vh;
+      }
+
+      #unit.paged fieldset:first-of-type {
+          display: block
+      }
+
+      #unit.paged.separate fieldset {
+          overflow-y: auto;
+          height: calc(100% - 100px);
+          padding: 50px 20px;
+          border: 0;
+      }
+
+      /* add some whitespace in scollmode, to make it possible to get last pages on the top even if they are small */
+      #unit.paged.concat-scroll:after,
+      #unit.paged.concat-scroll-snap:after {
+          height: 100%;
+          display: block;
+          content: " ";
+      }
+
+      #unit.concat-scroll-snap {
+          scroll-snap-type: y proximity;
+      }
+
+      #unit.concat-scroll-snap fieldset {
+          scroll-snap-align: start;
+      }
+
+      .page-bottom-anchor {
+          display: block;
+          height: 50px;
+      }
+
+      .vsp-navigation-tier {
+          position: fixed;
+      }
+
+      .vsp-navigation-tier button {
+          padding: 2px 6px;
+          cursor: pointer;
+      }
+
+      .vsp-navigation-tier button,
+      vsp-message {
+          border: none;
+          border-radius: 2px;
+          box-shadow: 0 0 5px 0 rgba(0, 0, 0, 0.75);
+          background: rgba(0, 0, 0, 0.75);
+          color: white;
+          font-size: small;
+      }
+
+      vsp-message {
+          position: fixed;
+          display: none;
+          max-height: 300px;
+          right: 20px;
+          top: 20px;
+          padding: 10px;
+          width: 300px;
+          filter: blur(4px);
+          opacity: 0;
+          transform: scale(2);
+          transform-origin: center;
+          animation: flyin 0.5s ease forwards;
+      }
+
+      vsp-message [onclick] {
+          cursor: pointer;
+      }
+
+      vsp-message [onclick]:hover {
+          text-decoration: underline;
+          color: grey;
+      }
+
+      vsp-pointer {
+          position: absolute;
+          height: 30px;
+          width: 30px;
+      }
+
+      vsp-pointer:after {
+          position: relative;
+          line-height: 25px;
+          text-shadow: 0 0 5px rgba(0,0,0,0.75);
+          display: inline-block;
+          filter: blur(4px);
+          opacity: 0;
+          transform: scale(2);
+          transform-origin: center;
+          animation: flyin 0.5s ease forwards;
+          font-size: 30px;
+          content: "►";
+      }
+
+      vsp-message-close {
+          position: absolute;
+          right: 5px;
+          top: 2px;
+          cursor: pointer;
+      }
+
+      .vsp-navigation-tier button:hover,
+      vsp-message-close:hover {
+          color: grey
+      }
+
+      .vsp-navigation-tier button:disabled {
+          box-shadow: 0 0 5px 0 rgba(100, 100, 100, 0.75);
+          background: rgba(0, 0, 0, 0.75);
+          color: gray;
+          cursor: auto;
+      }
+
+      #vsp-meta dl dd {
+          display: inline;
+          margin: 0;
+      }
+
+      #vsp-meta dl dd:after {
+          display: block;
+          content: '';
+      }
+
+      #vsp-meta dl dt {
+          display: inline-block;
+          min-width: 250px;
+      }
+
+      @keyframes flyin {
+          to {
+              filter: blur(0);
+              transform: scale(1);
+              opacity: 1;
+          }
+      }
   </style>
 </head>
 <body>
@@ -246,6 +246,9 @@
 </form>
 
 <script>
+
+  const unitStateDataType = "iqb-simple-player@2.0.0";
+  const unitDefinitionType = "verona-player-simple-4.0.0";
 
   // some polyfills
   (function polyfillReactionToProgrammaticallyChangedInputValue() {
@@ -364,7 +367,6 @@
       );
 
       vopReadyNotification = () => {
-        console.log(playerMetaData);
         setTimeout(
           () => this._send({
             type: 'vopReadyNotification',
@@ -391,6 +393,7 @@
       }
 
       _send = msg => {
+        console.log(msg);
         window.parent.postMessage(msg, '*');
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
       }
@@ -436,7 +439,7 @@
         dataParts: Unit.getData(),
         presentationProgress: Unit.getPresentationProgress(),
         responseProgress: Unit.getResponseProgress(),
-        unitStateDataType: 'iqb-simple-player@1.0.0'
+        unitStateDataType
       });
     }
 
@@ -467,38 +470,43 @@
     start = data => {
       sessionId = data.sessionId || new Error("session ID missing");
 
-      this._setUnit(data["unitDefinition"] || new Error("unitDefinition missing"));
-      const playerConfig = data["playerConfig"] || {};
-      this._setPlayerConfig(playerConfig);
-      this._setUnitData(data["unitState"] || {});
-
-      if (data['unitDefinitionType'] !== "iqb-simple-html@1.0.0") {
-        Log.debug("Unit definition type does not match: " + data['unitDefinitionType']);
+      if (data.unitDefinitionType && (data.unitDefinitionType !== unitDefinitionType)) {
+        Log.debug(`Unit definition type does not match: ${data.unitDefinitionType} and ${unitDefinitionType}`);
       }
+      if (
+        data.unitState && data.unitState.unitStateDataType &&
+        (data.unitState.unitStateDataType !== unitStateDataType)
+      ) {
+        Log.debug(`Unit state type does not match: ${data.unitState.unitStateDataType} & ${unitStateDataType}`);
+      }
+
+      this._setUnit(data.unitDefinition || new Error("unitDefinition missing"));
+      this._setPlayerConfig(data.playerConfig || {});
+      this._setUnitData(data.unitState || {});
 
       PlayerUI.toggleUnitNavButtons();
       PlayerUI.togglePageNavButtons();
     }
 
-    getData = () => ({
-      all:
-        Object.keys(this.dataPartsCollectors)
-          .reduce((carry, key) => {
-            carry[key] = this.dataPartsCollectors[key]();
-            return carry;
-          }, {})
-    });
+    getData = () =>
+      Object.keys(this.dataPartsCollectors)
+        .reduce((carry, key) => {
+          const dataPart = this.dataPartsCollectors[key]();
+          carry[key] = (typeof dataPart !== 'string') ? JSON.stringify(dataPart) : dataPart;
+          return carry;
+        }, {});
 
-    getPresentationProgress = () => Object.keys(this.presentationProgressFactors)
-      .reduce((carry, key) => {
-        if ((carry === 'complete') && this.presentationProgressFactors[key].complete()) {
-          return 'complete';
-        } else if ((carry !== 'none') || this.presentationProgressFactors[key].some()) {
-          return 'some';
-        } else {
-          return 'none'
-        }
-      }, 'complete');
+    getPresentationProgress = () =>
+      Object.keys(this.presentationProgressFactors)
+        .reduce((carry, key) => {
+          if ((carry === 'complete') && this.presentationProgressFactors[key].complete()) {
+            return 'complete';
+          } else if ((carry !== 'none') || this.presentationProgressFactors[key].some()) {
+            return 'some';
+          } else {
+            return 'none'
+          }
+        }, 'complete');
 
     // TODO make extensible like PresentationProgress
     getResponseProgress = () => {
@@ -512,7 +520,6 @@
         } else {
           validCount += (Unit.elementIsRequired(item) && !item.innerText.trim()) ? 0 : 1;
         }
-        console.log(item, validCount);
       });
 
       if (allCount === validCount) {
@@ -528,18 +535,20 @@
     }
 
     selectDataPartFromUnitState = (unitState, partName) => {
-      /**
-       * we have to store the additional states like audio in the unitState.all, because IQB-testcenter as
-       * of 7.3 does neither support custom player-states not other partition of data
-       * than a single `all`-field
-       */
-      const dataParts = unitState.dataParts || {};
-      const all = dataParts.all || {};
-      return all[partName] || {};
+      if (!unitState.dataParts) {
+        return {};
+      }
+      let part = unitState.dataParts[partName] || '{}';
+      try {
+        return JSON.parse(part);
+      } catch (e) {
+        console.warn('Could not parse unitState', e);
+        return {};
+      }
     }
 
     elementIsRequired = element => element.getAttribute('required') != null &&
-            (["", "true"].indexOf(element.getAttribute('required').toLowerCase()) > -1);
+      (["", "true"].indexOf(element.getAttribute('required').toLowerCase()) > -1);
 
     _setUnitData = unitState => {
       Answers.set(this.selectDataPartFromUnitState(unitState, 'answers'));
@@ -786,14 +795,12 @@
 
     rich = (type, message) => {
       if (["debug", "rich"].indexOf(playerConfig.logPolicy) > -1) {
-        console.log(message);
         this._log(type, message);
       }
     }
 
     lean = (type, message) => {
       if (["debug", "rich", "lean"].indexOf(playerConfig.logPolicy) > -1) {
-        console.log(message);
         this._log(type, message);
       }
     }

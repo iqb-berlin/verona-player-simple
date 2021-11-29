@@ -44,9 +44,9 @@ describe('simple player', () => {
         .setFirefoxOptions(options)
         .build();
     } catch (e) {
-      console.log("€€€€€€€€€€€");
+      console.log('€€€€€€€€€€€');
       console.error(e);
-      console.log("€€€€€€€€€€€");
+      console.log('€€€€€€€€€€€');
     }
     console.log(!driver ? '##### driver is not' : '#### ');
     done();
@@ -252,12 +252,10 @@ describe('simple player', () => {
       sessionId: '1',
       unitState: {
         dataParts: {
-          all: {
-            answers: {
-              '': ['firstContent', 'thirdContent'],
-              field: 'secondContent'
-            }
-          }
+          answers: JSON.stringify({
+            '': ['firstContent', 'thirdContent'],
+            field: 'secondContent'
+          })
         }
       }
     });
@@ -294,15 +292,15 @@ describe('simple player', () => {
 
     const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1000);
 
-    expect(msg.unitState.dataParts.all.answers || {}).toEqual({
+    expect(msg.unitState.dataParts.answers || {}).toEqual(JSON.stringify({
       '': 'c',
       field: ['a', 'b']
-    });
+    }));
 
     done();
   });
 
-  it('should support various form elements', async done => {
+  fit('should support various form elements', async done => {
     await loadPlayer({
       debounceStateMessages: 0,
       debounceKeyboardEvents: 0
@@ -311,27 +309,25 @@ describe('simple player', () => {
     await send({
       type: 'vopStartCommand',
       unitDefinition: `
-                <textarea name="text-area"></textarea>
-                <select name="multi-select" size="3" multiple>
-                    <option value="a">A</option>
-                    <option value="b">B</option>
-                    <option value="c">C</option>
-                </select>
-                <input type="radio" name="radio-group" value="a" />
-                <input type="radio" name="radio-group" value="b" />
-                <input type="radio" name="radio-group" value="c" />
-                <input type="checkbox" name="check-box-a" />
-                <input type="checkbox" name="check-box-b" />`,
+        <textarea name="text-area"></textarea>
+        <select name="multi-select" size="3" multiple>
+            <option value="a">A</option>
+            <option value="b">B</option>
+            <option value="c">C</option>
+        </select>
+        <input type="radio" name="radio-group" value="a" />
+        <input type="radio" name="radio-group" value="b" />
+        <input type="radio" name="radio-group" value="c" />
+        <input type="checkbox" name="check-box-a" />
+        <input type="checkbox" name="check-box-b" />`,
       sessionId: '1',
       unitState: {
         dataParts: {
-          all: {
-            answers: {
-              'check-box-a': 'on',
-              'radio-group': 'b',
-              'multi-select': ['b', 'c']
-            }
-          }
+          answers: JSON.stringify({
+            'check-box-a': 'on',
+            'radio-group': 'b',
+            'multi-select': ['b', 'c']
+          })
         }
       }
     });
@@ -352,12 +348,12 @@ describe('simple player', () => {
 
     const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
-    expect(msg.unitState.dataParts.all.answers || {}).toEqual({
+    expect(msg.unitState.dataParts.answers || {}).toEqual(JSON.stringify({
       'text-area': 'text area content',
       'multi-select': ['a', 'b', 'c'],
       'radio-group': 'a',
       'check-box-b': 'on'
-    });
+    }));
 
     done();
   });
@@ -393,13 +389,13 @@ describe('simple player', () => {
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
     const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
 
-    expect(message1.unitState.dataParts.all).toEqual({
-      answers: {},
+    expect(message1.unitState.dataParts).toEqual({
+      answers: '{}',
       special: 'no'
     });
 
-    expect(message2.unitState.dataParts.all).toEqual({
-      answers: {},
+    expect(message2.unitState.dataParts).toEqual({
+      answers: '{}',
       special: 'yes'
     });
 
@@ -410,19 +406,19 @@ describe('simple player', () => {
     await send({
       type: 'vopStartCommand',
       unitDefinition: `
-                <input type="text" id="field" name="field">
-                <button id="button">change!</button>
-                
-                <script>
-                  const field = document.querySelector('#field');
-                  const button = document.querySelector('#button');
-                
-                  button.addEventListener('click', e => {
-                    e.preventDefault();
-                    field.value = "programmatically changed";
-                  });
-                </script>
-            `,
+        <input type="text" id="field" name="field">
+        <button id="button">change!</button>
+        
+        <script>
+          const field = document.querySelector('#field');
+          const button = document.querySelector('#button');
+        
+          button.addEventListener('click', e => {
+            e.preventDefault();
+            field.value = "programmatically changed";
+          });
+        </script>
+    `,
       sessionId: '1'
     });
 
@@ -439,13 +435,11 @@ describe('simple player', () => {
 
     const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1200);
 
-    expect(message1.unitState.dataParts.all.answers || {}).toEqual({
-      field: 'manually changed'
-    });
+    expect(message1.unitState.dataParts.answers || {})
+      .toEqual('{"field":"manually changed"}');
 
-    expect(message2.unitState.dataParts.all.answers || {}).toEqual({
-      field: 'programmatically changed'
-    });
+    expect(message2.unitState.dataParts.answers || {})
+      .toEqual('{"field":"programmatically changed"}');
 
     done();
   });
@@ -473,9 +467,8 @@ describe('simple player', () => {
 
     expect(message1).toBeNull();
 
-    expect(message2.unitState.dataParts.all.answers || {}).toEqual({
-      field: 'first input second input'
-    });
+    expect(message2.unitState.dataParts.answers || {})
+      .toEqual('{"field":"first input second input"}');
 
     done();
   });
@@ -581,15 +574,13 @@ describe('simple player', () => {
       type: 'vopStateChangedNotification',
       unitState: {
         dataParts: {
-          all: {
-            answers: {
-              'the-item': 'something'
-            }
-          }
+          answers: JSON.stringify({
+            'the-item': 'something'
+          })
         },
         presentationProgress: 'complete',
         responseProgress: 'complete',
-        unitStateDataType: 'iqb-simple-player@1.0.0'
+        unitStateDataType: 'iqb-simple-player@2.0.0'
       }
     });
 
@@ -626,15 +617,13 @@ describe('simple player', () => {
       type: 'vopStateChangedNotification',
       unitState: {
         dataParts: {
-          all: {
-            answers: {
-              'the-item': 'something'
-            }
-          }
+          answers: JSON.stringify({
+            'the-item': 'something'
+          })
         },
         presentationProgress: 'complete',
         responseProgress: 'complete',
-        unitStateDataType: 'iqb-simple-player@1.0.0'
+        unitStateDataType: 'iqb-simple-player@2.0.0'
       }
     });
 
@@ -868,11 +857,11 @@ describe('simple player', () => {
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
     message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
     expect(message.unitState.responseProgress).toEqual('some');
-    expect(message.unitState.dataParts.all.answers).toEqual({
-      '': 'anything',
+    expect(message.unitState.dataParts.answers).toEqual(JSON.stringify({
       'must-have': '',
-      'nice-2-have': 'something'
-    });
+      'nice-2-have': 'something',
+      '': 'anything'
+    }));
 
     await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['responsesIncomplete'] });
     await driver.sleep(60);
@@ -887,11 +876,11 @@ describe('simple player', () => {
     await send({ type: 'vopGetStateRequest', sessionId: '1' });
     message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
     expect(message.unitState.responseProgress).toEqual('complete');
-    expect(message.unitState.dataParts.all.answers).toEqual({
+    expect(message.unitState.dataParts.answers).toEqual(JSON.stringify({
       'must-have': 'whatever',
       'nice-2-have': 'something',
       '': 'anything'
-    });
+    }));
 
     done();
   });
