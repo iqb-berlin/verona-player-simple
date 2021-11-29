@@ -11,6 +11,7 @@ test:
     - apt-get update && apt-get install firefox-esr sudo -y
     - firefox-esr --version
     - whoami
+    - less /etc/passwd
     - npm install
     - export TERM=xterm
     - sudo -u builder npm run test
