@@ -11,9 +11,8 @@ test:
     - whoami
     - more /etc/passwd
     - apt-get update && apt-get install firefox-esr sudo -y
-    - su - www-data
     - more /etc/passwd
-    - firefox-esr --version
+    - su -u www-data firefox-esr --version
     - npm install
     - export TERM=xterm
     - sudo -u www-data npm run test
