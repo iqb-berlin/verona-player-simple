@@ -300,7 +300,7 @@ describe('simple player', () => {
     done();
   });
 
-  fit('should support various form elements', async done => {
+  it('should support various form elements', async done => {
     await loadPlayer({
       debounceStateMessages: 0,
       debounceKeyboardEvents: 0
