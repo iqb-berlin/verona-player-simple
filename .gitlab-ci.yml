@@ -1,4 +1,4 @@
-include:
+include:frontend
   - template: Security/SAST.gitlab-ci.yml
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Dependency-Scanning.gitlab-ci.yml
@@ -8,11 +8,7 @@ image: node:14.16-buster
 test:
   stage: test
   script:
-    - whoami
-    - more /etc/passwd
-    - apt-get update && apt-get install firefox-esr sudo -y
-    - more /etc/passwd
-    - sudo -u www-data firefox-esr --version
+    - apt-get update && apt-get install firefox-esr -y
     - npm install
     - export TERM=xterm
-    - sudo -u www-data npm run test
+    - npm run test

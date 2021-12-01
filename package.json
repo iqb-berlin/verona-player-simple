@@ -4,6 +4,7 @@
   "description": "A dependency-free, vanilla-js Verona3-Player which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
   "dependencies": {},
   "devDependencies": {
+    "chromedriver": "^86.0.0",
     "geckodriver": "^1.20.0",
     "jasmine": "^3.6.3",
     "selenium-webdriver": "^4.0.0-alpha.7",
