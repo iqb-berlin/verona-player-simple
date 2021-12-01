@@ -12,7 +12,7 @@ test:
     - more /etc/passwd
     - apt-get update && apt-get install firefox-esr sudo -y
     - more /etc/passwd
-    - su -u www-data firefox-esr --version
+    - sudo -u www-data firefox-esr --version
     - npm install
     - export TERM=xterm
     - sudo -u www-data npm run test
