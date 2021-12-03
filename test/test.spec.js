@@ -293,8 +293,8 @@ describe('simple player', () => {
     const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1000);
 
     expect(msg.unitState.dataParts.answers || {}).toEqual(JSON.stringify({
-      '': 'c',
-      field: ['a', 'b']
+      field: ['a', 'b'],
+      '': 'c'
     }));
 
     done();
@@ -1307,7 +1307,7 @@ describe('simple player', () => {
       await MessageRecorder.recordMessages(driver);
       const msg = await MessageRecorder.getLastMessage(driver, 'vopReadyNotification');
       expect(msg.metadata.type).toEqual('player');
-      expect(msg.metadata.id).toEqual('simple');
+      expect(msg.metadata.id).toEqual('verona-player-simple');
       expect(msg.metadata.code.repositoryUrl).toEqual('https://github.com/iqb-berlin/verona-player-simple');
       done();
     });
