@@ -37,18 +37,10 @@ const longText = (length = 2000) => Array.from(
 
 describe('simple player', () => {
   beforeAll(async done => {
-    console.log('### beforeAll ###');
-    try {
-      driver = await new Builder()
-        .forBrowser('firefox')
-        .setFirefoxOptions(options)
-        .build();
-    } catch (e) {
-      console.log('€€€€€€€€€€€');
-      console.error(e);
-      console.log('€€€€€€€€€€€');
-    }
-    console.log(!driver ? '##### driver is not' : '#### ');
+    driver = await new Builder()
+      .forBrowser('firefox')
+      .setFirefoxOptions(options)
+      .build();
     done();
   });
 
