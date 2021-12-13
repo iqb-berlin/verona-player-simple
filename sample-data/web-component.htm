@@ -166,13 +166,22 @@
     }
     _createField(x, y) {
       const field  = document.createElement('div');
-      field.className = 'field';
+      field.className = 'field quadrant-' + this._getQuadrantNumber(x, y);
       field.dataset.value = this._getFieldValue(x, y);
       field.innerText = this._getFieldLabel(x, y);
       field.addEventListener('click', () => {
         this._updateValue(field.dataset.value);
       });
       return field;
+    }
+    _getQuadrantNumber(x, y) {
+      switch (`${Math.sign(x)}, ${Math.sign(y)}`) {
+        case "1, 1": return 1;
+        case "-1, 1": return 2;
+        case "-1, -1": return 3;
+        case "1, -1": return 4;
+        default: return 0;
+      }
     }
     _getFieldValue(x, y) {
       return `${x}, ${y}`;
@@ -181,7 +190,7 @@
       return fieldValue.split(',').map(s => parseInt(s.trim()));
     }
     _getFieldLabel(x, y) {
-      if (this.labels.length) {
+      if (this.labels && Object.keys(this.labels).length) {
         if (this.labels[x] && this.labels[x][y]) {
           return this.labels[x][y];
         } else {
@@ -197,7 +206,6 @@
 
       if (!selectedField) {
         console.warn("invalid value", value);
-        // todo invalid
         return;
       }
       selectedField.classList.add('selected');
@@ -209,7 +217,6 @@
       this._shadowRoot.querySelectorAll(`.field`)
         .forEach(field => {
           if (!field.dataset) {
-            console.log('f', field);
             return;
           }
           const xy = this._getCoordinatesFromValue(field.dataset.value);
@@ -244,15 +251,15 @@
     style="height: 500px; width: 500px"
 ></db-form-field>
 <db-form-field
-    id="other-color"
-    size="10"
+    id="labels"
+    size="2"
     label-top="top"
     label-left="left"
     label-right="right"
     label-bottom="bottom"
     name="yolo2"
     value="1, 1"
-    style="height: 500px; width: 500px; background: black; color: white"
-    inner-style=".field { background: orange; color: black }",
-    labels='[[], ["A", "B"]]'
+    inner-style=".field {color: white} .quadrant-1.field { background: dodgerblue } .quadrant-2.field { background: red } .quadrant-3.field { background: seagreen } .quadrant-4.field { background: yellow } .field.selected { box-shadow: inset 0px 0px 15px 5px #000000;}",
+    style="height: 150px; width: 150px; background: black; color: white"
+    labels='{"-1": { "-1" : "A", "1": "B" }, "1": { "-1" : "C", "1": "D" }}'
 ></db-form-field>
