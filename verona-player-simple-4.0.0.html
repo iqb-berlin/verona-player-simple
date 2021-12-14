@@ -364,7 +364,6 @@
       );
 
       vopReadyNotification = () => {
-        console.log(playerMetaData);
         setTimeout(
           () => this._send({
             type: 'vopReadyNotification',
@@ -419,7 +418,7 @@
         if (Log.hasNew()) {
           message.log = Log.next();
         }
-
+console.log(message);
         return message;
       }
 
@@ -512,7 +511,6 @@
         } else {
           validCount += (Unit.elementIsRequired(item) && !item.innerText.trim()) ? 0 : 1;
         }
-        console.log(item, validCount);
       });
 
       if (allCount === validCount) {
@@ -558,34 +556,70 @@
   }
 
   const Answers = new class {
-    get = () => ({...this._getAnswersFromForm(), ...this._getAnswersFromEditableElements()});
+    get = () => [
+      this._getAnswersFromThingsWithNameAndValue(),
+      this._getAnswersFromForm(),
+      this._getAnswersFromEditableElements()
+    ]
+      .reduce((carry, answerList) => {
+        Object.keys(answerList)
+          .forEach(name => {
+            if (isDefined(carry[name])) {
+              if (!Array.isArray(carry[name])) {
+                carry[name] = [carry[name]];
+              }
+              carry[name].push(...Array.isArray(answerList[name]) ? answerList[name] : [answerList[name]]);
+            } else {
+              carry[name] = answerList[name];
+            }
+          });
+        return carry;
+      }, {});
 
     set = answers => {
       Object.keys(answers).forEach(key => {this._setAnswer(key, answers[key]);});
     }
 
-    _getAnswersFromForm = () => [...new FormData(document.querySelector("form"))]
-      .reduce((carry, entry) => {
-        if (isDefined(carry[entry[0]])) {
-          carry[entry[0]] = Array.isArray(carry[entry[0]]) ? [...carry[entry[0]], entry[1]] : [carry[entry[0]], entry[1]];
-        } else {
-          carry[entry[0]] = entry[1];
-        }
-        return carry;
-      }, {});
+    _getAnswersFromForm = () =>
+      [...new FormData(document.querySelector("form"))]
+        .reduce((carry, entry) => {
+          if (isDefined(carry[entry[0]])) {
+            carry[entry[0]] = Array.isArray(carry[entry[0]]) ? [...carry[entry[0]], entry[1]] : [carry[entry[0]], entry[1]];
+          } else {
+            carry[entry[0]] = entry[1];
+          }
+          return carry;
+        }, {});
 
-    _getAnswersFromEditableElements = () => ([...document.querySelectorAll('form [contenteditable]')] || [])
-      .reduce((carry, element) => {
-        const name = element.getAttribute("name") || '';
-        if (isDefined(carry[name])) {
-          carry[name] = Array.isArray(carry[name])
-            ? [...carry[name], element.innerText.trim()]
-            : [carry[name], element.innerText.trim()];
-        } else {
-          carry[name] = element.innerText.trim();
-        }
-        return carry;
-      }, {});
+    _getAnswersFromEditableElements = () =>
+      ([...document.querySelectorAll('form [contenteditable]')] || [])
+        .reduce((carry, element) => {
+          const name = element.getAttribute("name") || '';
+          if (isDefined(carry[name])) {
+            carry[name] = Array.isArray(carry[name])
+              ? [...carry[name], element.innerText.trim()]
+              : [carry[name], element.innerText.trim()];
+          } else {
+            carry[name] = element.innerText.trim();
+          }
+          return carry;
+        }, {});
+
+    _getAnswersFromThingsWithNameAndValue = () =>
+      ([...document.querySelectorAll('form [name][value]')] || [])
+        .reduce((carry, element) => {
+          const name = element.getAttribute("name") || '';
+          const value = element.getAttribute("value") || '';
+          console.log('!', {name,value});
+          if (isDefined(carry[name])) {
+            carry[name] = Array.isArray(carry[name])
+              ? [...carry[name], value]
+              : [carry[name], value];
+          } else {
+            carry[name] = value;
+          }
+          return carry;
+        }, {});
 
     _setAnswer = (name, value, index = 0) => {
       // TODO use PlayerUI.itemElements
@@ -605,8 +639,6 @@
       }
 
       const element = elements[index] || elements[0];
-
-      element.dataset.touched = "true";
 
       switch (element.tagName) {
         case "INPUT":
@@ -635,7 +667,11 @@
           element.querySelector(`option[value="${value}"]`)?.setAttribute('selected', 'on');
           break;
         default:
-          element.innerText = value;
+          if (element.hasAttribute('contenteditable')) {
+            element.innerText = value;
+          } else {
+            element.setAttribute('value', value);
+          }
       }
     }
   }
@@ -822,7 +858,7 @@
 
   const PlayerUI = new class {
 
-    itemElements = "form select:enabled, form textarea:enabled, form input:enabled, form [contenteditable]";
+    itemElements = "form select:enabled, form textarea:enabled, form input:enabled, form [contenteditable], form [name]";
     presentationReportFactors = {
       pages: () => this._createPresentationReportForPages()
     }

@@ -5,6 +5,7 @@ const { Options } = require('selenium-webdriver/firefox');
 const { Builder, By, Key } = require('selenium-webdriver');
 const { MessageRecorder } = require('iqb-dev-components');
 const testConfig = require('./config.json');
+const fs = require("fs");
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox is starting too slow sometimes (1 of 750 times on my machine)
 MessageRecorder.defaultWaitingTime = 500;
@@ -1318,6 +1319,39 @@ describe('simple player', () => {
       expect(msg.metadata.type).toEqual('player');
       expect(msg.metadata.id).toEqual('simple');
       expect(msg.metadata.code.repositoryUrl).toEqual('https://github.com/iqb-berlin/verona-player-simple');
+      done();
+    });
+  });
+
+  fdescribe('new', () => {
+    it('should treat any element with an name and value as form element', async done => {
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: fs.readFileSync('./sample-data/web-component.htm').toString(),
+        sessionId: '1',
+        playerConfig: {
+          logPolicy: 'disabled',
+          stateReportPolicy: 'eager'
+        },
+        unitState: {
+          dataParts: {
+            all: {
+              answers: {
+                political_compass: '2, 2'
+              }
+            }
+          }
+        }
+      });
+
+      await MessageRecorder.recordMessages(driver);
+
+      const shit = await driver.findElement(By.id('shit'));
+      await shit.sendKeys('abc');
+
+      await send({ type: 'vopGetStateRequest', sessionId: '1' });
+      const message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
+      expect(message.unitState.responseProgress).toEqual('some');
       done();
     });
   });

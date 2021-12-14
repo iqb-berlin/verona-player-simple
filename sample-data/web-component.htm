@@ -24,6 +24,10 @@
   border: 1px solid grey;
 }
 
+#field.invalid {
+  box-shadow: 0px 0px 15px 5px #FF8D8D;
+}
+
 .field {
   background-color: lime;
   display: flex;
@@ -89,33 +93,37 @@
 `;
 
   class FormField extends HTMLElement {
+    static observedAttributes = [
+      "size",
+      "label-top",
+      "label-bottom",
+      "label-left",
+      "label-right",
+      "labels",
+      "value",
+      "name",
+      "inner-style",
+      "required"
+    ];
+
     constructor() {
       super();
+
       this._shadowRoot = this.attachShadow({
         'mode': 'open'
       });
       this._shadowRoot.appendChild(template.content.cloneNode(true));
+
       this.$field = this.shadowRoot.querySelector("#field");
       this.$labelTop = this.shadowRoot.querySelector("#label-top-content");
       this.$labelBottom = this.shadowRoot.querySelector("#label-bottom-content");
       this.$labelLeft = this.shadowRoot.querySelector("#label-left-content");
       this.$labelRight = this.shadowRoot.querySelector("#label-right-content");
       this.$style = this.shadowRoot.querySelector("style");
-      this.labels = '';
+      this.labels = null;
+      this.required = false;
     }
-    static get observedAttributes() {
-      return [
-        "size",
-        "label-top",
-        "label-bottom",
-        "label-left",
-        "label-right",
-        "labels",
-        "value",
-        "name",
-        "inner-style"
-      ];
-    }
+
     attributeChangedCallback(name, oldValue, newValue) {
       switch (name) {
         case "size":
@@ -144,12 +152,18 @@
         case "inner-style":
           this.$style.innerHTML += newValue;
           break;
+        case "required":
+          this.required = true;
+          this._updateValue(this.getAttribute('value'));
         case "value":
-        default:
-          this._updateValue(newValue);
+          if (oldValue !== newValue) {
+            console.log(oldValue,newValue)
+            this._updateValue(newValue);
+          }
           break;
       }
     }
+
     _createFields(size) {
       this.$field.innerText = '';
       this.$field.style.gridTemplateAreas = '"' + Array.from({ length: size }).map(_ => 'a').join(' ') + '"';
@@ -170,7 +184,7 @@
       field.dataset.value = this._getFieldValue(x, y);
       field.innerText = this._getFieldLabel(x, y);
       field.addEventListener('click', () => {
-        this._updateValue(field.dataset.value);
+        this._updateValue(field.dataset.value === this.getAttribute('value') ? '' : field.dataset.value);
       });
       return field;
     }
@@ -190,7 +204,7 @@
       return fieldValue.split(',').map(s => parseInt(s.trim()));
     }
     _getFieldLabel(x, y) {
-      if (this.labels && Object.keys(this.labels).length) {
+      if (this.labels != null) {
         if (this.labels[x] && this.labels[x][y]) {
           return this.labels[x][y];
         } else {
@@ -200,20 +214,26 @@
       return this._getFieldValue(x, y);
     }
     _updateValue(value) {
+      this.$field.classList.remove('invalid');
       this.$field.querySelectorAll('.field.selected')
         .forEach(field => field.classList.remove('selected'));
       const selectedField = this.$field.querySelector(`.field[data-value="${value}"]`);
 
       if (!selectedField) {
-        console.warn("invalid value", value);
+        if (this.required) {
+          this.$field.classList.add('invalid');
+        }
+        this._changeValue(null);
         return;
       }
       selectedField.classList.add('selected');
-
-      this.value = value;
+      this._changeValue(value);
+    }
+    _changeValue(toValue) {
+      this.setAttribute('value', toValue);
+      this.dispatchEvent(new CustomEvent('change', { bubbles: true }));
     }
     _updateFieldLabels() {
-      console.log('l', this.labels);
       this._shadowRoot.querySelectorAll(`.field`)
         .forEach(field => {
           if (!field.dataset) {
@@ -224,42 +244,52 @@
         });
     }
   }
-  window.customElements.define('db-form-field', FormField);
+  window.customElements.define('two-dimensional', FormField);
 </script>
 
 <h1>Custom Web-Element</h1>
-<db-form-field
-    size="5"
-    label-top="top"
-    label-left="left"
-    label-right="right"
-    label-bottom="bottom"
-    name="yolo"
-    value="0, 0"
-    labels=""
-    style="height: 400px; width: 400px"
-></db-form-field>
-<hr>
-<db-form-field
+<p>This unit contains a WebComponent for two-dimensional scales. It is *not*designed as a form-element, because
+  the simple player should handle every element with `name` and `value` as item.
+</p>
+<two-dimensional
     size="4"
     label-top="top"
     label-left="left"
     label-right="right"
     label-bottom="bottom"
-    name="yolo2"
-    value="1, 1"
+    name="first_example"
+    required
     style="height: 500px; width: 500px"
-></db-form-field>
-<db-form-field
+></two-dimensional>
+<button onclick="alert(document.getElementsByName('first_example')[0].getAttribute('value')); return false">Get Value</button>
+<hr>
+<p>It can have various styles, sizes and labels.</p>
+<two-dimensional
     id="labels"
     size="2"
     label-top="top"
     label-left="left"
     label-right="right"
     label-bottom="bottom"
-    name="yolo2"
+    name="second_example"
     value="1, 1"
-    inner-style=".field {color: white} .quadrant-1.field { background: dodgerblue } .quadrant-2.field { background: red } .quadrant-3.field { background: seagreen } .quadrant-4.field { background: yellow } .field.selected { box-shadow: inset 0px 0px 15px 5px #000000;}",
+    inner-style=".field {color: white} .quadrant-1.field { background: dodgerblue } .quadrant-2.field { background: red } .quadrant-3.field { background: seagreen } .quadrant-4.field { background: yellow } .field.selected, .field:hover { box-shadow: inset 0px 0px 15px 5px #000000;}",
     style="height: 150px; width: 150px; background: black; color: white"
     labels='{"-1": { "-1" : "A", "1": "B" }, "1": { "-1" : "C", "1": "D" }}'
-></db-form-field>
+></two-dimensional>
+<button onclick="alert(document.getElementsByName('second_example')[0].getAttribute('value')); return false">Get Value</button>
+<input name="political_compass" id="shit">
+<hr>
+<two-dimensional
+    size="21"
+    label-top="Authoritarian"
+    label-left="Left"
+    label-right="Right"
+    label-bottom="Libertarian"
+    name="political_compass"
+    value="0, 0"
+    style="height: 500px; width: 500px"
+    inner-style=".field {background: silver} .quadrant-1.field { background: #42aaff } .quadrant-2.field { background: #c09aea } .quadrant-3.field { background: #99ed97 } .quadrant-4.field { background: #ff7575 } .field.selected, .field:hover { box-shadow: inset 0px 0px 15px 5px #000000;}",
+    labels=""
+></two-dimensional>
+<p>Inspired by <a href="https://www.politicalcompass.org/">politicalcompass.org</a></p>
