@@ -390,6 +390,7 @@
       }
 
       _send = msg => {
+        console.log(msg);
         window.parent.postMessage(msg, '*');
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
       }
@@ -418,7 +419,7 @@
         if (Log.hasNew()) {
           message.log = Log.next();
         }
-console.log(message);
+
         return message;
       }
 
@@ -606,11 +607,10 @@ console.log(message);
         }, {});
 
     _getAnswersFromThingsWithNameAndValue = () =>
-      ([...document.querySelectorAll('form [name][value]')] || [])
+      ([...document.querySelectorAll('form [name][value]:not(select):not(textarea):not(input):not([contenteditable])')] || [])
         .reduce((carry, element) => {
-          const name = element.getAttribute("name") || '';
+          const name = (element.getAttribute("name") || '');
           const value = element.getAttribute("value") || '';
-          console.log('!', {name,value});
           if (isDefined(carry[name])) {
             carry[name] = Array.isArray(carry[name])
               ? [...carry[name], value]

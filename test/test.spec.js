@@ -1,11 +1,11 @@
-/* eslint-disable no-undef */ // TODO find a solution to import it, describe etc. in a way eslint can see
+/* eslint-disable no-undef,no-console */ // TODO find a solution to import it, describe etc. in a way eslint can see
 require('selenium-webdriver');
 const jasmine = require('jasmine');
 const { Options } = require('selenium-webdriver/firefox');
 const { Builder, By, Key } = require('selenium-webdriver');
 const { MessageRecorder } = require('iqb-dev-components');
 const testConfig = require('./config.json');
-const fs = require("fs");
+const fs = require('fs');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox is starting too slow sometimes (1 of 750 times on my machine)
 MessageRecorder.defaultWaitingTime = 500;
@@ -38,7 +38,6 @@ const longText = (length = 2000) => Array.from(
 
 describe('simple player', () => {
   beforeAll(async done => {
-    console.log('### beforeAll ###');
     try {
       driver = await new Builder()
         .forBrowser('firefox')
@@ -47,7 +46,6 @@ describe('simple player', () => {
     } catch (e) {
       console.error(e);
     }
-    console.log(!driver ? '##### driver is not' : '#### ');
     done();
   });
 
@@ -1324,20 +1322,22 @@ describe('simple player', () => {
   });
 
   fdescribe('new', () => {
-    it('should treat any element with an name and value as form element', async done => {
+    it('should read and write data to every element with an name attribute', async done => {
       await send({
         type: 'vopStartCommand',
-        unitDefinition: fs.readFileSync('./sample-data/web-component.htm').toString(),
+        unitDefinition:
+          `<input name="political_compass" id="input_with_same_name_as_web_component">
+          ${fs.readFileSync('./sample-data/web-component.htm').toString()}`,
         sessionId: '1',
         playerConfig: {
           logPolicy: 'disabled',
-          stateReportPolicy: 'eager'
+          stateReportPolicy: 'on-demand'
         },
         unitState: {
           dataParts: {
             all: {
               answers: {
-                political_compass: '2, 2'
+                political_compass: ['the textbox has same name as a web component', '2, 2']
               }
             }
           }
@@ -1346,12 +1346,20 @@ describe('simple player', () => {
 
       await MessageRecorder.recordMessages(driver);
 
-      const shit = await driver.findElement(By.id('shit'));
-      await shit.sendKeys('abc');
+      const textBox = await driver.findElement(By.id('input_with_same_name_as_web_component'));
+      await textBox.clear();
+      await textBox.sendKeys('new content');
 
       await send({ type: 'vopGetStateRequest', sessionId: '1' });
       const message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
+
+      console.log(message);
       expect(message.unitState.responseProgress).toEqual('some');
+      expect(message.unitState.dataParts.all.answers || {}).toEqual({
+        first_example: 'null',
+        second_example: '1, 1',
+        political_compass: ['new content', '2, 2']
+      });
       done();
     });
   });

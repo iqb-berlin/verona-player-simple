@@ -25,7 +25,7 @@
 }
 
 #field.invalid {
-  box-shadow: 0px 0px 15px 5px #FF8D8D;
+  box-shadow: 0 0 15px 5px #FF8D8D;
 }
 
 .field {
@@ -157,7 +157,6 @@
           this._updateValue(this.getAttribute('value'));
         case "value":
           if (oldValue !== newValue) {
-            console.log(oldValue,newValue)
             this._updateValue(newValue);
           }
           break;
@@ -278,7 +277,6 @@
     labels='{"-1": { "-1" : "A", "1": "B" }, "1": { "-1" : "C", "1": "D" }}'
 ></two-dimensional>
 <button onclick="alert(document.getElementsByName('second_example')[0].getAttribute('value')); return false">Get Value</button>
-<input name="political_compass" id="shit">
 <hr>
 <two-dimensional
     size="21"
@@ -293,3 +291,4 @@
     labels=""
 ></two-dimensional>
 <p>Inspired by <a href="https://www.politicalcompass.org/">politicalcompass.org</a></p>
+<input name=".d[">
