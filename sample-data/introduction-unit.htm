@@ -247,12 +247,6 @@
           SoundModule.stop();
         });
 
-        document.addEventListener('vopGetStateRequest', data => {
-          if (data.stop) {
-            PlayerUI.togglePlayerRunning(false);
-          }
-        });
-
         PlayerUI.addEventListener('click', '#melody-play', e => {
           e.preventDefault();
           SoundModule.play();

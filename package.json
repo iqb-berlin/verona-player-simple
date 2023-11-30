@@ -1,21 +1,21 @@
 {
   "name": "verona-player-simple",
-  "version": "4.0.0",
+  "version": "5.0.0",
   "description": "A dependency-free, vanilla-js Verona4-Player, which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
   "dependencies": {},
   "devDependencies": {
-    "geckodriver": "^1.20.0",
-    "jasmine": "^3.6.3",
-    "selenium-webdriver": "^4.0.0-alpha.7",
-    "iqb-dev-components": "1.3.9",
-    "@iqb/eslint-config": "1.0.2"
+    "geckodriver": "4.2.1",
+    "jasmine": "5.1.0",
+    "selenium-webdriver": "4.15.0",
+    "iqb-dev-components": "1.4.1",
+    "@iqb/eslint-config": "2.1.1"
   },
   "scripts": {
     "test": "clear && npx jasmine --config=test/jasmine.json"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/iqb-berlin/verona-player-html.git"
+    "url": "git+https://github.com/iqb-berlin/verona-player-simple.git"
   },
   "eslintConfig": {
     "extends": "@iqb/eslint-config/javascript"
