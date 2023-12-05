@@ -20,7 +20,7 @@ and the player does the rest. Use some special Ids for some special buttons.
 * The whole player is `verona-simple-player-5.0.html`, there is no build-process or whatever. 
 
 ## Development Rules for Units
-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
+
 Any HTML-content can be used as unit. Examples can be found in this repository in the folder `sample-data`.
 
 The Unit can contain any HTML-content (inner Part of `<body>`), even `<script>`- and `<style>`-tags!
