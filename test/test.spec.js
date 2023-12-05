@@ -35,7 +35,7 @@ const VopState = {
     // eslint-disable-next-line no-undef,no-underscore-dangle
     return webdriver.executeScript(() => window.vsp.Message.send._createStateMsg(true));
   }
-}
+};
 
 const longText = (length = 2000) => Array.from(
   { length },
