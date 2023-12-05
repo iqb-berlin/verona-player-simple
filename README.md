@@ -7,7 +7,7 @@ This is a simple, dependency-less, vanilla-js-written, but full-featured unit pl
 mainly as showcase for developers and for software-testing.
 
 It does implement the
-<a href="https://github.com/verona-interface" target="_blank">Verona 2.1.0</a>-Standard
+<a href="https://github.com/verona-interface" target="_blank">Verona 5.0.0</a>-Standard
 and can be used for units containing simple any content in HTML-format.
 
 Unit Description ist the <code>form</code>-content as HTML. Just give some names to the form element,
@@ -17,7 +17,7 @@ and the player does the rest. Use some special Ids for some special buttons.
 * You need a Verona-Host-System to run this Software, for example the 
 [IQB-Testcenter](https://github.com/iqb-berlin/testcenter-setup) or the 
 [Verona-Player-Testbed](https://github.com/iqb-berlin/verona-player-testbed).
-* The whole player is `verona-simple-player-2.html`, there is no build-process or whatever. 
+* The whole player is `verona-simple-player-5.0.html`, there is no build-process or whatever. 
 
 ## Development Rules for Units
 
