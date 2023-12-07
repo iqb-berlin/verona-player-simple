@@ -16,7 +16,7 @@ if (testConfig.headless) {
   options.addArguments('-headless');
 }
 
-const playerPath = `${__dirname}/../verona-player-simple-5.0.html`;
+const playerPath = `${__dirname}/../verona-player-simple-5.1.html`;
 
 const send = async message => {
   await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
@@ -34,6 +34,18 @@ const VopState = {
   get(webdriver) {
     // eslint-disable-next-line no-undef,no-underscore-dangle
     return webdriver.executeScript(() => window.vsp.Message.send._createStateMsg(true));
+  }
+};
+
+const ComputedStyle = {
+  get(webdriver, querySelector, styles) {
+    return webdriver.executeScript(
+      // eslint-disable-next-line no-shadow
+      (querySelector, styles) => styles
+        .map(style => [...document.querySelectorAll(querySelector)].map(element => getComputedStyle(element)[style])),
+      querySelector,
+      styles
+    );
   }
 };
 
@@ -56,7 +68,7 @@ describe('simple player', () => {
 
   afterAll(async () => {
     if (!testConfig.keepOpen) {
-      driver.quit();
+      await driver.quit();
     } else {
       for (;;) { /* empty */ }
     }
@@ -987,7 +999,7 @@ describe('simple player', () => {
           <button id="debug" onclick="Log.debug('debug'); return false">D</button>`,
         sessionId: '1',
         playerConfig: {
-          logPolicy: 'lean',
+          logPolicy: 'lean'
         },
         unitDefinitionType: 'iqb-simple-html@1.0.0'
       });
@@ -1081,6 +1093,68 @@ describe('simple player', () => {
       expect(msg.metadata.type).toEqual('player');
       expect(msg.metadata.id).toEqual('verona-player-simple');
       expect(msg.metadata.code.repositoryUrl).toEqual('https://github.com/iqb-berlin/verona-player-simple');
+    });
+  });
+
+  describe('(verona 5.1)', () => {
+    const unitWithPagesAndManyInputs = `
+      <fieldset>
+        <label><input name="required-text-field" required />Required Textfield </label><br>
+        <label><input name="readonly-text-field" value="read-only" readonly />Read-Only Textfield </label><br>
+        <label><input name="text-field" />Textfield </label><br>
+        <label><input type="radio" name="text-field" value="x" />Radio Button </label><br>
+        <label><input type="number" min="2" max="4" name="number-field" />Number field </label><br>
+        <label><input type="date" name="date-field" />Date field </label><br>
+        <label><input type="email" name="email-field" />Email field </label><br>
+        <label><input type="checkbox" name="check-box" />Checkbox </label><br>
+      </fieldset>
+      <fieldset>
+        Page 2
+        <label>
+          Dropdown
+          <select name="select-box">
+            <option value="a">A</option>
+          </select>
+        </label>
+        <label>
+          Textarea
+          <textarea name="text-area" style="width: 100%">Type something...</textarea>
+        </label>
+        <a href="https://github.com/iqb-berlin/testcenter/">A Link</a>
+      </fieldset>
+      <fieldset>Page 3</fieldset>
+      <fieldset>Page 4</fieldset>
+    `;
+    it('should break pages printMode=on', async () => {
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: unitWithPagesAndManyInputs,
+        sessionId: '1',
+        playerConfig: {
+          printMode: 'on-with-ids'
+        }
+      });
+      const style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
+      console.log(style);
+      expect(style).toEqual([['page', 'page', 'page', 'page']]);
+    });
+    it('should show names printMode=on-with-ids', async () => {
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: unitWithPagesAndManyInputs,
+        sessionId: '1',
+        playerConfig: {
+          printMode: 'on-with-ids'
+        }
+      });
+      const style = await ComputedStyle.get(driver, 'vsp-namehint', ['visibility']);
+      expect(style).toEqual([[
+        'visible', 'visible',
+        'visible', 'visible',
+        'visible', 'visible',
+        'visible', 'visible',
+        'visible', 'visible'
+      ]]);
     });
   });
 });
