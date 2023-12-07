@@ -409,7 +409,7 @@
       }
 
       _send = msg => {
-        console.log(msg);
+        console.log({send: msg});
         window.parent.postMessage(msg, '*');
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
       }
@@ -460,11 +460,11 @@
     }
 
     receive = (type, data) => {
-      if (sessionId && (data.sessionId !== sessionId)) {
-        throw new Error("Wrong sessionId " + type);
-      }
+      console.log({receive: data});
       if (type === "vopStartCommand") {
         Unit.start(data);
+      } else if (sessionId && (data.sessionId !== sessionId)) {
+        throw new Error("Wrong sessionId " + type);
       }
       document.dispatchEvent(new CustomEvent(type, {detail: data}));
     };
@@ -572,6 +572,7 @@
     }
 
     _setUnit = unitDef => {
+      document.querySelector('#unit').innerHTML = '';
       document.querySelector('#unit').append(document.createRange().createContextualFragment(unitDef));
       Pages.get();
     }
@@ -891,10 +892,6 @@
             .forEach(elem => elem.outerHTML += `<vsp-namehint>${elem.name}</vsp-namehint>`);
         case 'on':
           document.querySelector('#print-styles').removeAttribute('media');
-        default:
-          document.querySelector('#print-styles').addAttribute('media', 'print')
-          document.querySelectorAll('vsp-namehint')
-            .forEach(element => element.parentNode.removeChild(element));
       }
     }
 

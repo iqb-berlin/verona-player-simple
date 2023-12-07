@@ -1135,7 +1135,6 @@ describe('simple player', () => {
         }
       });
       const style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
-      console.log(style);
       expect(style).toEqual([['page', 'page', 'page', 'page']]);
     });
     it('should show names printMode=on-with-ids', async () => {
@@ -1156,5 +1155,45 @@ describe('simple player', () => {
         'visible', 'visible'
       ]]);
     });
+  });
+
+  it('should be possible to reuse it', async () => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition: '<div id="title">first unit</div>',
+      sessionId: '1'
+    });
+    const title1 = await driver.findElement(By.id('title'));
+    expect(await title1.getText()).toEqual('first unit');
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition: '<div id="title">second unit</div>',
+      sessionId: '2'
+    });
+    const title2 = await driver.findElement(By.id('title'));
+    expect(await title2.getText()).toEqual('second unit');
+  });
+
+  it('should not accept calls with wrong sessionId', async () => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition: '<fieldset id="p1">page 1</fieldset><fieldset>page 2</fieldset><fieldset>page 3</fieldset>',
+      sessionId: '1'
+    });
+    await driver.findElement(By.id('p1'));
+    await send({
+      type: 'vopPageNavigationCommand',
+      target: '2',
+      sessionId: '1'
+    });
+    const state1 = await VopState.get(driver);
+    expect(state1.playerState.currentPage).toEqual('2');
+    await send({
+      type: 'vopPageNavigationCommand',
+      target: '3',
+      sessionId: 'wrong'
+    });
+    const state2 = await VopState.get(driver);
+    expect(state2.playerState.currentPage).toEqual('2');
   });
 });
