@@ -2,8 +2,11 @@
 require('selenium-webdriver');
 const jasmine = require('jasmine');
 const { Options } = require('selenium-webdriver/firefox');
-const { Builder, By, Key } = require('selenium-webdriver');
+const {
+  Builder, By, Key, Select
+} = require('selenium-webdriver');
 const { MessageRecorder } = require('iqb-dev-components');
+const fs = require('fs');
 const testConfig = require('./config.json');
 
 jasmine.DEFAULT_TIMEOUT_INTERVAL = 10000; // firefox is starting too slow sometimes (1 of 750 times on my machine)
@@ -16,7 +19,7 @@ if (testConfig.headless) {
   options.addArguments('-headless');
 }
 
-const playerPath = `${__dirname}/../verona-player-simple-5.1.html`;
+const playerPath = fs.realpathSync(`${__dirname}/../verona-player-simple-5.1.html`);
 
 const send = async message => {
   await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
@@ -31,9 +34,16 @@ const loadPlayer = async playerSettings => {
 };
 
 const VopState = {
-  get(webdriver) {
+  async get(webdriver) {
     // eslint-disable-next-line no-undef,no-underscore-dangle
     return webdriver.executeScript(() => window.vsp.Message.send._createStateMsg(true));
+  },
+  async getAnswers(webdriver) {
+    const msg = await VopState.get(webdriver);
+    return JSON.parse(msg.unitState.dataParts.answers);
+  },
+  async getAnswer(webdriver, id) {
+    return (await VopState.getAnswers(webdriver)).filter(entry => entry.id === id)[0];
   }
 };
 
@@ -67,9 +77,7 @@ describe('simple player', () => {
   });
 
   afterAll(async () => {
-    if (!testConfig.keepOpen) {
-      await driver.quit();
-    } else {
+    if (testConfig.keepOpen) {
       for (;;) { /* empty */ }
     }
   });
@@ -216,10 +224,10 @@ describe('simple player', () => {
       sessionId: '1',
       unitState: {
         dataParts: {
-          answers: JSON.stringify({
-            '': ['firstContent', 'thirdContent'],
-            field: 'secondContent'
-          })
+          answers: JSON.stringify([
+            { id: '', value: ['firstContent', 'thirdContent'] },
+            { id: 'field', value: 'secondContent' }
+          ])
         }
       }
     });
@@ -240,9 +248,10 @@ describe('simple player', () => {
     });
     await send({
       type: 'vopStartCommand',
-      unitDefinition:
-        `<input type="text" name="field" value="a" />
-        <input type="text" name="field" value="b" /><p contenteditable>c</p>`,
+      unitDefinition: `
+        <input type="text" name="field" value="a" />
+        <input type="text" name="field" value="b" />
+        <p contenteditable>c</p>`,
       sessionId: '1'
     });
 
@@ -250,10 +259,10 @@ describe('simple player', () => {
 
     const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1500);
 
-    expect(msg.unitState.dataParts.answers || {}).toEqual(JSON.stringify({
-      field: ['a', 'b'],
-      '': 'c'
-    }));
+    expect(msg.unitState.dataParts.answers || {}).toEqual(JSON.stringify([
+      { id: 'field', status: 'DISPLAYED', value: ['a', 'b'] },
+      { id: '', status: 'DISPLAYED', value: 'c' }
+    ]));
   });
 
   it('should support various form elements', async () => {
@@ -279,11 +288,11 @@ describe('simple player', () => {
       sessionId: '1',
       unitState: {
         dataParts: {
-          answers: JSON.stringify({
-            'check-box-a': 'on',
-            'radio-group': 'b',
-            'multi-select': ['b', 'c']
-          })
+          answers: JSON.stringify([
+            { id: 'check-box-a', status: 'VALUE_CHANGED', value: 'on' },
+            { id: 'radio-group', status: 'VALUE_CHANGED', value: 'b' },
+            { id: 'multi-select', status: 'VALUE_CHANGED', value: ['b', 'c'] }
+          ])
         }
       }
     });
@@ -303,13 +312,13 @@ describe('simple player', () => {
     await checkBoxB.click();
 
     const msg = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification');
-
-    expect(msg.unitState.dataParts.answers || {}).toEqual(JSON.stringify({
-      'text-area': 'text area content',
-      'multi-select': ['a', 'b', 'c'],
-      'radio-group': 'a',
-      'check-box-b': 'on'
-    }));
+    expect(msg.unitState.dataParts.answers || {}).toEqual(JSON.stringify([
+      { id: 'text-area', status: 'VALUE_CHANGED', value: 'text area content' },
+      { id: 'multi-select', status: 'VALUE_CHANGED', value: ['a', 'b', 'c'] },
+      { id: 'radio-group', status: 'VALUE_CHANGED', value: 'a' },
+      { id: 'check-box-a', status: 'VALUE_CHANGED', value: '' },
+      { id: 'check-box-b', status: 'VALUE_CHANGED', value: 'on' }
+    ]));
   });
 
   it('should collect values from element from extension', async () => {
@@ -318,9 +327,9 @@ describe('simple player', () => {
       unitDefinition: `
         <script>
           let special = false;
-          Unit.dataPartsCollectors.special = () => special ? 'yes' : 'no';
+          Unit.dataPartsCollectors.special = () => ({ id: 'special', value: special ? 'yes' : 'no' });
           PlayerUI.addEventListener('click', '#specialControl', () => {
-              special = true;
+            special = true;
           });
         </script>
         <div id="specialControl">X</div>
@@ -334,13 +343,13 @@ describe('simple player', () => {
     const message2 = await VopState.get(driver);
 
     expect(message1.unitState.dataParts).toEqual({
-      answers: '{}',
-      special: 'no'
+      answers: '[]',
+      special: '{"id":"special","value":"no"}'
     });
 
     expect(message2.unitState.dataParts).toEqual({
-      answers: '{}',
-      special: 'yes'
+      answers: '[]',
+      special: '{"id":"special","value":"yes"}'
     });
   });
 
@@ -378,10 +387,10 @@ describe('simple player', () => {
     const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1200);
 
     expect(message1.unitState.dataParts.answers || {})
-      .toEqual('{"field":"manually changed"}');
+      .toEqual('[{"id":"field","status":"VALUE_CHANGED","value":"manually changed"}]');
 
     expect(message2.unitState.dataParts.answers || {})
-      .toEqual('{"field":"programmatically changed"}');
+      .toEqual('[{"id":"field","status":"VALUE_CHANGED","value":"programmatically changed"}]');
   });
 
   it('debounce returning messages', async () => {
@@ -408,7 +417,7 @@ describe('simple player', () => {
     expect(message1).toBeNull();
 
     expect(message2.unitState.dataParts.answers || {})
-      .toEqual('{"field":"first input second input"}');
+      .toEqual('[{"id":"field","status":"VALUE_CHANGED","value":"first input second input"}]');
   });
 
   it('should execute script in unit', async () => {
@@ -496,13 +505,13 @@ describe('simple player', () => {
       type: 'vopStateChangedNotification',
       unitState: {
         dataParts: {
-          answers: JSON.stringify({
-            'the-item': 'something'
-          })
+          answers: JSON.stringify([
+            { id: 'the-item', status: 'VALUE_CHANGED', value: 'something' }
+          ])
         },
         presentationProgress: 'complete',
         responseProgress: 'complete',
-        unitStateDataType: 'iqb-simple-player@2.0.0'
+        unitStateDataType: 'iqb-standard@1.0'
       }
     });
   });
@@ -715,11 +724,11 @@ describe('simple player', () => {
 
     message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1500);
     expect(message.unitState.responseProgress).toEqual('some');
-    expect(message.unitState.dataParts.answers).toEqual(JSON.stringify({
-      'must-have': '',
-      'nice-2-have': 'something',
-      '': 'anything'
-    }));
+    expect(message.unitState.dataParts.answers).toEqual(JSON.stringify([
+      { id: 'must-have', status: 'DISPLAYED', value: '' },
+      { id: 'nice-2-have', status: 'VALUE_CHANGED', value: 'something' },
+      { id: '', status: 'VALUE_CHANGED', value: 'anything' }
+    ]));
 
     await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['responsesIncomplete'] });
     await driver.sleep(60);
@@ -733,11 +742,11 @@ describe('simple player', () => {
 
     message = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1500);
     expect(message.unitState.responseProgress).toEqual('complete');
-    expect(message.unitState.dataParts.answers).toEqual(JSON.stringify({
-      'must-have': 'whatever',
-      'nice-2-have': 'something',
-      '': 'anything'
-    }));
+    expect(message.unitState.dataParts.answers).toEqual(JSON.stringify([
+      { id: 'must-have', status: 'VALUE_CHANGED', value: 'whatever' },
+      { id: 'nice-2-have', status: 'VALUE_CHANGED', value: 'something' },
+      { id: '', status: 'VALUE_CHANGED', value: 'anything' }
+    ]));
   });
 
   it('should send the correct `presentationProgress` in paginated mode', async () => {
@@ -1195,5 +1204,104 @@ describe('simple player', () => {
     });
     const state2 = await VopState.get(driver);
     expect(state2.playerState.currentPage).toEqual('2');
+  });
+
+  it('should return data in IQB standard', async () => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition:
+        `<fieldset id="p1">
+           <h1>page 1</h1>
+            <input type="text" name="a_text" /><br />
+            <input type="number" name="a_number" /><br />
+            <input type="checkbox" name="a_checkbox" /><br />
+            <label><input type="radio" name="a_radio" value="a" />A</label>
+            <label><input type="radio" name="a_radio" value="b" />B</label><br />
+            <input type="range" name="a_range" min="0" max="10" /><br />
+            <textarea name="a_textarea"></textarea><br />
+            <div name="a_contenteditable" contenteditable></div>
+            <input type="text" name="a_second_text"/><br />
+            <input type="text" name="a_second_text" id="duplicate_name"/><br />
+            <select name="a_select">
+              <option value="one" selected>1</option>
+              <option value="two">2</option>
+            </select>
+            <div style="height: 1000px; text-align: center; padding-top: 3em">↓</div>
+            <label><input name="a_hidden_text_field" value="initial" />Hidden Text field </label><br>
+        </fieldset>
+        <fieldset>
+          <p><b>Page 2</b></p>
+          <label><input name="a_text_field_on_page_two" value="initial" />Text field page two</label><br>
+        </fieldset>`,
+      sessionId: '1',
+      unitState: {
+        unitStateDataType: 'iqb-standard@1.0',
+        dataParts: {
+          answers: JSON.stringify([{ id: 'a_text', status: 'VALUE_CHANGED', value: 'loaded' }])
+        }
+      }
+    });
+
+    await driver.sleep(100);
+
+    expect(await VopState.getAnswers(driver)).toEqual([
+      { id: 'a_text', status: 'VALUE_CHANGED', value: 'loaded' },
+      { id: 'a_number', status: 'DISPLAYED', value: '' },
+      { id: 'a_checkbox', status: 'DISPLAYED', value: '' },
+      { id: 'a_radio', status: 'DISPLAYED', value: '' },
+      { id: 'a_range', status: 'DISPLAYED', value: '5' },
+      { id: 'a_textarea', status: 'DISPLAYED', value: '' },
+      { id: 'a_contenteditable', status: 'DISPLAYED', value: '' },
+      { id: 'a_second_text', status: 'DISPLAYED', value: ['', ''] },
+      { id: 'a_select', status: 'DISPLAYED', value: 'one' },
+      { id: 'a_hidden_text_field', status: 'NOT_REACHED', value: 'initial' },
+      { id: 'a_text_field_on_page_two', status: 'NOT_REACHED', value: 'initial' }
+    ]);
+
+    await driver.findElement(By.name('a_text')).sendKeys('A');
+    await driver.findElement(By.name('a_number')).sendKeys(9);
+    await driver.findElement(By.name('a_checkbox')).click();
+    await driver.findElement(By.name('a_range')).sendKeys(Key.ARROW_LEFT, Key.ARROW_LEFT);
+    await driver.findElement(By.name('a_radio')).click();
+    await driver.findElement(By.name('a_textarea')).sendKeys('sth');
+    await driver.findElement(By.name('a_contenteditable')).sendKeys('sth2');
+    await driver.findElement(By.name('a_second_text')).sendKeys('xx');
+    await driver.findElement(By.id('duplicate_name')).sendKeys('yy');
+    const selectElement = await driver.findElement(By.name('a_select'));
+    const select = new Select(selectElement);
+    await select.selectByValue('two');
+
+    expect(await VopState.getAnswers(driver)).toEqual([
+      { id: 'a_text', status: 'VALUE_CHANGED', value: 'loadedA' },
+      { id: 'a_number', status: 'VALUE_CHANGED', value: '9' },
+      { id: 'a_checkbox', status: 'VALUE_CHANGED', value: 'on' },
+      { id: 'a_radio', status: 'VALUE_CHANGED', value: 'a' },
+      { id: 'a_range', status: 'VALUE_CHANGED', value: '3' },
+      { id: 'a_textarea', status: 'VALUE_CHANGED', value: 'sth' },
+      { id: 'a_contenteditable', status: 'VALUE_CHANGED', value: 'sth2' },
+      { id: 'a_second_text', status: 'VALUE_CHANGED', value: ['xx', 'yy'] },
+      { id: 'a_select', status: 'VALUE_CHANGED', value: 'two' },
+      { id: 'a_hidden_text_field', status: 'NOT_REACHED', value: 'initial' },
+      { id: 'a_text_field_on_page_two', status: 'NOT_REACHED', value: 'initial' }
+    ]);
+
+    const hiddenTextField = await driver.findElement(By.name('a_hidden_text_field'));
+    await driver.executeScript(e => e.scrollIntoView(), hiddenTextField);
+
+    expect(await VopState.getAnswer(driver, 'a_hidden_text_field'))
+      .toEqual({ id: 'a_hidden_text_field', status: 'DISPLAYED', value: 'initial' });
+
+    const nextPage = await driver.findElement(By.css('#next-page'));
+    await nextPage.click();
+
+    expect(await VopState.getAnswer(driver, 'a_text_field_on_page_two'))
+      .toEqual({ id: 'a_text_field_on_page_two', status: 'DISPLAYED', value: 'initial' });
+
+    const prevPage = await driver.findElement(By.css('#prev-page'));
+    await prevPage.click();
+
+    await driver.findElement(By.name('a_checkbox')).click();
+    expect(await VopState.getAnswer(driver, 'a_checkbox'))
+      .toEqual({ id: 'a_checkbox', status: 'VALUE_CHANGED', value: '' });
   });
 });

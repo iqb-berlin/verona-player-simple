@@ -1,0 +1,81 @@
+{
+  "answers": [
+    {
+      "id": "required-text-field",
+      "value": "neyw",
+      "status": "VALUE_CHANGED"
+    },
+    {
+      "id": "readonly-text-field",
+      "value": "read-only"
+    },
+    {
+      "id": "text-field",
+      "value": [
+        "b",
+        "y"
+      ]
+    },
+    {
+      "id": "number-field",
+      "value": "1"
+    },
+    {
+      "id": "date-field",
+      "value": "2023-12-02"
+    },
+    {
+      "id": "email-field",
+      "value": "3@klo.de"
+    },
+    {
+      "id": "range-field",
+      "value": "5"
+    },
+    {
+      "id": "radio-group",
+      "value": "b"
+    },
+
+    {
+      "id": "two-text-fields-same-name",
+      "value": [
+        "c",
+        "D"
+      ]
+    },
+    {
+      "id": "select-box",
+      "value": "b"
+    },
+    {
+      "id": "list-field",
+      "value": "B"
+    },
+    {
+      "id": "text-area",
+      "value": "C"
+    },
+    {
+      "id": "multi-select",
+      "value": [
+        "red",
+        "blue"
+      ]
+    },
+    {
+      "id": "contenteditable-1",
+      "value": "change messy shit"
+    },
+    {
+      "id": "",
+      "value": "s"
+    }
+  ],
+  "custom": [
+    {
+      "id": "counter",
+      "value": "10"
+    }
+  ]
+}

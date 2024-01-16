@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <title>Simple Verona Player 5</title>
 
-  <!-- experimental new meta-data-format -->
   <script type="application/ld+json">
     {
       "$schema": "https://raw.githubusercontent.com/verona-interfaces/metadata/master/verona-module-metadata.json",
@@ -40,7 +39,7 @@
         "licenseType": "MIT",
         "licenseUrl": "https://raw.githubusercontent.com/iqb-berlin/verona-player-simple/main/LICENSE"
       },
-      "notSupportedFeatures": []
+      "metadataVersion": "2.0"
     }
   </script>
 
@@ -70,11 +69,11 @@
     #unit.paged.separate fieldset {
       overflow-y: auto;
       height: calc(100% - 100px);
-      padding: 50px 20px;
+      padding: 50px 0;
       border: 0;
     }
 
-    /* add some whitespace in scollmode, to make it possible to get last pages on the top even if they are small */
+    /* add some whitespace in scrollmode, to make it possible to get last pages on the top even if they are small */
     #unit.paged.concat-scroll:after,
     #unit.paged.concat-scroll-snap:after {
       height: 100%;
@@ -271,8 +270,8 @@
 </form>
 
 <script>
-  const unitStateDataType = "iqb-simple-player@2.0.0"; // TODO!
-  const unitDefinitionType = "verona-player-simple-4.0.0"; // TODO!
+  const unitStateDataType = "iqb-standard@1.0";
+  const unitDefinitionType = "verona-player-simple-5.1";
 
   // some polyfills
   (function polyfillReactionToProgrammaticallyChangedInputValue() {
@@ -409,7 +408,6 @@
       }
 
       _send = msg => {
-        console.log({send: msg});
         window.parent.postMessage(msg, '*');
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
       }
@@ -460,7 +458,6 @@
     }
 
     receive = (type, data) => {
-      console.log({receive: data});
       if (type === "vopStartCommand") {
         Unit.start(data);
       } else if (sessionId && (data.sessionId !== sessionId)) {
@@ -473,14 +470,14 @@
   const Unit = new class {
     dataPartsCollectors = {
       answers: () => Answers.get()
-    }
+    };
 
     presentationProgressFactors = {
       pages: {
         complete: () => Object.values(Pages.seenPages).filter(p => p.enter && p.bottom).length === Pages.pageCount,
         some: () => Object.values(Pages.seenPages).filter(p => p.enter || p.bottom).length > 0
       }
-    }
+    };
 
     start = data => {
       sessionId = data.sessionId || new Error("session ID missing");
@@ -497,13 +494,15 @@
 
       this._setUnit(data.unitDefinition || new Error("unitDefinition missing"));
       this._setPlayerConfig(data.playerConfig || {});
+
+      Answers.prepare();
       this._setUnitData(data.unitState || {});
 
       PlayerUI.togglePrintMode();
 
       PlayerUI.toggleUnitNavButtons();
       PlayerUI.togglePageNavButtons();
-    }
+    };
 
     getData = () =>
       Object.keys(this.dataPartsCollectors)
@@ -549,68 +548,67 @@
         // of 'none' is impossible as long the unit have non-required text-items.
         return 'none';
       }
-    }
+    };
 
     selectDataPartFromUnitState = (unitState, partName) => {
       if (!unitState.dataParts) {
-        return {};
+        return [];
       }
-      let part = unitState.dataParts[partName] || '{}';
+      const part = unitState.dataParts[partName] || '[]';
       try {
         return JSON.parse(part);
       } catch (e) {
         console.warn('Could not parse unitState', e);
-        return {};
+        return [];
       }
-    }
+    };
 
     elementIsRequired = element => element.getAttribute('required') != null &&
       (["", "true"].indexOf(element.getAttribute('required').toLowerCase()) > -1);
 
     _setUnitData = unitState => {
       Answers.set(this.selectDataPartFromUnitState(unitState, 'answers'));
-    }
+    };
 
     _setUnit = unitDef => {
       document.querySelector('#unit').innerHTML = '';
       document.querySelector('#unit').append(document.createRange().createContextualFragment(unitDef));
       Pages.get();
-    }
+    };
 
     _setPlayerConfig = newPlayerConfig => {
       playerConfig = Object.assign(playerConfig, newPlayerConfig);
       Pages.applyPagingMode();
       Pages.goto(playerConfig.startPage || 1);
-    }
+    };
   }
 
   const Answers = new class {
-    get = () => ({...this._getAnswersFromForm(), ...this._getAnswersFromEditableElements()});
+    status = {};
 
-    set = answers => {
-      Object.keys(answers).forEach(key => {this._setAnswer(key, answers[key]);});
+    get = () => {
+      const formData = new FormData(document.querySelector("form"));
+      const editableFields = Answers._getAnswersFromEditableElements();
+      return Object.entries(Answers.status)
+        .map(([id, status]) => {
+          const values = [...formData.getAll(id), ...(editableFields[id] || [])];
+          const value = values.length === 0 ? '' : values.length === 1 ? values[0] : values;
+          return { id, status, value };
+        });
     }
 
-    _getAnswersFromForm = () => [...new FormData(document.querySelector("form"))]
-      .reduce((carry, entry) => {
-        if (isDefined(carry[entry[0]])) {
-          carry[entry[0]] = Array.isArray(carry[entry[0]]) ? [...carry[entry[0]], entry[1]] : [carry[entry[0]], entry[1]];
-        } else {
-          carry[entry[0]] = entry[1];
-        }
-        return carry;
-      }, {});
+    set = answers => {
+      (answers || []).forEach(answer => {
+        Array.isArray(answer.value)
+          ? answer.value.forEach((value, index) => this._setAnswer(answer.id, value, index))
+          : this._setAnswer(answer.id, answer.value)
+      })
+    };
 
     _getAnswersFromEditableElements = () => ([...document.querySelectorAll('form [contenteditable]')] || [])
       .reduce((carry, element) => {
         const name = element.getAttribute("name") || '';
-        if (isDefined(carry[name])) {
-          carry[name] = Array.isArray(carry[name])
-            ? [...carry[name], element.innerText.trim()]
-            : [carry[name], element.innerText.trim()];
-        } else {
-          carry[name] = element.innerText.trim();
-        }
+        carry[name] = (isDefined(carry[name])) ? [...carry[name], element.innerText.trim()] : [element.innerText.trim()];
         return carry;
       }, {});
 
@@ -626,14 +624,17 @@
         return;
       }
 
+      if (!Answers.status[name]) {
+        Answers.status[name] = "UNSET";
+      }
+      Answers.status[name] = "VALUE_CHANGED";
+
       if (Array.isArray(value)) {
         value.forEach((valueEntry, i) => this._setAnswer(name, valueEntry, i));
         return;
       }
 
       const element = elements[index] || elements[0];
-
-      element.dataset.touched = "true";
 
       switch (element.tagName) {
         case "INPUT":
@@ -664,6 +665,30 @@
         default:
           element.innerText = value;
       }
+    }
+
+    prepare = () => {
+      document.querySelectorAll(PlayerUI.itemElements)
+        .forEach(elem => {
+          Answers.status[elem.getAttribute('name') || ''] = 'NOT_REACHED';
+          this._newObserver(elem);
+        });
+    }
+
+    _newObserver = elem => {
+      new IntersectionObserver(
+        entries => {
+          if (entries[0].isIntersecting) {
+            const id = elem.getAttribute('name') || '';
+            Answers.status[id] = Answers.status[id] === 'VALUE_CHANGED' ? 'VALUE_CHANGED' : 'DISPLAYED';
+            Message.send.vopStateChangedNotification();
+          }
+        }
+      ).observe(elem);
+    }
+
+    setStatusChanged = event => {
+      Answers.status[event.target.getAttribute('name') || ''] = 'VALUE_CHANGED';
     }
   }
 
@@ -1066,6 +1091,10 @@
   PlayerUI.addEventListener('keyup', PlayerUI.itemElements,
     Time.debounce(Message.send.vopStateChangedNotification, parseInt(playerSettings.debounceKeyboardEvents), 10)
   );
+
+  PlayerUI.addEventListener('change', PlayerUI.itemElements, Answers.setStatusChanged);
+  PlayerUI.addEventListener('programmaticallyChange', PlayerUI.itemElements, Answers.setStatusChanged);
+  PlayerUI.addEventListener('keyup', PlayerUI.itemElements, Answers.setStatusChanged);
 
   PlayerUI.addEventListener('click', '#next-page', () => Pages.goto('#next'));
   PlayerUI.addEventListener('click', '#prev-page', () => Pages.goto('#previous'));
