@@ -2,13 +2,15 @@
   "name": "verona-player-simple",
   "version": "5.1.0",
   "description": "A dependency-free, vanilla-js Verona5-Player, which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
-  "dependencies": {},
   "devDependencies": {
+    "@iqb/eslint-config": "2.1.1",
     "geckodriver": "4.2.1",
-    "jasmine": "5.1.0",
-    "selenium-webdriver": "4.15.0",
     "iqb-dev-components": "1.4.1",
-    "@iqb/eslint-config": "2.1.1"
+    "jasmine": "5.1.0",
+    "jasmine-core": "^5.1.1",
+    "karma": "^6.4.2",
+    "karma-jasmine": "^5.1.0",
+    "selenium-webdriver": "4.15.0"
   },
   "scripts": {
     "test": "clear && npx jasmine --config=test/jasmine.json",
