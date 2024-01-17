@@ -17,7 +17,7 @@ and the player does the rest. Use some special Ids for some special buttons.
 * You need a Verona-Host-System to run this Software, for example the 
 [IQB-Testcenter](https://github.com/iqb-berlin/testcenter-setup) or the 
 [Verona-Player-Testbed](https://github.com/iqb-berlin/verona-player-testbed).
-* The whole player is `verona-simple-player-5.1.html`, there is no build-process or whatever. 
+* The whole player is in the file `verona-simple-player-5.1.html`, there is no build-process or whatever. 
 
 ## Development Rules for Units
 
@@ -32,16 +32,23 @@ The Unit can contain any HTML-content (inner Part of `<body>`), even `<script>`-
   containing the `contenteditable`-attribute. In both cases use the name element to set up variable names.
 * The player contains some JS-Classes which can be used in unit-code to extend functionality.
 * Whenever a Verona-message is received an event with the same name is thrown, whenever a message is sent,
-  an event called `sent:{MessageName}` gets thrown afterwards. Use these events to hook into the player's
+  an event called `sent:{MessageName}` gets thrown afterward. Use these events to hook into the player's
   functionality if you want to.
 * That's it.
 
 
 ## Development
 
+Easiest way to develop the player is running 
+`
+npm install
+npm run testbed
+`
+This starts the player with a specific unit and starting data. Configure those in dev-tools/config.json.
+
 ### E2e-Testing the Player
 `
 npm install
-npm test
+npm run test
 `
 
