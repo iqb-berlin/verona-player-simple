@@ -1,7 +1,7 @@
 {
   "name": "verona-player-simple",
   "version": "5.1.0",
-  "description": "A dependency-free, vanilla-js Verona4-Player, which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
+  "description": "A dependency-free, vanilla-js Verona5-Player, which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
   "dependencies": {},
   "devDependencies": {
     "geckodriver": "4.2.1",
