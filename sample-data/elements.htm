@@ -1,0 +1,124 @@
+<style>
+  br {
+    margin-bottom: 0.4em;
+  }
+</style>
+<fieldset>
+  <div style="display: flex; overflow-y: hidden; height: calc(100% - 50px);">
+    <div style="flex: 70%; padding: 4px; overflow-y: scroll">
+      <p><b>Some HTML-form-elements:</b></p>
+      <label><input name="required-text-field" required />Required Text field </label><br>
+      <label><input name="readonly-text-field" value="read-only" readonly />Read-Only Text field </label><br>
+      <label><input name="text-field" />Text field </label><br>
+      <label><input type="radio" name="text-field" value="x" />Radio Button with same name as Text field</label><br>
+      <label><input type="radio" name="text-field" value="y" />Radio Button with same name as Text field</label><br>
+      <label><input type="number" min="2" max="4" name="number-field" />Number field (between 2 and 4)</label><br>
+      <label><input type="date" name="date-field" />Date field </label><br>
+      <label><input type="email" name="email-field" />Email field </label><br>
+      <label><input type="range" min="1" max="10" name="range-field" />Range field (from 1 to 10)</label><br>
+      <label><input type="radio" name="radio-group" value="a" required />Radio group: value-A </label><br>
+      <label><input type="radio" name="radio-group" value="b" />value-B </label><br>
+      <label><input type="radio" name="radio-group" value="c" />value-C </label><br>
+      <label><input type="checkbox" name="check-box" />Checkbox </label><br>
+      <label><input type="checkbox" name="check-box-initially-checked" checked />Checkbox initially checked</label><br>
+      <br>
+      <label><input name="two-text-fields-same-name" />Duplicate name Textfield1</label><br>
+      <label><input name="two-text-fields-same-name" />Duplicate name Textfield2</label><br>
+      <br>
+      <label>
+        Dropdown
+        <select name="select-box">
+          <option value="a">A</option>
+          <option value="b">B</option>
+          <option value="c">C</option>
+        </select>
+      </label>
+      <br>
+      <label>
+        Textbox with suggestions
+        <input list="browsers" name="list-field">
+        <datalist id="browsers">
+          <option value="Internet Explorer">
+          <option value="Firefox">
+          <option value="Chrome">
+          <option value="Opera">
+        </datalist>
+      </label>
+      <br>
+      <label>
+        Textarea
+        <textarea name="text-area" style="width: 100%; box-sizing: border-box">Type something...</textarea>
+      </label>
+      <br>
+      <label>
+        Multiselect
+        <select name="multi-select" size="4" multiple>
+          <option value="red">Red</option>
+          <option value="green">Green</option>
+          <option value="blue">Blue</option>
+          <option value="yellow">Yellow</option>
+        </select>
+      </label>
+      <br>
+      <label>Contenteditable with name</label>
+      <div name="contenteditable-1" contenteditable style="border:1px solid black; padding: 1px">change me</div>
+      <br>
+      <label>Contenteditable without name</label>
+      <div contenteditable style="border:1px solid black; padding: 1px"></div>
+      <br>
+      <label>Contenteditable with same name as text-field</label>
+      <div name="contenteditable-and-text-field" contenteditable style="border:1px solid black; padding: 1px"></div>
+      <input name="contenteditable-and-text-field">
+      <br>
+      <br>
+      <label>Custom input: Click to increase</label>
+      <div style="width: 3em; background: grey; border:1px solid black; border-radius: 2px; padding: 1px; cursor: pointer" id="custom-control"></div>
+      <script>
+        Unit.dataPartsCollectors['custom'] = () => ([{
+          'id': 'counter',
+          'status': 'VALUE_CHANGED',
+          'value': document.querySelector('#custom-control').innerHTML
+        }]);
+        document.addEventListener('vopStartCommand', event => {
+          document.querySelector('#custom-control').innerHTML =
+            Unit.selectDataPartFromUnitState(event.detail["unitState"] || {}, 'custom').counter?.value || 0;
+        });
+        PlayerUI.addEventListener('click', '#custom-control', () => {
+          document.querySelector('#custom-control').innerHTML++;
+          Message.send.vopStateChangedNotification();
+        });
+      </script>
+      <div style="height: 1000px; text-align: center; padding-top: 3em">↓</div>
+      <label><input name="hidden-text-field" />Hidden Text field </label><br>
+    </div>
+    <div style="overflow-y: scroll">
+      <p><b>Resulting State:</b></p>
+      <label>Filter State: <input type="text" name="filter" id="filter"></label>
+      <pre id="unitdata" style="overflow-x: hidden; background: black; color: white"></pre>
+      <script>
+        let filter = '';
+        const updateDisplayedState = () => {
+          document.querySelector('#unitdata').innerText =
+            JSON.stringify(
+              Object.entries(Unit.getData())
+                .map(chunk => ({
+                  [chunk[0]]: Object.values(JSON.parse(chunk[1]))
+                    .filter(item => !filter || item.id.includes(filter))
+                })),
+              null,
+              2
+            );
+        };
+        document.querySelector('#filter').addEventListener('keyup', () => {
+          filter = document.querySelector('#filter').value;
+          updateDisplayedState();
+        });
+        document.addEventListener('vopStateChangedNotification', updateDisplayedState);
+      </script>
+    </div>
+  </div>
+</fieldset>
+<fieldset>
+  <p><b>Page 2</b></p>
+  <label><input name="page-two-text-field" />Text field page two</label><br>
+</fieldset>
