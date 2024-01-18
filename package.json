@@ -7,9 +7,6 @@
     "geckodriver": "4.2.1",
     "iqb-dev-components": "1.4.1",
     "jasmine": "5.1.0",
-    "jasmine-core": "^5.1.1",
-    "karma": "^6.4.2",
-    "karma-jasmine": "^5.1.0",
     "selenium-webdriver": "4.15.0"
   },
   "scripts": {
