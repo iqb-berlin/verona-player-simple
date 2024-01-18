@@ -597,7 +597,7 @@ describe('simple player', () => {
   });
 
   describe('should show appropriate message on `vopNavigationDeniedNotification`', () => {
-    fit('when reason is `responsesIncomplete and also trigger form validation `', async () => {
+    it('when reason is `responsesIncomplete and also trigger form validation `', async () => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: `
