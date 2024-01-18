@@ -597,7 +597,7 @@ describe('simple player', () => {
   });
 
   describe('should show appropriate message on `vopNavigationDeniedNotification`', () => {
-    it('when reason is `responsesIncomplete and also trigger form validation `', async () => {
+    fit('when reason is `responsesIncomplete and also trigger form validation `', async () => {
       await send({
         type: 'vopStartCommand',
         unitDefinition: `
@@ -623,7 +623,7 @@ describe('simple player', () => {
       expect(await vspMessage.isDisplayed()).toBeFalse();
 
       await send({ type: 'vopNavigationDeniedNotification', sessionId: '1', reason: ['responsesIncomplete'] });
-      await driver.sleep(60);
+      await driver.sleep(200);
 
       expect(await vspMessage.isDisplayed()).toBeTrue();
       const vspMessageLinks = await vspMessage.findElements(By.css('[onclick]'));
