@@ -3,7 +3,7 @@ include:
   - template: Security/Secret-Detection.gitlab-ci.yml
   - template: Dependency-Scanning.gitlab-ci.yml
 
-image: node:14.16-buster
+image: node:20.11-buster
 
 test:
   stage: test
