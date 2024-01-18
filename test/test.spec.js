@@ -768,6 +768,8 @@ describe('simple player', () => {
 
     await nextPage.click();
 
+    await driver.sleep(100);
+
     const message2 = await VopState.get(driver);
 
     expect(message1.unitState.presentationProgress).toEqual('some');
