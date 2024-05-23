@@ -19,7 +19,7 @@ if (testConfig.headless) {
   options.addArguments('-headless');
 }
 
-const playerPath = fs.realpathSync(`${__dirname}/../verona-player-simple-5.2.html`);
+const playerPath = fs.realpathSync(`${__dirname}/../verona-player-simple-6.0.html`);
 
 const send = async message => {
   await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
