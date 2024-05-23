@@ -15,8 +15,8 @@
           "lang": "en"
         }
       ],
-      "version": "5.1.0",
-      "specVersion": "5.1",
+      "version": "5.2.0",
+      "specVersion": "5.2",
       "description": [
         {
           "value": "This is a simple, dependency-less, vanilla-js-written, but full-featured unit player, mainly as showcase for developers and for software-testing. It does implement the Verona 4.0.0-Standard and can be used for units containing simple any content in HTML-format. Unit Description ist the <code>form</code>-content as HTML. Just give some names to the form element, and the player does the rest. Use some special Ids for some special buttons.",
@@ -57,6 +57,7 @@
       margin: 0 9em;
     }
 
+    #unit.paged.button,
     #unit.paged.separate {
       overflow-y: auto;
       height: 100vh;
@@ -66,6 +67,7 @@
       display: block
     }
 
+    #unit.paged.button fieldset,
     #unit.paged.separate fieldset {
       overflow-y: auto;
       height: calc(100% - 100px);
@@ -209,7 +211,7 @@
       size: A4 landscape;
       margin: 15pt;
     }
-    html, body, #unit.paged.separate, #unit {
+    html, body, #unit.paged.separate, #unit.paged.button, #unit {
       height: auto;
     }
     vsp-message,
@@ -271,7 +273,7 @@
 
 <script>
   const unitStateDataType = "iqb-standard@1.0";
-  const unitDefinitionType = "verona-player-simple-5.1";
+  const unitDefinitionType = "verona-player-simple-5.2";
 
   // some polyfills
   (function polyfillReactionToProgrammaticallyChangedInputValue() {
@@ -319,7 +321,7 @@
     unitTitle: 'Unit',
     unitId: 'unit',
     enabledNavigationTargets: [], // can contain  "next" "previous" "first" "last" "end"
-    pagingMode: "separate", // "separate" | "concat-scroll" | "concat-scroll-snap",
+    pagingMode: "button", // "separate" | "concat-scroll" | "concat-scroll-snap" | "button"
     printMode: "off",
     startPage: null,
     directDownloadUrl: null
@@ -714,7 +716,7 @@
     }
 
     get currentPage() {
-      if (playerConfig.pagingMode !== "separate") {
+      if (!['separate', 'button'].includes(playerConfig.pagingMode)) {
         const currentPage = Math.min(...Object.keys(this.visiblePages).filter(i => this.visiblePages[i]));
         if (currentPage === Infinity) {
           return 0;
@@ -744,7 +746,7 @@
 
       const pageElem = document.querySelector(`fieldset:nth-of-type(${this._currentPage})`);
 
-      if (playerConfig.pagingMode === "separate") {
+      if (['separate', 'button'].includes(playerConfig.pagingMode)) {
         this._openPage(pageElem);
         PlayerUI.togglePageNavButtons();
         PlayerUI.removeAllPointers();
@@ -804,7 +806,7 @@
 
     _pageIntersection = intersectionEntry => {
       const pageId = parseInt(intersectionEntry.target.dataset.pagenr, 10);
-      if (playerConfig.pagingMode !== "separate") {
+      if (!['separate', 'button'].includes(playerConfig.pagingMode)) {
         this.visiblePages[pageId] = intersectionEntry.isIntersecting;
       }
       this.seenPages[pageId].enter = this.seenPages[pageId].enter || intersectionEntry.isIntersecting;
@@ -889,13 +891,17 @@
 
     togglePageNavButtons = () => {
       document.querySelector('#unit').classList[Pages.hasPages ? 'add' : 'remove']('paged');
+      console.log({
+        current: Pages.currentPage,
+        count: Pages.pageCount
+      });
       this.toggleButton('next-page',
         Pages.pageCount > 1 && Pages.currentPage < Pages.pageCount,
-        Pages.pageCount > 1 && playerConfig.pagingMode === 'separate'
+        Pages.pageCount > 1 && playerConfig.pagingMode === 'button'
       );
       this.toggleButton('prev-page',
         Pages.pageCount > 1 && Pages.currentPage > 1,
-        Pages.pageCount > 1 && playerConfig.pagingMode === 'separate'
+        Pages.pageCount > 1 && playerConfig.pagingMode === 'button'
       );
     }
 

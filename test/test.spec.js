@@ -19,7 +19,7 @@ if (testConfig.headless) {
   options.addArguments('-headless');
 }
 
-const playerPath = fs.realpathSync(`${__dirname}/../verona-player-simple-5.1.html`);
+const playerPath = fs.realpathSync(`${__dirname}/../verona-player-simple-5.2.html`);
 
 const send = async message => {
   await driver.executeScript(`window.postMessage(${JSON.stringify(message)}, '*');`);
@@ -148,27 +148,32 @@ describe('simple player', () => {
     const nextPage = await driver.findElement(By.css('#next-page'));
     const prevPage = await driver.findElement(By.css('#prev-page'));
 
-    expect(await nextPage.isDisplayed()).toBeTrue();
-    expect(await prevPage.isDisplayed()).toBeTrue();
-
     expect(await p1.isDisplayed()).toBeTrue();
     expect(await p2.isDisplayed()).toBeFalse();
-    expect(await nextPage.isEnabled()).toBeTrue();
-    expect(await prevPage.isEnabled()).toBeFalse();
+    expect(await nextPage.isDisplayed()).toBeFalse();
+    expect(await prevPage.isDisplayed()).toBeFalse();
 
-    await nextPage.click();
+    await send({
+      type: 'vopPageNavigationCommand',
+      target: '2',
+      sessionId: '1'
+    });
 
     expect(await p1.isDisplayed()).toBeFalse();
     expect(await p2.isDisplayed()).toBeTrue();
-    expect(await nextPage.isEnabled()).toBeFalse();
-    expect(await prevPage.isEnabled()).toBeTrue();
+    expect(await nextPage.isDisplayed()).toBeFalse();
+    expect(await prevPage.isDisplayed()).toBeFalse();
 
-    await prevPage.click();
+    await send({
+      type: 'vopPageNavigationCommand',
+      target: '1',
+      sessionId: '1'
+    });
 
     expect(await p1.isDisplayed()).toBeTrue();
     expect(await p2.isDisplayed()).toBeFalse();
-    expect(await nextPage.isEnabled()).toBeTrue();
-    expect(await prevPage.isEnabled()).toBeFalse();
+    expect(await nextPage.isDisplayed()).toBeFalse();
+    expect(await prevPage.isDisplayed()).toBeFalse();
   });
 
   it('should not display pagination buttons when `pagingMode` = `concat-scroll`', async () => {
@@ -215,6 +220,29 @@ describe('simple player', () => {
 
     expect(await p1.isDisplayed()).toBeTrue();
     expect(await p2.isDisplayed()).toBeTrue();
+  });
+
+  it('should display pagination buttons when `pagingMode` = `button`', async () => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition:
+        '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
+      sessionId: '1',
+      playerConfig: {
+        pagingMode: 'button'
+      }
+    });
+
+    const p1 = await driver.findElement(By.css('#p1'));
+    const p2 = await driver.findElement(By.css('#p2'));
+    const nextPage = await driver.findElement(By.css('#next-page'));
+    const prevPage = await driver.findElement(By.css('#prev-page'));
+
+    expect(await nextPage.isDisplayed()).toBeTrue();
+    expect(await prevPage.isDisplayed()).toBeTrue();
+
+    expect(await p1.isDisplayed()).toBeTrue();
+    expect(await p2.isDisplayed()).toBeFalse();
   });
 
   it('should load values into the right forms', async () => {
@@ -611,7 +639,7 @@ describe('simple player', () => {
         sessionId: '1',
         playerConfig: {
           enabledNavigationTargets: ['#next', '#prev'],
-          pagingMode: 'separate'
+          pagingMode: 'button'
         }
       });
 
@@ -664,7 +692,7 @@ describe('simple player', () => {
           `,
         sessionId: '1',
         playerConfig: {
-          pagingMode: 'separate'
+          pagingMode: 'button'
         }
       });
 
@@ -756,7 +784,7 @@ describe('simple player', () => {
         '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
       sessionId: '1',
       playerConfig: {
-        pagingMode: 'separate'
+        pagingMode: 'button'
       }
     });
 
@@ -798,7 +826,7 @@ describe('simple player', () => {
         </script>`,
       sessionId: '1',
       playerConfig: {
-        pagingMode: 'separate'
+        pagingMode: 'button'
       }
     });
 
