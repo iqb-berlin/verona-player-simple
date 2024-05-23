@@ -222,14 +222,14 @@ describe('simple player', () => {
     expect(await p2.isDisplayed()).toBeTrue();
   });
 
-  it('should display pagination buttons when `pagingMode` = `button`', async () => {
+  it('should display pagination buttons when `pagingMode` = `buttons`', async () => {
     await send({
       type: 'vopStartCommand',
       unitDefinition:
         '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
       sessionId: '1',
       playerConfig: {
-        pagingMode: 'button'
+        pagingMode: 'buttons'
       }
     });
 
@@ -639,7 +639,7 @@ describe('simple player', () => {
         sessionId: '1',
         playerConfig: {
           enabledNavigationTargets: ['#next', '#prev'],
-          pagingMode: 'button'
+          pagingMode: 'buttons'
         }
       });
 
@@ -692,7 +692,7 @@ describe('simple player', () => {
           `,
         sessionId: '1',
         playerConfig: {
-          pagingMode: 'button'
+          pagingMode: 'buttons'
         }
       });
 
@@ -784,7 +784,7 @@ describe('simple player', () => {
         '<fieldset><legend id="p1">Page 1</legend></fieldset><fieldset><legend id="p2">Page 2</legend></fieldset>',
       sessionId: '1',
       playerConfig: {
-        pagingMode: 'button'
+        pagingMode: 'buttons'
       }
     });
 
@@ -826,7 +826,7 @@ describe('simple player', () => {
         </script>`,
       sessionId: '1',
       playerConfig: {
-        pagingMode: 'button'
+        pagingMode: 'buttons'
       }
     });
 

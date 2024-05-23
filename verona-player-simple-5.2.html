@@ -57,7 +57,7 @@
       margin: 0 9em;
     }
 
-    #unit.paged.button,
+    #unit.paged.buttons,
     #unit.paged.separate {
       overflow-y: auto;
       height: 100vh;
@@ -67,7 +67,7 @@
       display: block
     }
 
-    #unit.paged.button fieldset,
+    #unit.paged.buttons fieldset,
     #unit.paged.separate fieldset {
       overflow-y: auto;
       height: calc(100% - 100px);
@@ -211,7 +211,7 @@
       size: A4 landscape;
       margin: 15pt;
     }
-    html, body, #unit.paged.separate, #unit.paged.button, #unit {
+    html, body, #unit.paged.separate, #unit.paged.buttons, #unit {
       height: auto;
     }
     vsp-message,
@@ -321,7 +321,7 @@
     unitTitle: 'Unit',
     unitId: 'unit',
     enabledNavigationTargets: [], // can contain  "next" "previous" "first" "last" "end"
-    pagingMode: "button", // "separate" | "concat-scroll" | "concat-scroll-snap" | "button"
+    pagingMode: "buttons", // "separate" | "concat-scroll" | "concat-scroll-snap" | "buttons"
     printMode: "off",
     startPage: null,
     directDownloadUrl: null
@@ -716,7 +716,7 @@
     }
 
     get currentPage() {
-      if (!['separate', 'button'].includes(playerConfig.pagingMode)) {
+      if (!['separate', 'buttons'].includes(playerConfig.pagingMode)) {
         const currentPage = Math.min(...Object.keys(this.visiblePages).filter(i => this.visiblePages[i]));
         if (currentPage === Infinity) {
           return 0;
@@ -746,7 +746,7 @@
 
       const pageElem = document.querySelector(`fieldset:nth-of-type(${this._currentPage})`);
 
-      if (['separate', 'button'].includes(playerConfig.pagingMode)) {
+      if (['separate', 'buttons'].includes(playerConfig.pagingMode)) {
         this._openPage(pageElem);
         PlayerUI.togglePageNavButtons();
         PlayerUI.removeAllPointers();
@@ -806,7 +806,7 @@
 
     _pageIntersection = intersectionEntry => {
       const pageId = parseInt(intersectionEntry.target.dataset.pagenr, 10);
-      if (!['separate', 'button'].includes(playerConfig.pagingMode)) {
+      if (!['separate', 'buttons'].includes(playerConfig.pagingMode)) {
         this.visiblePages[pageId] = intersectionEntry.isIntersecting;
       }
       this.seenPages[pageId].enter = this.seenPages[pageId].enter || intersectionEntry.isIntersecting;
@@ -897,11 +897,11 @@
       });
       this.toggleButton('next-page',
         Pages.pageCount > 1 && Pages.currentPage < Pages.pageCount,
-        Pages.pageCount > 1 && playerConfig.pagingMode === 'button'
+        Pages.pageCount > 1 && playerConfig.pagingMode === 'buttons'
       );
       this.toggleButton('prev-page',
         Pages.pageCount > 1 && Pages.currentPage > 1,
-        Pages.pageCount > 1 && playerConfig.pagingMode === 'button'
+        Pages.pageCount > 1 && playerConfig.pagingMode === 'buttons'
       );
     }
 
