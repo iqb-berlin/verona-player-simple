@@ -7,7 +7,7 @@ This is a simple, dependency-less, vanilla-js-written, but full-featured unit pl
 mainly as showcase for developers and for software-testing.
 
 It does implement the
-<a href="https://github.com/verona-interface" target="_blank">Verona 5.2.0</a>-Standard
+<a href="https://github.com/verona-interface" target="_blank">Verona 6.0.0</a>-Standard
 and can be used for units containing simple any content in HTML-format.
 
 Unit Description ist the <code>form</code>-content as HTML. Just give some names to the form element,
