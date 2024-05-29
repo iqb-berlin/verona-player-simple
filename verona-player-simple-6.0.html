@@ -410,6 +410,7 @@
       }
 
       _send = msg => {
+        console.log(msg);
         window.parent.postMessage(msg, '*');
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
       }
@@ -445,7 +446,7 @@
       _getPlayerState = () => {
         const playerState = {};
         if (Pages.hasPages) {
-          playerState.validPages = Pages.validPages;
+          playerState.validPages = Object.keys(Pages.validPages).map(id => ({id, label: Pages.validPages[id]}))
           playerState.currentPage = Pages.currentPage.toString()
         }
         return playerState;
@@ -891,10 +892,6 @@
 
     togglePageNavButtons = () => {
       document.querySelector('#unit').classList[Pages.hasPages ? 'add' : 'remove']('paged');
-      console.log({
-        current: Pages.currentPage,
-        count: Pages.pageCount
-      });
       this.toggleButton('next-page',
         Pages.pageCount > 1 && Pages.currentPage < Pages.pageCount,
         Pages.pageCount > 1 && playerConfig.pagingMode === 'buttons'

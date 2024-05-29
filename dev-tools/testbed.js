@@ -10,9 +10,11 @@ const path = fs.realpathSync(`${__dirname}/..`);
 const playerPath = `${path}/${config.player}`;
 const unitPath = `${path}/${config.unit}`;
 const unitDataPath = `${path}/${config.data}`;
+const playerConfigPath = `${path}/${config.playerConfig}`;
 
 const sendStartCommand = async driver => {
   const unitData = config.data ? JSON.parse(fs.readFileSync(unitDataPath, 'utf-8').toString()) : {};
+  const playerConfig = config.playerConfig ? JSON.parse(fs.readFileSync(playerConfigPath, 'utf-8').toString()) : {};
   const dataParts = Object.entries(unitData)
     .reduce((agg, entry) => {
       // eslint-disable-next-line no-param-reassign
@@ -23,6 +25,7 @@ const sendStartCommand = async driver => {
     type: 'vopStartCommand',
     unitDefinition: fs.readFileSync(unitPath, 'utf-8').toString(),
     sessionId: '1',
+    playerConfig,
     unitState: {
       unitStateDataType: 'iqb-standard@1.0',
       dataParts

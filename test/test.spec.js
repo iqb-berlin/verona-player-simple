@@ -1334,4 +1334,53 @@ describe('simple player', () => {
     expect(await VopState.getAnswer(driver, 'a_checkbox'))
       .toEqual({ id: 'a_checkbox', status: 'VALUE_CHANGED', value: '' });
   });
+
+  it('should report correct page', async () => {
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition: `
+        <fieldset><h1>page 1</h1></fieldset>
+        <fieldset><h1>Page 2</h1></fieldset>
+        <fieldset><h1>Page 3</h1></fieldset>
+        <fieldset><h1>Page 4</h1></fieldset>
+        <fieldset><h1>Page 5</h1></fieldset>
+      `,
+      sessionId: '1'
+    });
+
+    await MessageRecorder.recordMessages(driver);
+
+    const nextPage = await driver.findElement(By.css('#next-page'));
+    await nextPage.click();
+
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1200);
+
+    expect(message1.playerState)
+      .toEqual({
+        validPages: [
+          { id: '1', label: 'Page-1' },
+          { id: '2', label: 'Page-2' },
+          { id: '3', label: 'Page-3' },
+          { id: '4', label: 'Page-4' },
+          { id: '5', label: 'Page-5' }
+        ],
+        currentPage: '2'
+      });
+
+    await nextPage.click();
+
+    const message2 = await MessageRecorder.getLastMessage(driver, 'vopStateChangedNotification', 1200);
+
+    expect(message2.playerState)
+      .toEqual({
+        validPages: [
+          { id: '1', label: 'Page-1' },
+          { id: '2', label: 'Page-2' },
+          { id: '3', label: 'Page-3' },
+          { id: '4', label: 'Page-4' },
+          { id: '5', label: 'Page-5' }
+        ],
+        currentPage: '3'
+      });
+  });
 });
