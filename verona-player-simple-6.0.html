@@ -315,6 +315,8 @@
 
   const playerMetaData = JSON.parse(document.querySelector('script[type="application/ld+json"]').innerText)
 
+  const pagingModes = ["separate", "concat-scroll", "concat-scroll-snap", "buttons"];
+
   let playerConfig = {
     logPolicy: 'eager', // "disabled" | "lean" | "rich" | "debug"
     unitNumber: 0,
@@ -502,7 +504,6 @@
       this._setUnitData(data.unitState || {});
 
       PlayerUI.togglePrintMode();
-
       PlayerUI.toggleUnitNavButtons();
       PlayerUI.togglePageNavButtons();
     };
@@ -526,6 +527,14 @@
             return 'none'
           }
         }, 'complete');
+
+    updatePlayerConfig = newConfig => {
+      Object.assign(playerConfig, newConfig);
+      Pages.applyPagingMode();
+      PlayerUI.togglePrintMode();
+      PlayerUI.toggleUnitNavButtons();
+      PlayerUI.togglePageNavButtons();
+    }
 
     // TODO make extensible like PresentationProgress
     getResponseProgress = () => {
@@ -588,6 +597,7 @@
 
   const Answers = new class {
     status = {};
+    _observers = [];
 
     get = () => {
       const formData = new FormData(document.querySelector("form"));
@@ -671,6 +681,7 @@
     }
 
     prepare = () => {
+      this._cleanObservers();
       document.querySelectorAll(PlayerUI.itemElements)
         .forEach(elem => {
           Answers.status[elem.getAttribute('name') || ''] = 'NOT_REACHED';
@@ -679,7 +690,7 @@
     }
 
     _newObserver = elem => {
-      new IntersectionObserver(
+      const observer = new IntersectionObserver(
         entries => {
           if (entries[0].isIntersecting) {
             const id = elem.getAttribute('name') || '';
@@ -687,16 +698,24 @@
             Message.send.vopStateChangedNotification();
           }
         }
-      ).observe(elem);
+      );
+      observer.observe(elem);
+      this._observers.push(observer);
     }
 
     setStatusChanged = event => {
       Answers.status[event.target.getAttribute('name') || ''] = 'VALUE_CHANGED';
     }
+
+    _cleanObservers = () => {
+      this._observers.forEach(observer => observer.disconnect());
+      this._observers.length = 0;
+    }
   }
 
   const Pages = new class {
     _currentPage = 0;
+    _observers = [];
     pageCount = 0;
     hasPages = false;
     validPages = {};
@@ -718,6 +737,7 @@
 
     get currentPage() {
       if (!['separate', 'buttons'].includes(playerConfig.pagingMode)) {
+        // TODO get first visible page in a better way, ids are not numeric, use find
         const currentPage = Math.min(...Object.keys(this.visiblePages).filter(i => this.visiblePages[i]));
         if (currentPage === Infinity) {
           return 0;
@@ -759,7 +779,9 @@
     }
 
     applyPagingMode = () => {
+      document.querySelector('#unit').classList.remove(...pagingModes);
       document.querySelector('#unit').classList.add(playerConfig.pagingMode);
+      this._cleanObservers();
       this._setScrollObserver();
     }
 
@@ -795,14 +817,16 @@
     }
 
     _newObserver = (callback, elem) => {
-      new IntersectionObserver(
+      const observer = new IntersectionObserver(
         entries => entries.forEach(callback),
         {
           root: document.querySelector('#unit'),
           threshold: 0.01,
           rootMargin: '0%'
         }
-      ).observe(elem);
+      );
+      observer.observe(elem);
+      this._observers.push(observer);
     }
 
     _pageIntersection = intersectionEntry => {
@@ -821,6 +845,11 @@
       const pageId = parseInt(intersectionEntry.target.parentElement.dataset.pagenr, 10);
       this.seenPages[pageId].bottom = true;
       Message.send.vopStateChangedNotification();
+    }
+
+    _cleanObservers = () => {
+      this._observers.forEach(observer => observer.disconnect());
+      this._observers.length = 0;
     }
   }
 
@@ -1076,6 +1105,10 @@
 
   document.addEventListener("vopPageNavigationCommand", event => Pages.goto(event.detail.target));
   document.addEventListener("vopNavigationDeniedNotification", event => PlayerUI.navigationDeniedMessage(event.detail.reason));
+
+  document.addEventListener("vopPlayerConfigChangedNotification", event => {
+    Unit.updatePlayerConfig(event.detail.playerConfig);
+  });
 
   window.addEventListener('blur', () => {
     Message.send.vopWindowFocusChangedNotification(document.hasFocus());

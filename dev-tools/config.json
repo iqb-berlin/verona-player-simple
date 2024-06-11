@@ -1,7 +1,7 @@
 {
   "player": "verona-player-simple-6.0.html",
-  "Xunit": "sample-data/elements.htm",
-  "Xdata": "sample-data/elements.data.json",
-  "unit": "sample-data/multi-page-unit.htm",
-  "playerConfig": "dev-tools/player-config.json"
+  "unit": "sample-data/elements.htm",
+  "data": "sample-data/elements.data.json",
+  "Yunit": "sample-data/player-state.htm",
+  "YplayerConfig": "dev-tools/player-config.json"
 }

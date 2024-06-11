@@ -1,3 +1,8 @@
 {
-  "startPage": "2"
+  "startPage": "2",
+  "unitId": "Unit·5",
+  "unitTitle": "Einstiegsunit",
+  "unitNumber": 5,
+  "YdirectDownloadUrl": "https://raw.githubusercontent.com/iqb-berlin/testcenter/15.1.8/",
+  "directDownloadUrl": "https://raw.githubusercontent.com/iqb-berlin/verona-player-simple/main/"
 }
