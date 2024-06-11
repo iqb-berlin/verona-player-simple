@@ -548,7 +548,7 @@ describe('simple player', () => {
         },
         presentationProgress: 'complete',
         responseProgress: 'complete',
-        unitStateDataType: 'iqb-standard@1.0'
+        unitStateDataType: 'iqb-standard@1.3'
       }
     });
   });
@@ -990,8 +990,7 @@ describe('simple player', () => {
         sessionId: '1',
         playerConfig: {
           logPolicy: 'debug'
-        },
-        unitDefinitionType: 'iqb-simple-html@1.0.0'
+        }
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1019,8 +1018,7 @@ describe('simple player', () => {
         sessionId: '1',
         playerConfig: {
           logPolicy: 'rich'
-        },
-        unitDefinitionType: 'iqb-simple-html@1.0.0'
+        }
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1048,8 +1046,7 @@ describe('simple player', () => {
         sessionId: '1',
         playerConfig: {
           logPolicy: 'lean'
-        },
-        unitDefinitionType: 'iqb-simple-html@1.0.0'
+        }
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1076,8 +1073,7 @@ describe('simple player', () => {
         sessionId: '1',
         playerConfig: {
           logPolicy: 'disabled'
-        },
-        unitDefinitionType: 'iqb-simple-html@1.0.0'
+        }
       });
 
       const richBtn = await driver.findElement(By.css('#rich'));
@@ -1393,198 +1389,256 @@ describe('simple player', () => {
       });
   });
 
-  describe('should react correctly to changes of all aspects of PlayerState: ', () => {
-    beforeEach(async () => {
+  describe('(Verona 6.0)', () => {
+    describe('should react correctly to changes of all aspects of PlayerState: ', () => {
+      beforeEach(async () => {
+        await send({
+          type: 'vopStartCommand',
+          unitDefinition:
+            fs.readFileSync(fs.realpathSync(`${__dirname}/../sample-data/player-state.htm`), 'utf-8').toString(),
+          playerConfig: {
+            unitId: 'Unit·5',
+            unitTitle: 'Introduction Unit',
+            unitNumber: 5,
+            logPolicy: 'rich',
+            pagingMode: 'separate',
+            printMode: 'off',
+            startPage: '2',
+            directDownloadUrl: 'https://raw.githubusercontent.com/iqb-berlin/verona-player-simple/5.2.0',
+            enabledNavigationTargets: ['next', 'previous']
+          },
+          sessionId: '1'
+        });
+      });
+
+      it('information about unit in booklet', async () => {
+        expect(await driver.findElement(By.id('unitId')).getAttribute('innerHTML'))
+          .toEqual('Unit·5');
+        expect(await driver.findElement(By.id('unitTitle')).getAttribute('innerHTML'))
+          .toEqual('Introduction Unit');
+        expect(await driver.findElement(By.id('unitNumber')).getAttribute('innerHTML'))
+          .toEqual('5');
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            unitId: 'Unit·6',
+            unitTitle: 'New Title',
+            unitNumber: 6
+          },
+          sessionId: '1'
+        });
+
+        expect(await driver.findElement(By.id('unitId')).getAttribute('innerHTML'))
+          .toEqual('Unit·6');
+        expect(await driver.findElement(By.id('unitTitle')).getAttribute('innerHTML'))
+          .toEqual('New Title');
+        expect(await driver.findElement(By.id('unitNumber')).getAttribute('innerHTML'))
+          .toEqual('6');
+      });
+
+      it('logging policy', async () => {
+        await driver.executeScript(() => window.vsp.Log.lean('a_lean_log', 'log text'));
+        await driver.executeScript(() => window.vsp.Log.rich('a_rich_log', 'log text'));
+
+        let log = await VopState.getLog(driver);
+        expect(log.length).toEqual(2);
+        expect(log[0].key).toEqual('a_lean_log');
+        expect(log[1].key).toEqual('a_rich_log');
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            logPolicy: 'lean'
+          },
+          sessionId: '1'
+        });
+
+        await driver.executeScript(() => window.vsp.Log.lean('a_lean_log_2', 'log text'));
+        await driver.executeScript(() => window.vsp.Log.rich('a_rich_log_2', 'log text'));
+
+        log = await VopState.getLog(driver);
+        expect(log.length).toEqual(1);
+        expect(log[0].key).toEqual('a_lean_log_2');
+      });
+
+      it('pagingMode', async () => {
+        let nextPage = await driver.findElement(By.css('#next-page'));
+        let prevPage = await driver.findElement(By.css('#prev-page'));
+        expect(await nextPage.isDisplayed()).toBeFalse();
+        expect(await prevPage.isDisplayed()).toBeFalse();
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            pagingMode: 'buttons'
+          },
+          sessionId: '1'
+        });
+
+        nextPage = await driver.findElement(By.css('#next-page'));
+        prevPage = await driver.findElement(By.css('#prev-page'));
+        expect(await nextPage.isDisplayed()).toBeTrue();
+        expect(await prevPage.isDisplayed()).toBeTrue();
+      });
+
+      it('printMode', async () => {
+        let style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
+        expect(style).toEqual([['auto', 'auto', 'auto']]);
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            printMode: 'on'
+          },
+          sessionId: '1'
+        });
+
+        style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
+        expect(style).toEqual([['page', 'page', 'page']]);
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            printMode: 'on-with-ids'
+          },
+          sessionId: '1'
+        });
+
+        style = await ComputedStyle.get(driver, 'vsp-namehint', ['visibility']);
+        expect(style).toEqual([[
+          'visible'
+        ]]);
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            printMode: 'off'
+          },
+          sessionId: '1'
+        });
+
+        style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
+        expect(style).toEqual([['auto', 'auto', 'auto']]);
+        style = await ComputedStyle.get(driver, 'vsp-namehint', ['visibility']);
+        expect(style).toEqual([[]]);
+      });
+
+      it('directDownloadUrl', async () => {
+        const fetchButton = await driver.findElement(By.css('#fetch-external-content'));
+        await fetchButton.click();
+        const fetchResult = await driver.findElement(By.css('#external-content'));
+
+        expect(await fetchResult.getAttribute('innerHTML'))
+          .toEqual('5.2.0');
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            directDownloadUrl: 'https://raw.githubusercontent.com/iqb-berlin/verona-player-simple/4.0.0'
+          },
+          sessionId: '1'
+        });
+
+        await fetchButton.click();
+
+        expect(await fetchResult.getAttribute('innerHTML'))
+          .toEqual('4.0.0');
+      });
+
+      it('enabledNavigationTargets', async () => {
+        const nextUnit = await driver.findElement(By.css('#next-unit'));
+        const prevUnit = await driver.findElement(By.css('#prev-unit'));
+        const lastUnit = await driver.findElement(By.css('#last-unit'));
+        const firstUnit = await driver.findElement(By.css('#first-unit'));
+        const endUnit = await driver.findElement(By.css('#end-unit'));
+
+        expect(await nextUnit.isEnabled()).toBeTrue();
+        expect(await prevUnit.isEnabled()).toBeTrue();
+        expect(await lastUnit.isEnabled()).toBeFalse();
+        expect(await firstUnit.isEnabled()).toBeFalse();
+        expect(await endUnit.isEnabled()).toBeFalse();
+
+        await send({
+          type: 'vopPlayerConfigChangedNotification',
+          playerConfig: {
+            enabledNavigationTargets: ['first', 'last', 'end']
+          },
+          sessionId: '1'
+        });
+
+        expect(await nextUnit.isEnabled()).toBeFalse();
+        expect(await prevUnit.isEnabled()).toBeFalse();
+        expect(await lastUnit.isEnabled()).toBeTrue();
+        expect(await firstUnit.isEnabled()).toBeTrue();
+        expect(await endUnit.isEnabled()).toBeTrue();
+      });
+    });
+
+    it('should report runtime error', async () => {
+      await MessageRecorder.recordMessages(driver);
       await send({
         type: 'vopStartCommand',
-        unitDefinition:
-          fs.readFileSync(fs.realpathSync(`${__dirname}/../sample-data/player-state.htm`), 'utf-8').toString(),
-        playerConfig: {
-          unitId: 'Unit·5',
-          unitTitle: 'Introduction Unit',
-          unitNumber: 5,
-          logPolicy: 'rich',
-          pagingMode: 'separate',
-          printMode: 'off',
-          startPage: '2',
-          directDownloadUrl: 'https://raw.githubusercontent.com/iqb-berlin/verona-player-simple/5.2.0',
-          enabledNavigationTargets: ['next', 'previous']
-        },
         sessionId: '1'
       });
-    });
-
-    it('information about unit in booklet', async () => {
-      expect(await driver.findElement(By.id('unitId')).getAttribute('innerHTML'))
-        .toEqual('Unit·5');
-      expect(await driver.findElement(By.id('unitTitle')).getAttribute('innerHTML'))
-        .toEqual('Introduction Unit');
-      expect(await driver.findElement(By.id('unitNumber')).getAttribute('innerHTML'))
-        .toEqual('5');
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          unitId: 'Unit·6',
-          unitTitle: 'New Title',
-          unitNumber: 6
-        },
-        sessionId: '1'
-      });
-
-      expect(await driver.findElement(By.id('unitId')).getAttribute('innerHTML'))
-        .toEqual('Unit·6');
-      expect(await driver.findElement(By.id('unitTitle')).getAttribute('innerHTML'))
-        .toEqual('New Title');
-      expect(await driver.findElement(By.id('unitNumber')).getAttribute('innerHTML'))
-        .toEqual('6');
-    });
-
-    it('logging policy', async () => {
-      await driver.executeScript(() => window.vsp.Log.lean('a_lean_log', 'log text'));
-      await driver.executeScript(() => window.vsp.Log.rich('a_rich_log', 'log text'));
-
-      let log = await VopState.getLog(driver);
-      expect(log.length).toEqual(2);
-      expect(log[0].key).toEqual('a_lean_log');
-      expect(log[1].key).toEqual('a_rich_log');
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          logPolicy: 'lean'
-        },
-        sessionId: '1'
-      });
-
-      await driver.executeScript(() => window.vsp.Log.lean('a_lean_log_2', 'log text'));
-      await driver.executeScript(() => window.vsp.Log.rich('a_rich_log_2', 'log text'));
-
-      log = await VopState.getLog(driver);
-      expect(log.length).toEqual(1);
-      expect(log[0].key).toEqual('a_lean_log_2');
-    });
-
-    it('pagingMode', async () => {
-      let nextPage = await driver.findElement(By.css('#next-page'));
-      let prevPage = await driver.findElement(By.css('#prev-page'));
-      expect(await nextPage.isDisplayed()).toBeFalse();
-      expect(await prevPage.isDisplayed()).toBeFalse();
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          pagingMode: 'buttons'
-        },
-        sessionId: '1'
-      });
-
-      nextPage = await driver.findElement(By.css('#next-page'));
-      prevPage = await driver.findElement(By.css('#prev-page'));
-      expect(await nextPage.isDisplayed()).toBeTrue();
-      expect(await prevPage.isDisplayed()).toBeTrue();
-    });
-
-    it('printMode', async () => {
-      let style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
-      expect(style).toEqual([['auto', 'auto', 'auto']]);
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          printMode: 'on'
-        },
-        sessionId: '1'
-      });
-
-      style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
-      expect(style).toEqual([['page', 'page', 'page']]);
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          printMode: 'on-with-ids'
-        },
-        sessionId: '1'
-      });
-
-      style = await ComputedStyle.get(driver, 'vsp-namehint', ['visibility']);
-      expect(style).toEqual([[
-        'visible'
-      ]]);
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          printMode: 'off'
-        },
-        sessionId: '1'
-      });
-
-      style = await ComputedStyle.get(driver, '#unit fieldset', ['break-after']);
-      expect(style).toEqual([['auto', 'auto', 'auto']]);
-      style = await ComputedStyle.get(driver, 'vsp-namehint', ['visibility']);
-      expect(style).toEqual([[]]);
-    });
-
-    it('directDownloadUrl', async () => {
-      const fetchButton = await driver.findElement(By.css('#fetch-external-content'));
-      await fetchButton.click();
-      const fetchResult = await driver.findElement(By.css('#external-content'));
-
-      expect(await fetchResult.getAttribute('innerHTML'))
-        .toEqual('5.2.0');
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          directDownloadUrl: 'https://raw.githubusercontent.com/iqb-berlin/verona-player-simple/4.0.0'
-        },
-        sessionId: '1'
-      });
-
-      await fetchButton.click();
-
-      expect(await fetchResult.getAttribute('innerHTML'))
-        .toEqual('4.0.0');
-    });
-
-    it('enabledNavigationTargets', async () => {
-      const nextUnit = await driver.findElement(By.css('#next-unit'));
-      const prevUnit = await driver.findElement(By.css('#prev-unit'));
-      const lastUnit = await driver.findElement(By.css('#last-unit'));
-      const firstUnit = await driver.findElement(By.css('#first-unit'));
-      const endUnit = await driver.findElement(By.css('#end-unit'));
-
-      expect(await nextUnit.isEnabled()).toBeTrue();
-      expect(await prevUnit.isEnabled()).toBeTrue();
-      expect(await lastUnit.isEnabled()).toBeFalse();
-      expect(await firstUnit.isEnabled()).toBeFalse();
-      expect(await endUnit.isEnabled()).toBeFalse();
-
-      await send({
-        type: 'vopPlayerConfigChangedNotification',
-        playerConfig: {
-          enabledNavigationTargets: ['first', 'last', 'end']
-        },
-        sessionId: '1'
-      });
-
-      expect(await nextUnit.isEnabled()).toBeFalse();
-      expect(await prevUnit.isEnabled()).toBeFalse();
-      expect(await lastUnit.isEnabled()).toBeTrue();
-      expect(await firstUnit.isEnabled()).toBeTrue();
-      expect(await endUnit.isEnabled()).toBeTrue();
+      const message1 = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
+      expect(message1.code).toEqual('unit-definition-missing');
     });
   });
 
-  it('should report runtime error', async () => {
+  it('should reject unsupported unit-state- and unit-definition-formats', async () => {
     await MessageRecorder.recordMessages(driver);
+    let message;
     await send({
       type: 'vopStartCommand',
-      sessionId: '1'
+      sessionId: '1',
+      unitDefinition: 's',
+      unitDefinitionType: `verona-player-simple@${currentMinor}`,
+      unitState: {
+        unitStateDataType: 'crazy-format-1.0'
+      }
     });
-    const message1 = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
-    expect(message1.code).toEqual('unit-definition-missing');
+    message = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
+    expect(message.code).toEqual('unit-state-type-unsupported');
+
+    await send({
+      type: 'vopStartCommand',
+      sessionId: '1',
+      unitDefinition: 's',
+      unitDefinitionType: `verona-player-simple@${currentMinor}`,
+      unitState: {
+        unitStateDataType: 'iqb-standard@10.0.0'
+      }
+    });
+    message = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
+    expect(message.code).toEqual('unit-state-type-unsupported');
+
+    await send({
+      type: 'vopStartCommand',
+      sessionId: '1',
+      unitDefinition: 's',
+      unitDefinitionType: 'binary'
+    });
+    message = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
+    expect(message.code).toEqual('unit-definition-type-unsupported');
+
+    await send({
+      type: 'vopStartCommand',
+      sessionId: '1',
+      unitDefinition: 's',
+      unitDefinitionType: 'verona-player-simple@7.0'
+    });
+    message = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
+    expect(message.code).toEqual('unit-definition-type-unsupported');
+
+    const nextMinor = currentMinor.split('.').map((v, i) => parseInt(v, 10) + i).join('.');
+    await send({
+      type: 'vopStartCommand',
+      sessionId: '1',
+      unitDefinition: 's',
+      unitDefinitionType: `verona-player-simple@${nextMinor}`
+    });
+    message = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
+    expect(message.code).toEqual('unit-definition-type-unsupported');
   });
 });
