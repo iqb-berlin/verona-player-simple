@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Simple Verona Player 5</title>
+  <title>Simple Verona Player 6.0</title>
 
   <script type="application/ld+json">
     {
@@ -142,6 +142,10 @@
     vsp-message [onclick]:hover {
       text-decoration: underline;
       color: grey;
+    }
+
+    vsp-message.error {
+      background: rgba(150, 0, 0, 0.75);
     }
 
     vsp-pointer {
@@ -398,17 +402,26 @@
       vopUnitNavigationRequestedNotification = target => {
         this._send({
           type: 'vopUnitNavigationRequestedNotification',
-          sessionId: sessionId,
-          target: target,
+          sessionId,
+          target,
         });
       };
 
       vopWindowFocusChangedNotification = hasFocus => {
         this._send({
           type: 'vopWindowFocusChangedNotification',
-          sessionId: sessionId,
-          hasFocus: hasFocus
+          sessionId,
+          hasFocus
         });
+      }
+
+      vopRuntimeErrorNotification = (code, message) => {
+        this._send({
+          type: 'vopRuntimeErrorNotification',
+          sessionId,
+          code,
+          message
+        })
       }
 
       _send = msg => {
@@ -466,7 +479,7 @@
       if (type === "vopStartCommand") {
         Unit.start(data);
       } else if (sessionId && (data.sessionId !== sessionId)) {
-        throw new Error("Wrong sessionId " + type);
+        throw new VspRuntimeError('wrong-session-id', `Wrong Session-Id: '${sessionId}' (was: '${sessionId}').`);
       }
       document.dispatchEvent(new CustomEvent(type, {detail: data}));
     };
@@ -485,7 +498,15 @@
     };
 
     start = data => {
-      sessionId = data.sessionId || new Error("session ID missing");
+      if (!data.sessionId) {
+        throw new VspRuntimeError("session-id-missing", "Session-Id is missing.");
+      }
+      console.log(data.sessionId);
+      sessionId = data.sessionId;
+      if (!data.unitDefinition) {
+        throw new VspRuntimeError("unit-definition-missing", "Unit-Definition is missing.")
+      }
+
 
       if (data.unitDefinitionType && (data.unitDefinitionType !== unitDefinitionType)) {
         Log.debug(`Unit definition type does not match: ${data.unitDefinitionType} and ${unitDefinitionType}`);
@@ -497,7 +518,8 @@
         Log.debug(`Unit state type does not match: ${data.unitState.unitStateDataType} & ${unitStateDataType}`);
       }
 
-      this._setUnit(data.unitDefinition || new Error("unitDefinition missing"));
+
+      this._setUnit(data.unitDefinition);
       this._setPlayerConfig(data.playerConfig || {});
 
       Answers.prepare();
@@ -1086,7 +1108,7 @@
       });
     }
 
-    toggleMessage = content => {
+    toggleMessage = (content, isError) => {
       const dialog = document.querySelector('vsp-message');
       const dialogContent = document.querySelector('vsp-message-content');
       if (!content) {
@@ -1095,11 +1117,30 @@
       } else {
         dialogContent.innerHTML = content;
         dialog.style.display = 'block';
+        dialog.classList[isError ? 'add' : 'remove']('error');
       }
     }
   }
 
+  class VspRuntimeError extends Error {
+    name = 'VspRuntimeError';
+    constructor(code, message) {
+      super(message);
+      this.code = code;
+    }
+  }
+
   window.addEventListener('message', event => {Message.receive(event.data.type, event.data)}, false);
+
+  window.addEventListener('error', event => {
+    if (event.error.name === VspRuntimeError.name) {
+      Message.send.vopRuntimeErrorNotification(event.error.code, event.error.message);
+      PlayerUI.toggleMessage('Error: ' + event.error.message, true);
+    } else {
+      Message.send.vopRuntimeErrorNotification('runtime-error', event.error.message);
+      PlayerUI.toggleMessage('Error: Runtime Error', true);
+    }
+  }, false);
 
   document.addEventListener("DOMContentLoaded", Message.send.vopReadyNotification);
 

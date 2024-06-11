@@ -1577,4 +1577,14 @@ describe('simple player', () => {
       expect(await endUnit.isEnabled()).toBeTrue();
     });
   });
+
+  it('should report runtime error', async () => {
+    await MessageRecorder.recordMessages(driver);
+    await send({
+      type: 'vopStartCommand',
+      sessionId: '1'
+    });
+    const message1 = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
+    expect(message1.code).toEqual('unit-definition-missing');
+  });
 });
