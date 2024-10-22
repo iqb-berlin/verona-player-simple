@@ -33,7 +33,7 @@ const send = async message => {
 const loadPlayer = async playerSettings => {
   const query = playerSettings
     ? Object.keys(playerSettings).reduce((carry, item) => `${carry}&${item}=${playerSettings[item]}`, '?')
-    : '';
+    : '?debounceStateMessages=1000&debounceKeyboardEvents=100&delayReadyNotification=0';
 
   await driver.get(`file:${playerPath}${query}`);
 };
