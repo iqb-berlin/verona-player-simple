@@ -1641,4 +1641,112 @@ describe('simple player', () => {
     message = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1200);
     expect(message.code).toEqual('unit-definition-type-unsupported');
   });
+
+  describe('(regression test) restore previously saved progresses', () => {
+    it('- presentationProgress from complete', async () => {
+      await loadPlayer({
+        debounceStateMessages: 0,
+        debounceKeyboardEvents: 0
+      });
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: '<fieldset>P1</fieldset><fieldset>P2</fieldset>',
+        sessionId: '1',
+        unitState: {
+          presentationProgress: 'complete'
+        }
+      });
+
+      const message = await VopState.get(driver);
+      expect(message.unitState.presentationProgress).toEqual('complete');
+    });
+
+    it('- presentationProgress from some', async () => {
+      await loadPlayer({
+        debounceStateMessages: 0,
+        debounceKeyboardEvents: 0
+      });
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: '<fieldset>P1</fieldset><fieldset>P2</fieldset>',
+        sessionId: '1',
+        unitState: {
+          presentationProgress: 'some'
+        }
+      });
+
+      const message = await VopState.get(driver);
+      expect(message.unitState.presentationProgress).toEqual('some');
+    });
+
+    it('- presentationProgress from none', async () => {
+      await loadPlayer({
+        debounceStateMessages: 0,
+        debounceKeyboardEvents: 0
+      });
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: '<fieldset>P1</fieldset><fieldset>P2</fieldset>',
+        sessionId: '1',
+        unitState: {
+          presentationProgress: 'none'
+        }
+      });
+      const message = await VopState.get(driver);
+      expect(message.unitState.presentationProgress).toEqual('some');
+    });
+
+    it('- responseProgress from complete', async () => {
+      await loadPlayer({
+        debounceStateMessages: 0,
+        debounceKeyboardEvents: 0
+      });
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: '<fieldset><input required></fieldset>',
+        sessionId: '1',
+        unitState: {
+          responseProgress: 'complete'
+        }
+      });
+
+      const message = await VopState.get(driver);
+      expect(message.unitState.responseProgress).toEqual('complete');
+    });
+
+    it('- responseProgress from some', async () => {
+      await loadPlayer({
+        debounceStateMessages: 0,
+        debounceKeyboardEvents: 0
+      });
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: '<fieldset><input required></fieldset>',
+        sessionId: '1',
+        unitState: {
+          responseProgress: 'some'
+        }
+      });
+
+      const message = await VopState.get(driver);
+      expect(message.unitState.responseProgress).toEqual('some');
+    });
+
+    it('- responseProgress from none', async () => {
+      await loadPlayer({
+        debounceStateMessages: 0,
+        debounceKeyboardEvents: 0
+      });
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: '<fieldset><input required></fieldset>',
+        sessionId: '1',
+        unitState: {
+          responseProgress: 'none'
+        }
+      });
+      const message = await VopState.get(driver);
+      expect(message.unitState.responseProgress).toEqual('none');
+    });
+  });
 });

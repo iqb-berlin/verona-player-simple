@@ -1,6 +1,6 @@
 {
   "name": "verona-player-simple",
-  "version": "6.0.2",
+  "version": "6.0.3",
   "description": "A dependency-free, vanilla-js Verona5-Player, which can run HTML-forms as Units. NPM and stuff is only needed for testing purpose.",
   "devDependencies": {
     "@iqb/eslint-config": "2.1.1",

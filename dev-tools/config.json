@@ -1,9 +1,6 @@
 {
-  "Yplayer": "sample-data/iqb-player-aspect-2.4.11.html",
   "player": "verona-player-simple-6.0.html",
-  "Yunit": "sample-data/aspect.2.4.11.unit.json",
   "data": "sample-data/elements.data.json",
   "unit": "sample-data/player-state.htm",
-  "playerConfig": "dev-tools/player-config.json",
-  "YplayerConfig": "dev-tools/player-config2.json"
+  "playerConfig": "dev-tools/player-config.json"
 }
