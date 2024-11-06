@@ -801,11 +801,13 @@ describe('simple player', () => {
 
     const nextPage = await driver.findElement(By.css('#next-page'));
 
+    await driver.sleep(500);
+
     const message1 = await VopState.get(driver);
 
     await nextPage.click();
 
-    await driver.sleep(100);
+    await driver.sleep(500);
 
     const message2 = await VopState.get(driver);
 
@@ -1542,6 +1544,8 @@ describe('simple player', () => {
 
         await fetchButton.click();
 
+        await driver.sleep(300);
+
         expect(await fetchResult.getAttribute('innerHTML'))
           .toEqual('4.0.0');
       });
@@ -1748,5 +1752,33 @@ describe('simple player', () => {
       const message = await VopState.get(driver);
       expect(message.unitState.responseProgress).toEqual('none');
     });
+  });
+
+  it('(regression test) should not raise an error when other message comes before first vopStartCommand', async () => {
+    await MessageRecorder.recordMessages(driver);
+
+    await send({
+      sessionId: '1',
+      type: 'vopPlayerConfigChangedNotification',
+      playerConfig: {
+        enabledNavigationTargets: 'next'
+      }
+    });
+
+    await send({
+      type: 'vopStartCommand',
+      unitDefinition: '<fieldset>1</fieldset><fieldset>2</fieldset><fieldset>3</fieldset>',
+      sessionId: '1',
+      playerConfig: {
+        pagingMode: 'buttons'
+      },
+      unitState: {
+        presentationProgress: 'some'
+      }
+    });
+
+    const msg = await MessageRecorder.getLastMessage(driver, 'vopRuntimeErrorNotification', 1000);
+
+    expect(msg).toBeNull();
   });
 });
