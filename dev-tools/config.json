@@ -1,6 +1,7 @@
 {
   "player": "verona-player-simple-6.0.html",
   "data": "sample-data/elements.data.json",
-  "unit": "sample-data/player-state.htm",
-  "playerConfig": "dev-tools/player-config.json"
+  "unit": "sample-data/load-external-file.html",
+  "playerConfig": "dev-tools/player-config.json",
+  "host": "dev-tools/testhost.html"
 }
