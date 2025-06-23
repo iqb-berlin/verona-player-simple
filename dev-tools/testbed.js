@@ -59,11 +59,14 @@ const serve = () => {
 
 (async () => {
   const options = new Options();
+  options.addArguments('-devtools');
   const driver = await new Builder()
     .forBrowser('firefox')
     .setFirefoxOptions(options)
     .build();
   serve();
+  await driver.manage().window().maximize();
+
   await driver.get(config.host ? `http://localhost:9999/${config.host}` : `file:${paths.player}`);
   if (!config.host) await sendStartCommand(driver);
 

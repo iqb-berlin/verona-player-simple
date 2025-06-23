@@ -449,6 +449,23 @@
         })
       }
 
+      vopStartWidget = (name, parameters) => {
+        this._send({
+          type: 'vopStartWidget',
+          sessionId,
+          name,
+          parameters
+        })
+      }
+
+      vopCloseWidget = name => {
+        this._send({
+          type: 'vopCloseWidget',
+          sessionId,
+          name
+        })
+      }
+
       _send = msg => {
         window.parent.postMessage(msg, '*');
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));

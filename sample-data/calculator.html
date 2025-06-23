@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Advanced Calculator</title>
+  <style>
+      body {
+          font-family: Arial, sans-serif;
+          text-align: center;
+          margin-top: 50px;
+      }
+      .calculator {
+          display: inline-block;
+          padding: 20px;
+          border: 2px solid #333;
+          border-radius: 10px;
+          background: whitesmoke;
+      }
+      input[type="text"] {
+          width: 100%;
+          height: 40px;
+          font-size: 20px;
+          text-align: right;
+          margin-bottom: 10px;
+      }
+      .buttons button {
+          width: 60px;
+          height: 60px;
+          font-size: 18px;
+          margin: 5px;
+          cursor: pointer;
+      }
+      .advanced {
+          display: none;
+          margin-top: 10px;
+      }
+      .toggle-btn {
+          margin-top: 10px;
+          background-color: #444;
+          color: white;
+          padding: 8px 15px;
+          border: none;
+          border-radius: 5px;
+          cursor: pointer;
+      }
+  </style>
+</head>
+<body>
+
+<div class="calculator" id="calculator">
+  <input type="text" id="display" disabled>
+
+  <div class="buttons">
+    <button onclick="appendValue('7')">7</button>
+    <button onclick="appendValue('8')">8</button>
+    <button onclick="appendValue('9')">9</button>
+    <button onclick="appendValue('/')">÷</button><br>
+
+    <button onclick="appendValue('4')">4</button>
+    <button onclick="appendValue('5')">5</button>
+    <button onclick="appendValue('6')">6</button>
+    <button onclick="appendValue('*')">×</button><br>
+
+    <button onclick="appendValue('1')">1</button>
+    <button onclick="appendValue('2')">2</button>
+    <button onclick="appendValue('3')">3</button>
+    <button onclick="appendValue('-')">−</button><br>
+
+    <button onclick="appendValue('0')">0</button>
+    <button onclick="appendValue('.')">.</button>
+    <button onclick="calculate()">=</button>
+    <button onclick="appendValue('+')">+</button><br>
+
+    <button onclick="clearDisplay()" style="width: 100%">C</button>
+  </div>
+
+  <button class="toggle-btn" onclick="toggleAdvanced()">Toggle Advanced Mode</button>
+
+  <div class="buttons advanced" id="advancedButtons">
+    <button onclick="applyFunction('Math.sin')">sin</button>
+    <button onclick="applyFunction('Math.cos')">cos</button>
+    <button onclick="applyFunction('Math.tan')">tan</button>
+    <button onclick="applyFunction('Math.sqrt')">√</button><br>
+
+    <button onclick="applyFunction('Math.log')">log</button>
+    <button onclick="appendValue('Math.PI')">π</button>
+    <button onclick="appendValue('Math.E')">e</button>
+    <button onclick="appendValue('**')">^</button>
+  </div>
+</div>
+
+<script>
+  function appendValue(value) {
+    document.getElementById('display').value += value;
+  }
+
+  function clearDisplay() {
+    document.getElementById('display').value = '';
+  }
+
+  function calculate() {
+    try {
+      const result = eval(document.getElementById('display').value);
+      document.getElementById('display').value = result;
+      window.parent.postMessage({
+        type: 'vopStateChangedNotification',
+        unitState: {
+          dataParts: {
+            calculatorWidget: JSON.stringify({
+              id: 'calculation_result',
+              value: result,
+              status: 'VALUE_CHANGED'
+            })
+          }
+        }
+      }, '*');
+    } catch {
+      document.getElementById('display').value = 'Error';
+    }
+  }
+
+  function toggleAdvanced() {
+    const adv = document.getElementById('advancedButtons');
+    adv.style.display = adv.style.display === 'none' ? 'block' : 'none';
+    reportCalculatorPosition();
+    window.parent.postMessage({
+      type: 'vopStateChangedNotification',
+      bookletState: {
+        calculator_advanced_mode: JSON.stringify(adv.style.display === 'none')
+      }
+    }, '*');
+  }
+
+  function applyFunction(funcName) {
+    const display = document.getElementById('display');
+    try {
+      const value = eval(display.value);
+      const result = eval(`${funcName}(${value})`);
+      display.value = result;
+    } catch {
+      display.value = 'Error';
+    }
+  }
+
+  function makeDraggable(el) {
+    let offsetX = 0, offsetY = 0, isDragging = false;
+
+    el.addEventListener('mousedown', dragStart);
+    el.addEventListener('touchstart', dragStart);
+
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', dragEnd);
+    document.addEventListener('touchmove', drag);
+    document.addEventListener('touchend', dragEnd);
+
+    function dragStart(e) {
+      isDragging = true;
+      const evt = e.type.startsWith('touch') ? e.touches[0] : e;
+      offsetX = evt.clientX - el.getBoundingClientRect().left;
+      offsetY = evt.clientY - el.getBoundingClientRect().top;
+      el.style.position = 'absolute';
+      el.style.zIndex = 1000;
+    }
+
+    function drag(e) {
+      if (!isDragging) return;
+      const evt = e.type.startsWith('touch') ? e.touches[0] : e;
+      const x = evt.clientX - offsetX;
+      const y = evt.clientY - offsetY;
+      el.style.left = `${x}px`;
+      el.style.top = `${y}px`;
+      reportCalculatorPosition();
+    }
+
+    function dragEnd() {
+      isDragging = false;
+      reportCalculatorPosition();
+    }
+  }
+
+  function reportCalculatorPosition() {
+    document.getElementById('advancedButtons').style.display = 'none';
+    const calculator = document.querySelector('.calculator');
+    const rect = calculator.getBoundingClientRect();
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    window.parent.postMessage({
+      type: 'vopChangeWidgetConfig',
+      widgetConfig: {
+        clipPath: `inset(${rect.top}px ${width - rect.right}px ${height - rect.bottom}px ${rect.left}px)`
+      }
+    }, '*');
+  }
+
+  // Initialize draggable calculator after page loads
+  window.addEventListener('load', () => {
+    const calc = document.getElementById('calculator');
+    makeDraggable(calc);
+  });
+
+  // Initialize advanced mode as hidden
+  document.addEventListener('DOMContentLoaded', () => {
+    reportCalculatorPosition();
+  });
+</script>
+
+
+</body>
+</html>

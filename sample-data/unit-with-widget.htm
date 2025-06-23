@@ -1,0 +1,36 @@
+<button id="openBtn">Open Widget</button>
+<button id="closeBtn">Close Widget</button>
+<hr>
+<h4>Messages</h4>
+<ol id="data"></ol>
+
+
+<script>
+  document.getElementById('openBtn').addEventListener('click', event => {
+    event.preventDefault();
+    Message.send.vopStartWidget('sample-data/calculator.html');
+  });
+  document.getElementById('closeBtn').addEventListener('click', event => {
+    event.preventDefault();
+    Message.send.vopCloseWidget('sample-data/calculator.html');
+  });
+  const dataElem = document.getElementById('data');
+  window.parent.addEventListener('message', async  event => {
+    console.log(event.data);
+    let content = '';
+    if (event.data.type === 'vopStateChangedNotification') {
+      if (event.data.bookletState) {
+        content += 'BookletState: <ul>' + Object.entries(event.data.bookletState)
+          .map(([k, v]) => `<li>${k}: ${v}</li>`) + '</ul>';
+      }
+      if (event.data.unitState && event.data.unitState.dataParts) {
+        content += 'dataParts: <ul>' + Object.entries(event.data.unitState.dataParts)
+          .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`) + '</ul>';
+      }
+    }
+
+    dataElem.innerHTML += `<li><b>${event.data.type}<b> : ${content}</li>`;
+  });
+</script>
+
+
