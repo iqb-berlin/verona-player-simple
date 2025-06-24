@@ -89,6 +89,8 @@
 </div>
 
 <script>
+  let widgetId;
+
   function appendValue(value) {
     document.getElementById('display').value += value;
   }
@@ -178,17 +180,23 @@
   }
 
   function reportCalculatorPosition() {
-    document.getElementById('advancedButtons').style.display = 'none';
+
+
+    window.parent.postMessage({
+      type: 'vopChangeWidgetConfig',
+      widgetId,
+      widgetConfig: getWidgetConfig()
+    }, '*');
+  }
+
+  function getWidgetConfig() {
     const calculator = document.querySelector('.calculator');
     const rect = calculator.getBoundingClientRect();
     const width = window.innerWidth;
     const height = window.innerHeight;
-    window.parent.postMessage({
-      type: 'vopChangeWidgetConfig',
-      widgetConfig: {
-        clipPath: `inset(${rect.top}px ${width - rect.right}px ${height - rect.bottom}px ${rect.left}px)`
-      }
-    }, '*');
+    return {
+      clipPath: `inset(${rect.top}px ${width - rect.right}px ${height - rect.bottom}px ${rect.left}px)`
+    };
   }
 
   // Initialize draggable calculator after page loads
@@ -199,6 +207,11 @@
 
   // Initialize advanced mode as hidden
   document.addEventListener('DOMContentLoaded', () => {
+    window.parent.postMessage({
+      type: 'vopWidgetReadyNotification',
+      widgetType: 'example-calculator@1.0.0',
+      widgetConfig: getWidgetConfig()
+    }, '*');
     reportCalculatorPosition();
   });
 </script>

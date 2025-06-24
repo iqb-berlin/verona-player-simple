@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Avatar</title>
+</head>
+<body>
+  <img id="avatar" alt="avatar" src="about:blank" />
+  <script>
+    document.addEventListener('vopStartCommand', () => {
+      document.getElementById('avatar').src = `${playerConfig.directDownloadUrl}/sample-data/avatar.svg`;
+    });
+  </script>
+</body>
+</html>

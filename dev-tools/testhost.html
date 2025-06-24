@@ -18,7 +18,7 @@
         overflow:hidden;
         background: white
     }
-    #widgetHost {
+    .widgetHost {
         position:fixed;
         top: 0;
         right: 0;
@@ -26,7 +26,7 @@
         height: 100%;
         border: none;
     }
-    #widgetHost.off {
+    .widgetHost.off {
         display:none;
     }
   </style>
@@ -34,9 +34,9 @@
 <body style="background: burlywood">
 
 <iframe id="host"></iframe>
-<iframe id="widgetHost"  class="off"></iframe>
 <script>
   (async () => {
+    const widgetHosts = { };
     const host = document.getElementById('host');
     const widgetHost = document.getElementById('widgetHost');
     const player = await fetch('http://localhost:9999/player');
@@ -50,8 +50,7 @@
     const unitDefinition = await unit.text() || 'not found';
     host.srcdoc = playerSrc;
     window.addEventListener('message', async  event => {
-      console.log('!');
-      console.log(event);
+      console.log(event.data);
       if (event.data.type === 'vopReadyNotification') {
         host.contentWindow.postMessage({
           type: 'vopStartCommand',
@@ -66,30 +65,38 @@
       }
       if (event.data.type === 'vopStartWidget') {
         console.log('message vopStartWidget')
-        widgetHost.classList.remove('off');
-        const widget = await fetch(`http://localhost:9999/${event.data.name}`);
-        widgetHost.srcdoc = (await widget.text());
+        const widgetHost = document.createElement('iframe');
+        const widgetCode = await fetch(`http://localhost:9999/${event.data.name}`);
+        widgetHost.classList.add('widgetHost');
+        widgetHost.srcdoc = (await widgetCode.text());
+        document.body.appendChild(widgetHost);
+        widgetHosts[event.data.name] = widgetHosts;
         widgetHost.contentWindow.postMessage({
-          type: 'vopStartCommand',
-          sessionId: '1',
+          type: 'vopWidgetStartCommand',
+          widgetId: String(Object.keys(widgetHosts).length),
           playerConfig
         }, '*');
+
       }
       if (event.data.type === 'vopCloseWidget') {
-        console.log('message vopStartWidget')
-        widgetHost.classList.remove('off');
-        const widget = await fetch(`http://localhost:9999/${event.data.name}`);
-        widgetHost.srcdoc = (await widget.text());
-        widgetHost.contentWindow.postMessage({
-          type: 'vopStartCommand',
-          sessionId: '1',
-          playerConfig
-        }, '*');
+        console.log('message vopCloseWidget')
+        if (event.data.name in widgetHosts) {
+          delete widgetHosts[event.data.name];
+          console.log('BÄM');
+        }
       }
       if (event.data.type === 'vopChangeWidgetConfig') {
         console.log('message vopChangeWidgetConfig')
-        console.log(event.data.widgetConfig.clipPath)
-        widgetHost.style.clipPath = event.data.widgetConfig.clipPath;
+        console.log(event)
+        // widgetHost.style.clipPath = event.data.widgetConfig.clipPath;
+      // }
+      // if (event.data.type === 'vopWidgetReadyNotification') {
+      //   console.log(event);
+      //   widgetHost.contentWindow.postMessage({
+      //     type: 'vopStartCommand',
+      //     sessionId: '1',
+      //     playerConfig
+      //   }, '*');
       }
     }, false);
   })();
