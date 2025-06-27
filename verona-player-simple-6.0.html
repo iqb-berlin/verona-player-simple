@@ -458,11 +458,12 @@
         });
       }
 
-      vopCloseWidget = name => {
+      vopCloseWidget = widgetId => {
+        console.log('CLOSE')
         this._send({
           type: 'vopCloseWidget',
           sessionId,
-          name
+          widgetId
         });
       }
 

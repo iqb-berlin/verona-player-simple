@@ -180,8 +180,6 @@
   }
 
   function reportCalculatorPosition() {
-
-
     window.parent.postMessage({
       type: 'vopChangeWidgetConfig',
       widgetId,
@@ -205,14 +203,19 @@
     makeDraggable(calc);
   });
 
-  // Initialize advanced mode as hidden
   document.addEventListener('DOMContentLoaded', () => {
     window.parent.postMessage({
       type: 'vopWidgetReadyNotification',
       widgetType: 'example-calculator@1.0.0',
       widgetConfig: getWidgetConfig()
     }, '*');
-    reportCalculatorPosition();
+  });
+
+  window.addEventListener('message', msg => {
+    if (msg.data.type==='vopWidgetStartCommand') {
+      widgetId = msg.data.widgetId;
+      reportCalculatorPosition();
+    }
   });
 </script>
 

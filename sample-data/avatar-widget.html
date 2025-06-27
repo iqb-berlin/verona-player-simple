@@ -3,12 +3,40 @@
 <head>
   <meta charset="UTF-8">
   <title>Avatar</title>
+  <style>
+    body {
+        display: blocK;
+        background: transparent;
+        margin: 0;
+        padding: 0;
+    }
+    #avatar {
+        height: 100px;
+        top: 0px;
+        left: 0px;
+        position: absolute;
+        border: 1px solid red;
+    }
+  </style>
 </head>
 <body>
   <img id="avatar" alt="avatar" src="about:blank" />
   <script>
-    document.addEventListener('vopStartCommand', () => {
-      document.getElementById('avatar').src = `${playerConfig.directDownloadUrl}/sample-data/avatar.svg`;
+    let widgetId;
+    document.addEventListener('DOMContentLoaded', () => {
+      window.parent.postMessage({
+        type: 'vopWidgetReadyNotification',
+        widgetType: 'example-calculator@1.0.0',
+        widgetConfig: {
+          clipPath: 'polygon(11px 77px, 17px 84px, 30px 62px, 30px 81px, 37px 87px, 36px 98px, 45px 99px, 44px 89px, 56px 88px, 55px 97px, 64px 97px, 64px 88px, 69px 85px, 68px 63px, 81px 80px, 89px 75px, 61px 47px, 69px 32px, 63px 17px, 41px 15px, 29px 23px, 34px 42px, 39px 48px, 26px 55px)'
+        }
+      }, '*');
+    });
+    window.addEventListener('message', msg => {
+      if (msg.data.type==='vopWidgetStartCommand') {
+        widgetId = msg.data.widgetId;
+        document.getElementById('avatar').src = `${msg.data.playerConfig.directDownloadUrl}/sample-data/avatar.svg`;
+      }
     });
   </script>
 </body>

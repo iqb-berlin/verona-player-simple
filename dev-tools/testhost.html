@@ -25,6 +25,7 @@
         width: 100%;
         height: 100%;
         border: none;
+        background: rgba(0,0,0,0.2);
     }
     .widgetHost.off {
         display:none;
@@ -36,9 +37,8 @@
 <iframe id="host"></iframe>
 <script>
   (async () => {
-    const widgetHosts = { };
+    const widgetHosts = {};
     const host = document.getElementById('host');
-    const widgetHost = document.getElementById('widgetHost');
     const player = await fetch('http://localhost:9999/player');
     const playerSettings = 'debounceStateMessages=0&debounceKeyboardEvents=0';
     const playerSrc = (await player.text())
@@ -49,6 +49,24 @@
     const unit = await fetch('http://localhost:9999/unit')
     const unitDefinition = await unit.text() || 'not found';
     host.srcdoc = playerSrc;
+
+    const getSendingWidgetHostId = event => {
+      console.log(widgetHosts);
+      const result = Object.entries(widgetHosts)
+        .find(([id, hostElem]) => hostElem.contentWindow === event.source);
+      if (!result) throw new Error("not send from a widgetHost");
+      return result[0];
+    }
+
+    const getWidgetHost = widgetId => {
+      if (!widgetHosts[widgetId]) throw new Error(`not widgetHost with id ${widgetId}`);
+      return widgetHosts[widgetId];
+    }
+
+    const applyWidgetConfig = (widgetHost, widgetConfig) => {
+      widgetHost.style.clipPath = widgetConfig.clipPath;
+    }
+
     window.addEventListener('message', async  event => {
       console.log(event.data);
       if (event.data.type === 'vopReadyNotification') {
@@ -63,40 +81,47 @@
           }
         }, '*');
       }
+
       if (event.data.type === 'vopStartWidget') {
-        console.log('message vopStartWidget')
+        console.log('[vopStartWidget]');
         const widgetHost = document.createElement('iframe');
         const widgetCode = await fetch(`http://localhost:9999/${event.data.name}`);
         widgetHost.classList.add('widgetHost');
         widgetHost.srcdoc = (await widgetCode.text());
         document.body.appendChild(widgetHost);
-        widgetHosts[event.data.name] = widgetHosts;
+        const widgetId = '#' + String(Object.keys(widgetHosts).length);
+        widgetHosts[widgetId] = widgetHost;
+        console.log(`widget registered: ${event.data.name} | id: ${widgetId}`)
+      }
+
+      if (event.data.type === 'vopWidgetReadyNotification') {
+        const widgetHostId = getSendingWidgetHostId(event);
+        console.log(`[vopWidgetReadyNotification] from ${widgetHostId}`);
+        const widgetHost = getWidgetHost(widgetHostId);
+        applyWidgetConfig(widgetHost, event.data.widgetConfig);
         widgetHost.contentWindow.postMessage({
           type: 'vopWidgetStartCommand',
-          widgetId: String(Object.keys(widgetHosts).length),
+          widgetId: widgetHostId,
           playerConfig
         }, '*');
+      }
 
-      }
       if (event.data.type === 'vopCloseWidget') {
-        console.log('message vopCloseWidget')
-        if (event.data.name in widgetHosts) {
-          delete widgetHosts[event.data.name];
-          console.log('BÄM');
-        }
+        console.log(`[vopCloseWidget] for ${event.data.widgetId}`);
+        const widgetHost = getWidgetHost(event.data.widgetId);
+        console.log({
+          widgetId: event.data.widgetId,
+          widgetHost,
+          widgetHosts
+        });
+        document.body.removeChild(widgetHost);
+        delete widgetHosts[event.data.widgetId];
       }
+
       if (event.data.type === 'vopChangeWidgetConfig') {
-        console.log('message vopChangeWidgetConfig')
-        console.log(event)
-        // widgetHost.style.clipPath = event.data.widgetConfig.clipPath;
-      // }
-      // if (event.data.type === 'vopWidgetReadyNotification') {
-      //   console.log(event);
-      //   widgetHost.contentWindow.postMessage({
-      //     type: 'vopStartCommand',
-      //     sessionId: '1',
-      //     playerConfig
-      //   }, '*');
+        console.log(`[vopChangeWidgetConfig] for ${event.data.widgetId}`);
+        const widgetHost = getWidgetHost(event.data.widgetId);
+        applyWidgetConfig(widgetHost, event.data.widgetConfig);
       }
     }, false);
   })();

@@ -6,9 +6,9 @@
 </style>
 
 <button id="openBtn1">Open Widget: Calculator</button>
-<button id="closeBtn1">Close Widget: Calculator</button>
+<button id="closeBtn1">Close Widget: #0</button>
 <button id="openBtn2">Open Widget: Avatar</button>
-<button id="closeBtn2">Open Widget: Avatar</button>
+<button id="closeBtn2">Close Widget: #1</button>
 
 <hr>
 <h4>Messages</h4>
@@ -24,7 +24,7 @@
   document.getElementById('closeBtn1').addEventListener('click', event => {
     console.log('closeBtn1')
     event.preventDefault();
-    Message.send.vopCloseWidget('sample-data/calculator.html');
+    Message.send.vopCloseWidget('#0');
   });
 
   document.getElementById('openBtn2').addEventListener('click', event => {
@@ -33,17 +33,18 @@
   });
   document.getElementById('closeBtn2').addEventListener('click', event => {
     event.preventDefault();
-    Message.send.vopCloseWidget('sample-data/avatar-widget.html');
+    Message.send.vopCloseWidget('#0');
   });
 
 
-
+  let lastEventType = '';
+  let lastEventCount = 0;
   window.parent.addEventListener('message', async  event => {
+    const messageType = event.data.type + (event.data.widgetId ? ` (widget ${event.data.widgetId})` : '');
     const dataElem = document.getElementById('data');
-
-    let content = '';
     if (event.data.type === 'vopStateChangedNotification') {
-      if (event.data.bookletState) {
+      let content = '';
+      if (event.data.bookletState && event.data.bookletState.length) {
         content += 'BookletState: <ul>' + Object.entries(event.data.bookletState)
           .map(([k, v]) => `<li>${k}: ${v}</li>`) + '</ul>';
       }
@@ -51,9 +52,14 @@
         content += 'dataParts: <ul>' + Object.entries(event.data.unitState.dataParts)
           .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`) + '</ul>';
       }
+      dataElem.innerHTML += `<li><b>${event.data.type}<b> : ${content}</li>`;
+    } else {
+      lastEventCount = (lastEventType === messageType) ? lastEventCount + 1 : 1;
+      const counter = lastEventCount ? `(${lastEventCount})` : '';
+      if (lastEventType === messageType) dataElem.querySelector(':scope > li:last-child').remove();
+      dataElem.innerHTML += `<li><b>${messageType} ${counter}</li>`;
     }
-
-    dataElem.innerHTML += `<li><b>${event.data.type}<b> : ${content}</li>`;
+    lastEventType = messageType;
   });
 </script>
 
