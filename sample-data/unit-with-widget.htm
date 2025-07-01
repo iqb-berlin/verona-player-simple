@@ -15,6 +15,38 @@
   #left {
     border-right: 1px solid silver;
   }
+  .warning::before {
+      content: "⚠";
+      left: 0;
+      position: absolute;
+      color: red;
+      font-size: large;
+      height: 100%;
+      top: calc(50% - 0.6em)
+  }
+  .warning {
+      background: rgba(255, 250, 0, 0.1);
+      border: 1px solid rgba(255, 250, 0, 0.5);
+      border-radius: 3px;
+      padding: 2px 2px 2px 1.2em;
+      position: relative;
+  }
+  .alternative::before {
+      content: "⚠";
+      left: 0;
+      position: absolute;
+      color: rgb(0, 50, 255);
+      font-size: large;
+      height: 100%;
+      top: calc(50% - 0.6em)
+  }
+  .alternative {
+      background: rgba(0, 50, 255, 0.1);
+      border: 1px solid rgba(0, 50, 255, 0.5);
+      border-radius: 3px;
+      padding: 2px 2px 2px 1.2em;
+      position: relative;
+  }
 
 </style>
 
@@ -23,9 +55,10 @@
 <div id="wrapper">
   <div id="left">
     <p>Mit dieser Unit soll das Konzept für Verona-Widgets erklärt werden. Sie verwendet den simple player 6.0 in einer
-      modifizierten Version
+      modifizierten Version. Es handelt sich lediglich um eine <i>Konzeptskizze</i>, daher werden auch mögliche
+      Alternativen genannt.
     </p>
-    <h2>Was ist ein Verona Widget? </h2>
+    <h2>Was ist ein Verona Widget?</h2>
     <p>Es handelt sich um ein, von der eigentlichen Unit unabhängiges interaktives
       Element, das</p>
     <ul>
@@ -38,10 +71,37 @@
       Attribut und postMessages.
     </p>
 
-    <button id="openBtn1">Open Widget: Calculator</button>
-    <button id="openBtn2">Open Widget: Avatar</button>
 
-    <hr>
+    <h2>Darstellung</h2>
+    <p>
+      <i>Vorschlag</i>: Widgets werden grundsätzlich als Vollbildoverlay dargestellt. Sie können aber den Host darüber
+      informieren, sich beschneiden zu lassen (Details s. U.), sodass die darunter liegenden Elemente erreichbar sind.
+      Dafür kann sie css-eigenschaft clip-path verwendet werden. Widgets müssen daher nicht rechteckig sein.
+      :
+      <button id="openBtn2">Beispiel: Avatar Widget</button>
+    </p>
+    <p>
+      Sollte das Widget verschiebbar sein sollen, ist die Drag-Und-Drop-Funktionalität im Widget selbst umzusetzen und
+      im Verschiebungsfall der Host über einen veränderten clip-path zu informieren.
+      Beispiel:
+      <button id="openBtn1">Beispiel: Taschenrechner Widget</button>
+    </p>
+    <p>
+      Analog dazu entscheidet auch der Widget-Autor selbst darüber, ob es z. B. einen schließen Button gibt.
+    </p>
+    <p class="warning">
+      Das Konzept "immer fullscreen overlay und clip path" ist noch nicht im Zusammenspiel mit Mobile Devices erprobt.
+    </p>
+    <p class="alternative">
+      Alternativ könnten a priori verschiedene Darstellungsweisen - z. B. "modal", "overlay", "sidebar", "movable" etc.
+      festgelegt werden. Beim Aufruf des Widgets wird eine davon gesetzt. Für den Widgetautor würde das weniger
+      Implementationsaufwand bedeuten, aber auch sehr viel weniger Funktionalität. Drag & Drop würde dann ggf. im Host
+      umgesetzt werden. Das Widget müsste dennoch seine Größe selbst an den Host melden. Es könnte dann nur rechteckig
+      sein. Eine Kombination aus beiden Konzepten ist evenfalls denkbar.
+    </p>
+
+
+
     <h4>Unit content</h4>
     <input type="text" name="textfield">
 
