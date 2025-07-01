@@ -26,26 +26,35 @@
         background: white
     }
     .widgetHost {
-        position:fixed;
-        top: 0;
-        right: 0;
-        width: 100%;
-        height: 100%;
-        border: none;
-        background: rgba(0,0,0,0.2);
+      position:fixed;
+      top: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: rgba(0,0,0,0.2);
     }
-    .widgetHost.off {
-        display:none;
+    #state > span {
+      padding-left: 1em;
+      border-left: 1px solid black;
+      margin-left: 1em;
+      font-size: x-small;
     }
   </style>
 </head>
 <body>
-<div><small>VERONA MiniTestbed</small></div>
+<div>
+  <small>VERONA MiniTestbed</small>
+  <span id="state" />
+</div>
 
 <iframe id="host"></iframe>
 <script>
   (async () => {
-    const widgetHosts = {};
+    const widgets = {};
+    const state = {
+      focus: 'unknown'
+    };
     const host = document.getElementById('host');
     const player = await fetch('http://localhost:9999/player');
     const playerSettings = 'debounceStateMessages=0&debounceKeyboardEvents=0';
@@ -58,16 +67,22 @@
     const unitDefinition = await unit.text() || 'not found';
     host.srcdoc = playerSrc;
 
+    const updateState = (key, value) => {
+      state[key] = value;
+      document.getElementById('state').innerHTML =
+        Object.entries(state).map(([key, value]) => `<span><b>${key}</b>: ${value}</span>`).join('');
+    }
+
     const getSendingWidgetHostId = event => {
-      const result = Object.entries(widgetHosts)
+      const result = Object.entries(widgets)
         .find(([id, widget]) => widget.elem.contentWindow === event.source);
       if (!result) throw new Error("not send from a widgetHost");
       return result[0];
     }
 
     const getWidgetHost = widgetId => {
-      if (!widgetHosts[widgetId]) throw new Error(`No widgetHost with id ${widgetId} registered.`);
-      return widgetHosts[widgetId].elem;
+      if (!widgets[widgetId]) throw new Error(`No widgetHost with id ${widgetId} registered.`);
+      return widgets[widgetId].elem;
     }
 
     const applyWidgetConfig = (widgetHost, widgetConfig) => {
@@ -95,8 +110,8 @@
         widgetHost.classList.add('widgetHost');
         widgetHost.srcdoc = (await widgetCode.text());
         document.body.appendChild(widgetHost);
-        const widgetId = event.data.name + '#' + Object.values(widgetHosts).filter(widget => widget.type === event.data.name).length;
-        widgetHosts[widgetId] = {
+        const widgetId = event.data.name + '#' + Object.values(widgets).filter(widget => widget.type === event.data.name).length;
+        widgets[widgetId] = {
           elem: widgetHost,
           type: event.data.name
         };
@@ -121,19 +136,19 @@
         console.log({
           widgetId: event.data.widgetId,
           widgetHost,
-          widgetHosts
+          widgetHosts: widgets
         });
         document.body.removeChild(widgetHost);
-        delete widgetHosts[event.data.widgetId];
+        delete widgets[event.data.widgetId];
       }
 
       if (event.data.type === 'vopGetWidgetsRequestNotification') {
         console.log(`[vopGetWidgetsRequestNotification] for ${event.data.widgetId}`);
-        const senderHost = (event.data.widgetId && widgetHosts[widgetId]) ? widgetHosts[widgetId].elem : host;
-        host.contentWindow.postMessage({
+        const senderHost = (event.data.widgetId && widgets[event.data.widgetId]) ? widgets[event.data.widgetId].elem : host;
+        senderHost.contentWindow.postMessage({
           sessionId: '1',
           type: 'vopGetWidgetsNotification',
-          widgets: Object.entries(widgetHosts).map(([id, widget]) => ({ id, type: widget.type }))
+          widgets: Object.entries(widgets).map(([id, widget]) => ({ id, type: widget.type }))
         }, '*');
       }
 
@@ -142,7 +157,20 @@
         const widgetHost = getWidgetHost(event.data.widgetId);
         applyWidgetConfig(widgetHost, event.data.widgetConfig);
       }
+
+      if (event.data.type === 'vopWindowFocusChangedNotification') {
+        const sender = (event.data.widgetId && widgets[event.data.widgetId]) ? event.data.widgetId : 'player';
+        updateState('focus', (event.data.hasFocus) ? sender : 'host');
+      }
     }, false);
+
+    window.addEventListener('blur', () => {
+      //updateState('focus', undefined);
+    });
+
+    window.addEventListener('focus', () => {
+      updateState('focus', 'host');
+    });
   })();
 </script>
 </body>

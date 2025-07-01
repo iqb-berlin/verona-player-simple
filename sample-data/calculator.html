@@ -199,6 +199,14 @@
     };
   }
 
+  function reportFocus(hasFocus) {
+    window.parent.postMessage({
+      type: 'vopWindowFocusChangedNotification',
+      widgetId,
+      hasFocus
+    }, '*');
+  }
+
   // Initialize draggable calculator after page loads
   window.addEventListener('load', () => {
     const calc = document.getElementById('calculator');
@@ -218,6 +226,14 @@
       widgetId = msg.data.widgetId;
       reportCalculatorPosition();
     }
+  });
+
+  // window.addEventListener('blur', () => {
+  //   reportFocus(document.hasFocus());
+  // });
+
+  window.addEventListener('focus', () => {
+    reportFocus(document.hasFocus());
   });
 </script>
 
