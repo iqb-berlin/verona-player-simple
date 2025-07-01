@@ -29,7 +29,7 @@
           margin: 5px;
           cursor: pointer;
       }
-      .advanced {
+      #advancedButtons {
           display: none;
           margin-top: 10px;
       }
@@ -75,7 +75,7 @@
 
   <button class="toggle-btn" onclick="toggleAdvanced()">Toggle Advanced Mode</button>
 
-  <div class="buttons advanced" id="advancedButtons">
+  <div class="buttons" id="advancedButtons">
     <button onclick="applyFunction('Math.sin')">sin</button>
     <button onclick="applyFunction('Math.cos')">cos</button>
     <button onclick="applyFunction('Math.tan')">tan</button>
@@ -122,7 +122,9 @@
 
   function toggleAdvanced() {
     const adv = document.getElementById('advancedButtons');
-    adv.style.display = adv.style.display === 'none' ? 'block' : 'none';
+    console.log('!before: ' + adv.style.display)
+    adv.style.display = (!adv.style.display || (adv.style.display === 'none')) ? 'block' : 'none';
+    console.log('after: ' + adv.style.display)
     reportCalculatorPosition();
     window.parent.postMessage({
       type: 'vopStateChangedNotification',

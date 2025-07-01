@@ -1,32 +1,68 @@
 <style>
   #data {
-      max-height: 80%;
-      overflow-y: scroll;
+    max-height: 80%;
+    overflow-y: scroll;
   }
+  #wrapper {
+    width: 100%;
+    display: flex;
+    flex-wrap: nowrap;
+  }
+  #left, #right {
+    width: 50%;
+    padding: 0.5em;
+  }
+  #left {
+    border-right: 1px solid silver;
+  }
+
 </style>
 
-<h1>Unit using widgets</h1>
+<h1>Widget Konzept</h1>
 
-<h4>This is a testunit that interacts with various widgets.</h4>
+<div id="wrapper">
+  <div id="left">
+    <p>Mit dieser Unit soll das Konzept für Verona-Widgets erklärt werden. Sie verwendet den simple player 6.0 in einer
+      modifizierten Version
+    </p>
+    <h2>Was ist ein Verona Widget? </h2>
+    <p>Es handelt sich um ein, von der eigentlichen Unit unabhängiges interaktives
+      Element, das</p>
+    <ul>
+      <li>Unit-übergreifend verwendet werden kann und seinen Zustand unit-übergreifend behalten kann.</li>
+      <li>möglichst genau wie die player im Booklet-Ladevorgang geladen werden kann.</li>
+      <li>als Overlay über der eigentlichen Aufgabe (und sogar dem Host?) erscheinen kann.</li>
+    </ul>
+    <p>
+      Grundsätzlich verwenden Widgets dieselbe Technologie wie Verona-PLayer an sich: ein iframe, das <i>srcdoc</i>
+      Attribut und postMessages.
+    </p>
 
-<button id="openBtn1">Open Widget: Calculator</button>
-<button id="openBtn2">Open Widget: Avatar</button>
+    <button id="openBtn1">Open Widget: Calculator</button>
+    <button id="openBtn2">Open Widget: Avatar</button>
+
+    <hr>
+    <h4>Unit content</h4>
+    <input type="text" name="textfield">
+
+    <hr>
+    <h4>Widgets</h4>
+    <button id="ListBtn">Actualize list</button>
+    <table id="widgets">
+      <thead>
+      <tr><td>ID</td><td>type</td><td></td></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="right">
+    <h4>Messages</h4>
+    <p>Hier werden alle Post-Messages gelistet, die vom Player oder vom Host <i>empfangen</i> werden.</p>
+    <ol id="data"></ol>
+  </div>
+</div>
 
 
-<hr>
-<h4>Widgets</h4>
-<button id="ListBtn">Actualize list</button>
-<table id="widgets">
-  <thead>
-    <tr><td>ID</td><td>type</td><td></td></tr>
-  </thead>
-  <tbody></tbody>
-</table>
-
-
-<hr>
-<h4>Messages</h4>
-<ol id="data"></ol>
 
 
 <script>
@@ -49,25 +85,26 @@
     const dataElem = document.getElementById('data');
     if (event.data.type === 'vopStateChangedNotification') {
       let content = '';
-      if (event.data.bookletState && event.data.bookletState.length) {
+      if (event.data.bookletState && Object.keys(event.data.bookletState).length) {
         content += 'BookletState: <ul>' + Object.entries(event.data.bookletState)
           .map(([k, v]) => `<li>${k}: ${v}</li>`) + '</ul>';
       }
       if (event.data.unitState && event.data.unitState.dataParts) {
-        content += '<p>dataParts: <ul>' + Object.entries(event.data.unitState.dataParts)
-          .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`) + '</ul></p>';
+        content += '<ul>' + Object.entries(event.data.unitState.dataParts)
+          .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`) + '</ul>';
       }
-      dataElem.innerHTML += `<li><b>${receiver}</b> ${event.data.type} : ${content}</li>`;
+      dataElem.innerHTML += `<li><b>${receiver}</b> <i>${event.data.type}</i> : ${content}</li>`;
+    } else if (event.data.type === 'vopWindowFocusChangedNotification') {
+      dataElem.innerHTML += `<li><b>${receiver}</b> <i>${event.data.type}</i> : ${event.data.hasFocus}</li>`;
     } else {
       lastEventCount = (lastEventType === messageType) ? lastEventCount + 1 : 1;
       const counter = lastEventCount ? `(${lastEventCount})` : '';
       if (lastEventType === messageType) dataElem.querySelector(':scope > li:last-child').remove();
-      dataElem.innerHTML += `<li><b>${receiver}</b> ${messageType} ${counter}</li>`;
+      dataElem.innerHTML += `<li><b>${receiver}</b> <i>${messageType}</i> ${counter}</li>`;
     }
     lastEventType = messageType;
 
     if (event.data.type === 'vopGetWidgetsNotification') {
-      console.log(event.data.type, {YP: event.data});
       document.querySelector('#widgets tbody').innerHTML = '';
       (event.data?.widgets || [])
         .forEach(widget => {
