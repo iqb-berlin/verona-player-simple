@@ -467,6 +467,14 @@
         });
       }
 
+      vopGetWidgetsRequestNotification = () => {
+        console.log('vopGetWidgetsRequestNotification');
+        this._send({
+          type: 'vopGetWidgetsRequestNotification',
+          sessionId
+        });
+      }
+
       _send = msg => {
         window.parent.postMessage(msg, '*');
         document.dispatchEvent(new CustomEvent('sent:' + msg.type, {detail: msg}));
@@ -522,7 +530,7 @@
         Unit.start(data);
         document.dispatchEvent(new CustomEvent(type, { detail: data }));
       } else if (sessionId && (data.sessionId !== sessionId)) {
-        throw new VspRuntimeError('wrong-session-id', `Wrong Session-Id: '${sessionId}' (was: '${sessionId}').`);
+        throw new VspRuntimeError('wrong-session-id', `Wrong Session-Id: '${data.sessionId}' (should be: '${sessionId}').`);
       } else if (sessionId) {
         document.dispatchEvent(new CustomEvent(type, { detail: data }));
       } else {

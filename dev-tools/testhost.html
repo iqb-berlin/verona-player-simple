@@ -53,14 +53,14 @@
     const getSendingWidgetHostId = event => {
       console.log(widgetHosts);
       const result = Object.entries(widgetHosts)
-        .find(([id, hostElem]) => hostElem.contentWindow === event.source);
+        .find(([id, widget]) => widget.elem.contentWindow === event.source);
       if (!result) throw new Error("not send from a widgetHost");
       return result[0];
     }
 
     const getWidgetHost = widgetId => {
-      if (!widgetHosts[widgetId]) throw new Error(`not widgetHost with id ${widgetId}`);
-      return widgetHosts[widgetId];
+      if (!widgetHosts[widgetId]) throw new Error(`No widgetHost with id ${widgetId} registered.`);
+      return widgetHosts[widgetId].elem;
     }
 
     const applyWidgetConfig = (widgetHost, widgetConfig) => {
@@ -89,8 +89,11 @@
         widgetHost.classList.add('widgetHost');
         widgetHost.srcdoc = (await widgetCode.text());
         document.body.appendChild(widgetHost);
-        const widgetId = '#' + String(Object.keys(widgetHosts).length);
-        widgetHosts[widgetId] = widgetHost;
+        const widgetId = event.data.name + '#' + Object.values(widgetHosts).filter(widget => widget.type === event.data.name).length;
+        widgetHosts[widgetId] = {
+          elem: widgetHost,
+          type: event.data.name
+        };
         console.log(`widget registered: ${event.data.name} | id: ${widgetId}`)
       }
 
@@ -116,6 +119,16 @@
         });
         document.body.removeChild(widgetHost);
         delete widgetHosts[event.data.widgetId];
+      }
+
+      if (event.data.type === 'vopGetWidgetsRequestNotification') {
+        console.log(`[vopGetWidgetsRequestNotification] for ${event.data.widgetId}`);
+        const senderHost = (event.data.widgetId && widgetHosts[widgetId]) ? widgetHosts[widgetId].elem : host;
+        host.contentWindow.postMessage({
+          sessionId: '1',
+          type: 'vopGetWidgetsNotification',
+          widgets: Object.entries(widgetHosts).map(([id, widget]) => ({ id, type: widget.type }))
+        }, '*');
       }
 
       if (event.data.type === 'vopChangeWidgetConfig') {

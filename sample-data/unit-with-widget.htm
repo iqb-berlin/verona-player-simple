@@ -5,10 +5,24 @@
   }
 </style>
 
+<h1>Unit using widgets</h1>
+
+<h4>This is a testunit that interacts with various widgets.</h4>
+
 <button id="openBtn1">Open Widget: Calculator</button>
-<button id="closeBtn1">Close Widget: #0</button>
 <button id="openBtn2">Open Widget: Avatar</button>
-<button id="closeBtn2">Close Widget: #1</button>
+
+
+<hr>
+<h4>Widgets</h4>
+<button id="ListBtn">Actualize list</button>
+<table id="widgets">
+  <thead>
+    <tr><td>ID</td><td>type</td><td></td></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
 
 <hr>
 <h4>Messages</h4>
@@ -16,30 +30,21 @@
 
 
 <script>
-  document.getElementById('openBtn1').addEventListener('click', event => {
-    console.log('openBtn1')
+  function openWidget(widgetType, event) {
     event.preventDefault();
-    Message.send.vopStartWidget('sample-data/calculator.html');
-  });
-  document.getElementById('closeBtn1').addEventListener('click', event => {
-    console.log('closeBtn1')
-    event.preventDefault();
-    Message.send.vopCloseWidget('#0');
-  });
+    Message.send.vopStartWidget(widgetType);
+    setTimeout(Message.send.vopGetWidgetsRequestNotification, 100);
+  }
 
-  document.getElementById('openBtn2').addEventListener('click', event => {
+  function closeWidget(widgetId, event) {
     event.preventDefault();
-    Message.send.vopStartWidget('sample-data/avatar-widget.html');
-  });
-  document.getElementById('closeBtn2').addEventListener('click', event => {
-    event.preventDefault();
-    Message.send.vopCloseWidget('#0');
-  });
-
+    Message.send.vopCloseWidget(widgetId);
+    setTimeout(Message.send.vopGetWidgetsRequestNotification, 100);
+  }
 
   let lastEventType = '';
   let lastEventCount = 0;
-  window.parent.addEventListener('message', async  event => {
+  function processMessageEvent(receiver, event) {
     const messageType = event.data.type + (event.data.widgetId ? ` (widget ${event.data.widgetId})` : '');
     const dataElem = document.getElementById('data');
     if (event.data.type === 'vopStateChangedNotification') {
@@ -49,17 +54,35 @@
           .map(([k, v]) => `<li>${k}: ${v}</li>`) + '</ul>';
       }
       if (event.data.unitState && event.data.unitState.dataParts) {
-        content += 'dataParts: <ul>' + Object.entries(event.data.unitState.dataParts)
-          .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`) + '</ul>';
+        content += '<p>dataParts: <ul>' + Object.entries(event.data.unitState.dataParts)
+          .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`) + '</ul></p>';
       }
-      dataElem.innerHTML += `<li><b>${event.data.type}<b> : ${content}</li>`;
+      dataElem.innerHTML += `<li><b>${receiver}</b> ${event.data.type} : ${content}</li>`;
     } else {
       lastEventCount = (lastEventType === messageType) ? lastEventCount + 1 : 1;
       const counter = lastEventCount ? `(${lastEventCount})` : '';
       if (lastEventType === messageType) dataElem.querySelector(':scope > li:last-child').remove();
-      dataElem.innerHTML += `<li><b>${messageType} ${counter}</li>`;
+      dataElem.innerHTML += `<li><b>${receiver}</b> ${messageType} ${counter}</li>`;
     }
     lastEventType = messageType;
+
+    if (event.data.type === 'vopGetWidgetsNotification') {
+      console.log(event.data.type, {YP: event.data});
+      document.querySelector('#widgets tbody').innerHTML = '';
+      (event.data?.widgets || [])
+        .forEach(widget => {
+          document.querySelector('#widgets tbody').innerHTML += `<tr><td>${widget.id}</td><td>${widget.type}</td><td><button onclick="closeWidget('${widget.id}', event)">X</button></td></tr>`;
+        });
+    }
+  }
+
+  window.parent.addEventListener('message', async  event => processMessageEvent('Host', event));
+  window.addEventListener('message', async  event => processMessageEvent('Player', event));
+  document.getElementById('openBtn1').addEventListener('click', event => openWidget('sample-data/calculator.html', event));
+  document.getElementById('openBtn2').addEventListener('click', event => openWidget('sample-data/avatar-widget.html', event));
+  document.getElementById('ListBtn').addEventListener('click', event => {
+    event.preventDefault();
+    Message.send.vopGetWidgetsRequestNotification();
   });
 </script>
 
