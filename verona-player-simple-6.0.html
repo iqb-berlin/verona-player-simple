@@ -449,17 +449,15 @@
         });
       }
 
-      vopStartWidget = (name, parameters) => {
+      vopStartWidget = (name) => {
         this._send({
           type: 'vopStartWidget',
           sessionId,
-          name,
-          parameters
+          name
         });
       }
 
       vopCloseWidget = widgetId => {
-        console.log('CLOSE')
         this._send({
           type: 'vopCloseWidget',
           sessionId,

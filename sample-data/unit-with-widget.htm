@@ -7,53 +7,84 @@
     width: 100%;
     display: flex;
     flex-wrap: nowrap;
+    height: calc(100% - 50px);
   }
   #left, #right {
     width: 50%;
     padding: 0.5em;
+    overflow-y: scroll;
   }
   #left {
     border-right: 1px solid silver;
   }
+
+  blockquote {
+    font-family: monospace;
+    white-space: break-spaces;
+    margin: 0;
+  }
+
+  #widgets,
+  blockquote,
+  .warning,
+  .hint,
+  .alternative {
+    border-radius: 3px;
+    padding: 2px 2px 2px 1.2em;
+    position: relative;
+    background: rgba(155, 155, 155, 0.1);
+    border: 1px solid rgba(155, 155, 155, 0.5);
+    margin-bottom: 0.5em;
+  }
+
+
+
   .warning::before {
-      content: "⚠";
-      left: 0;
-      position: absolute;
-      color: red;
-      font-size: large;
-      height: 100%;
-      top: calc(50% - 0.6em)
+    content: "⚠";
+    left: 0;
+    position: absolute;
+    color: red;
+    font-size: large;
+    height: 100%;
+    top: calc(50% - 0.6em)
   }
   .warning {
-      background: rgba(255, 250, 0, 0.1);
-      border: 1px solid rgba(255, 250, 0, 0.5);
-      border-radius: 3px;
-      padding: 2px 2px 2px 1.2em;
-      position: relative;
+    background: rgba(255, 250, 0, 0.1);
+    border: 1px solid rgba(255, 250, 0, 0.5);
+  }
+  .hint {
+      background: rgba(55, 150, 250, 0.1);
+      border: 1px solid rgba(55, 150, 250, 0.5);
   }
   .alternative::before {
-      content: "⚠";
-      left: 0;
-      position: absolute;
-      color: rgb(0, 50, 255);
-      font-size: large;
-      height: 100%;
-      top: calc(50% - 0.6em)
+    content: "⚠";
+    left: 0;
+    position: absolute;
+    color: rgb(0, 50, 255);
+    font-size: large;
+    height: 100%;
+    top: calc(50% - 0.6em)
   }
   .alternative {
-      background: rgba(0, 50, 255, 0.1);
-      border: 1px solid rgba(0, 50, 255, 0.5);
-      border-radius: 3px;
-      padding: 2px 2px 2px 1.2em;
-      position: relative;
+    background: rgba(0, 50, 255, 0.1);
+    border: 1px solid rgba(0, 50, 255, 0.5);
   }
-
+  #widgets {
+    padding: 0;
+    border-collapse: collapse;
+    width: 100%;
+  }
+  #widgets td {
+    border: 1px solid silver;
+    padding: 2px;
+  }
 </style>
 
-<h1>Widget Konzept</h1>
+
 
 <div id="wrapper">
   <div id="left">
+    <h1>Widget Konzept</h1>
     <p>Mit dieser Unit soll das Konzept für Verona-Widgets erklärt werden. Sie verwendet den simple player 6.0 in einer
       modifizierten Version. Es handelt sich lediglich um eine <i>Konzeptskizze</i>, daher werden auch mögliche
       Alternativen genannt.
@@ -76,7 +107,7 @@
     <p>
       <i>Vorschlag</i>: Widgets werden grundsätzlich als Vollbildoverlay dargestellt. Sie können aber den Host darüber
       informieren, sich beschneiden zu lassen (Details s. U.), sodass die darunter liegenden Elemente erreichbar sind.
-      Dafür kann sie css-eigenschaft clip-path verwendet werden. Widgets müssen daher nicht rechteckig sein.
+      Dafür kann die CSS-Eigenschaft <i>clip-path</i> verwendet werden. Widgets müssen daher nicht rechteckig sein.
       :
       <button id="openBtn2">Beispiel: Avatar Widget</button>
     </p>
@@ -100,21 +131,261 @@
       sein. Eine Kombination aus beiden Konzepten ist evenfalls denkbar.
     </p>
 
+    <h2>Kommunikation</h2>
+    <p>
+      Die Grundidee dieses Konzeptes ist, dass widgets konzeptuell nichts anderes sind als weitere, parallele
+      Verona-Player-Sessions, die lediglich anders dargestellt werden.
+    </p>
+    <p>
+      Dies hat den Vorteil, dass die bereits etablierten Verona-Befehle verwendet werden können. Der Startvorgang ist
+      der gleiche, wie bei einem Verona-Player:
+    </p>
+    <ol>
+      <li>
+        Eine
+        <a href="https://verona-interfaces.github.io/player/#operation-send-vopReadyNotification">vopReadyNotification</a>
+        das Widget teilt mit, dass es fertig geladen ist.
+      </li>
+      <li>
+        Ein
+        <a href="https://verona-interfaces.github.io/player/#operation-receive-vopStartCommand">vopStartCommand</a>,
+        des Hosts fordert das Widget auf, zu starten. Es wird allerdings keine
+        <a href="https://verona-interfaces.github.io/player/#schema-PlayerConfig">PlayerConfig</a>
+        mitgegeben, sondern eine WidgetConfig.
+      </li>
+    </ol>
+    <p>
+      Widgets können dann, genauso wie der player selbst UnitDaten und -States oder -Logs mit
+      <a href="https://verona-interfaces.github.io/player/#operation-send-vopStateChangedNotification">vopStateChangedNotification</a>
+      vermelden, Fehler mit
+      <a href="https://verona-interfaces.github.io/player/#operation-send-vopRuntimeErrorNotification">vopRuntimeErrorNotification</a>
+      melden und sogar eine Navigation mit
+      <a href="https://verona-interfaces.github.io/player/#operation-send-vopUnitNavigationRequestedNotification">vopUnitNavigationRequestedNotification</a>
+      anstoßen.
+    </p>
+    <p class="warning">
+      In dem vorliegenden Beispiel wurde auch
+      <a href="https://verona-interfaces.github.io/player/#operation-send-vopWindowFocusChangedNotification">vopWindowFocusChangedNotification</a>
+      verwendet, um einen Fokuswechsel ins Widget mitzuteilen, <a href="https://github.com/verona-interfaces/player/issues/8">
+      auch wenn, dieses in der nächsten Verona-Version wahrscheinlich nicht mehr vorkommt.</a>
+    </p>
+    <p class="warning">
+      Was das Wegschreiben von Unitdaten angeht, muss man sich fragen, ob widgets immer zusätzliche units-chunks zur
+      jeweils aktuellen Unit produzieren oder zu einer eigenen "virtuellen" Unit.<br>
+      Der erste Ansatz hätte den Vorteil einer stärkeren Verzahnung von Unit und Widget, würde jedoch zu problemen führen,
+      wenn Unit und Widget nicht dasselbe Datenformat verwenden, <a href="https://github.com/verona-interfaces/player/issues/2">
+      so lange Verona chunks mit verschiedenen Datentypen innerhalb einer Unit zulässt.</a>
+    </p>
+    <p>
+      (Mehrheitlich) dieselbe API für widgets und player zu verwenden, führt dazu, dass die Widgets tendenziell sehr
+      mächtig sind. Allerdings könnte eine Host-Implementierung bestimmte Funktionen für Widgets auch unterdrücken
+      (z. B. Navigation), ohne dass dies vor vorne herein in der API-definition der Fall sein müsste.
+    </p>
+    <p class="alternative">
+      Die Alternative wäre eine ganz neue API, die konzeptuell mehr oder minder die player API repliziert und
+      definiert, wie der Host mit den Widgets kommuniziert.
+    </p>
 
+    <h2>Verwaltung</h2>
+    <p>
+      Widgets können über bestimmte Verona-Befehle aufgerufen und geschlossen werden.
+    </p>
+    <h3>Widget öffnen</h3>
+    <blockquote>
+{
+  "type": "vopStartWidget",
+  "sessionId": "#1",
+  "name": "calculator"
+}
+    </blockquote>
+    <p>Die Eigenschaft <i>name</i> referiert welches Widget geöffnet werden soll.</p>
 
-    <h4>Unit content</h4>
-    <input type="text" name="textfield">
+    <h3>Widget schließen</h3>
+    <blockquote>
+{
+  "type": "vopCloseWidget",
+  "sessionId": "#1",
+  "widgetId": "calculator#1"
+}
+    </blockquote>
 
-    <hr>
-    <h4>Widgets</h4>
-    <button id="ListBtn">Actualize list</button>
+    <h3>Widgets auflisten</h3>
+    <p>Der Player kann eine Liste der laufenden Widgets vom Host erhalten:</p>
+    <blockquote>
+{
+  "type": "vopGetWidgetsRequestNotification"
+  "sessionId": "#1",
+}
+    </blockquote>
+    <p>Vom Host gibt es eine Antwort, z. B.:</p>
+    <blockquote>
+{
+  sessionId: '#1',
+  type: 'vopGetWidgetsNotification',
+  running: [
+    {
+      id: "widget#1",
+      name:
+    }
+  ],
+  available: [
+    {
+      name: 'calculator',
+    },
+    {
+      name: 'avatar',
+    }
+  ]
+}
+    </blockquote>
+    <p>
+      Sie enthält zwei Listen:
+    </p>
+    <ol>
+      <li><strong>running</strong>: Eine liste von aktiven Widgets mit ID und name.</li>
+      <li>
+        <strong>available</strong>: Eine liste von Widgets, die aktuell geöffnet werden dürfen.
+        <div class="hint">
+          Was das konkret bedeutet, hängt von der implementation im Host ab. im <strong>Testcenter</strong>,
+          wird das wohl bedeuten <i>"Widgets, die für diese Unit zugelassen sind"</i>.<br>
+          Der Host ist selbst dafür zuständig, Widgets, die nicht mehr gezeigt werden sollen (z. B. beim Unitwechsel)
+          zu schließen - aus Schnittstellen sicht kann es also durchaus sein, dass in <i>running</i> völlig andere
+          widgets stehen als in <i>available</i>, wenn dies nicht beachtet wurde.<br>
+          Außerdem muss der Host darüber entscheiden, ob zwei widgets mit dem selben Namen gleichzeitig gezeigt werden
+          können. In dieser Testumgebung hier geht das, im <strong>Testcenter</strong> wäre das wahrscheinlich nict so.
+        </div>
+      </li>
+    </ol>
+    <p><button id="ListBtn">Liste Abrufen</button></p>
     <table id="widgets">
       <thead>
-      <tr><td>ID</td><td>type</td><td></td></tr>
+        <tr><td colspan="3">Running</td></tr>
+        <tr><td>ID</td><td>name</td><td></td></tr>
       </thead>
-      <tbody></tbody>
+      <tbody id="widgets-running"></tbody>
+      <thead>
+        <tr><td colspan="2">Available</td></tr>
+        <tr><td>Name</td><td></td></tr>
+      </thead>
+      <tbody id="widgets-available"></tbody>
     </table>
+
+    <h2>Übergreifende Daten</h2>
+    <h3>BookletState</h3>
+    <p>
+      Widgets können bestehen bleiben, während die Unit gewechselt wird. Ein Widget kann auch verschwinden und soll dann
+      wieder im selben Zustand geöffnet werden können (Beispiel: Avatar-Farbe).
+      Hierzu wird ein übergeordnentes objekt verwendet, der <i>bookletState</i>, das mit der
+      <a href="https://verona-interfaces.github.io/player/#operation-send-vopStateChangedNotification">vopStateChangedNotification</a>
+      mitgegeben wird.
+      Dieser kann von playern, vom host und vom widget gesetzt werden. Das Datenformat ist eine einfache Collection von
+      Strings.
+    </p>
+    <blockquote>
+{
+  "avatar-type": "man",
+  "avatar-color": "red"
+  "calculatur-mode": "scientific"
+}
+    </blockquote>
+    <div class="hint">
+      Es handelt sich also nicht um Variablen im engeren Sinne. Warum? Weil sich diese Datenstruktur im
+      <strong>Testcenter</strong> bereits befindet. Den BookletState des Testcenters auch als bookletState für Verona
+      einzusetzen, anstatt eine neue Datenstruktur einzuführen würde folgende
+      Funktionen ohne weitere Implementierung mit sich bringen:
+      <ul>
+        <li>BookletState wird im Teststate bereits automatisch persistiert.</li>
+        <li>BookletState kann über die Testtaker-Datei personengenau vorbelegt werden.</li>
+        <li>BookletState kann im Review Modus frei gewählt werden.</li>
+        <li>BookletState wird im Gruppen-Monitor angezeigt und es kann danach sortiert udn gefilter werden.</li>
+        <li>BookletState beeinflusst die Verzweigung.</li>
+        <li>BookletState kann im debugmodus des TC live beorbachtet werden.</li>
+      </ul>
+    </div>
+    <div class="alternative">
+      Die Alternative wäre eine neue Datenstruktur zu erfinden, die über die Units hinweg gehalten wird und jeder neuen
+      unit und jedem neuen widget mitgeteilt wird. Aus <string>Verona-</string>sicht spricht nichts dagegen, aber es würde
+      im Testcenter eine deutlich größere
+    </div>
+
+    <h3>WidgetConfig</h3>
+    <p>
+      Zusätzlich gibt es eine widgetConfig. Dieses Object beschreibt die config eines konkreten Widgets.
+      Die einzige Eigenschaft, die in der vorliegenden Variante darin enthalten ist, ist clipPath, aber es sind natürlich
+      noch andere Denkbar (siehe <a>Darstellung</a>).
+    </p>
+    <ul>
+      <li>
+        <strong>clipPath</strong>: <i>string</i> - enthält einen string für die CSS-Eigenschaft
+        <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/clip-path">clip-path</a>
+      </li>
+    </ul>
+    <blockquote>
+{
+  "clipPath": "ellipse(130px 140px at 10% 20%)"
+}
+    </blockquote>
+    <p>
+      Entscheidend ist, dass die <i>WidgetConfig</i> vom widget gesetzt wird! Der Host wird darüber informiert in der
+      <i>vopReadyNotification</i> oder eine speziellen <i>vopChangeWidgetConfig</i>.
+    </p><!--TODO rename ? -->
+    <blockquote>
+{
+  "type": "vopChangeWidgetConfig",
+  "widgetId": "w1",
+  "widgetConfig": {
+    "clipPath": "ellipse(130px 140px at 10% 20%)"
+  }
+}
+    </blockquote>
+
+    <h2>Implementation im IQB Testcenter und Studio</h2>
+    <h3>Deklaration in der Unit.XML</h3>
+    <p class="hint">
+      Die <a href="https://iqb-berlin.github.io/tba-info/Testcenter/Testinhalte/unit-xml.html">Unit.xml</a>
+      ist ein austauschformat für (Verona-)Units innerhalb der IQB Anwendungen.<br>
+      Die folgenden Überlegungen betreffen also nicht <i>Verona</i>.
+    </p>
+    <p>
+      Das ein bestimmtes Widget für eine bestimmte Unit benötigt wird, muss in der Unit-<i>Definition</i> stehen
+      (typischerweise Datei mit der Endung <i>.voud.json</i>. Wie das in der implementierung ist, ist Sache des
+      Players. Zusätzlich sollte in der Unit-<i>Deklaration</i> (unit.xml) eine Abhängigkeit auf die Widget<i>datei(-en)</i>
+      deklariert werden, damit diese vorgeladen werden können.
+      Die Datenstrukturen dafür
+      <a href="https://github.com/iqb-berlin/testcenter/blob/b5bd7419f5810a8532ceb033e91ce3dd95ef8b00/definitions/vo_Unit.xsd#L172">
+      sind bereits vorhanden</a>:
+    </p>
+    <blockquote>
+&lt;Dependencies&gt;
+  &lt;File for="player">calculator.html&lt;/File&gt;
+&lt;/Dependencies&gt;
+    </blockquote>
+    <p>
+      Diese Dateien werden allerdings nicht vorgeladen. Dieser Fall ist allerdings bereits mitgedacht, und der
+      <a href="https://github.com/iqb-berlin/testcenter/blob/master/frontend/src/app/test-controller/services/test-loader.service.ts">Test-Loader</a>
+      lässt sich leicht entsprechend erweitern.
+    </p>
+    <p class="hint">
+      Aktuell wird das Feld Dependencies nur im Fall von Paketen wie GeoGebra oder einem Itemplayer-Paket verwendet,
+      deren inhalte jedoch dynamisch nachgeladen werden. Es können jedoch auch einzelne Dateien angegeben werden.
+      Idealerweise wäre es das XML-Schema um ein weiteres attribut zu erweitern, dass das ladeverhalten bestimmt.
+    </p>
+    <p>
+      Es wäre dann aufgabe des <strong>Studios</strong> und des Verona-Editors, bei Auswahl eines Widgets einen
+      entsprechenden Vermerk in die Unit-Deklaration abzulegen.
+    </p>
+
+
+    <h2>Extra</h2>
+    <p>
+      Zum Abschluss noch ein Gedankenexperiment: Wenn Widgets nichts anderes sind, als parallele Verona-sessions
+      mit etwas anderen Eigenschaften, könnte ein Widget auch ein normaler Verona-Player sein, dem man seinen
+      Inhalt als Unit mitgibt. Widgets ließen sich somit auch z. B. im Aspect-Editor bauen.
+      <button>Beispiel!</button>
+    </p>
+    <p class="hint">Der Normalfall sollte aber natürlich sein, dass ein Widget ein single-unit Verona-PLayer ist.</p>
   </div>
+
   <div id="right">
     <h4>Messages</h4>
     <p>Hier werden alle Post-Messages gelistet, die vom Player oder vom Host <i>empfangen</i> werden.</p>
@@ -132,16 +403,27 @@
     setTimeout(Message.send.vopGetWidgetsRequestNotification, 100);
   }
 
-  function closeWidget(widgetId, event) {
+  function closeWidget(sessionId, event) {
     event.preventDefault();
-    Message.send.vopCloseWidget(widgetId);
+    Message.send.vopCloseWidget(sessionId);
+    setTimeout(Message.send.vopGetWidgetsRequestNotification, 100);
+  }
+
+  function openWidgetExperimental(event) {
+    // TODO
+    event.preventDefault();
+    this._send({
+      type: 'vopStartWidget',
+      sessionId,
+      name: ''
+    });
     setTimeout(Message.send.vopGetWidgetsRequestNotification, 100);
   }
 
   let lastEventType = '';
   let lastEventCount = 0;
   function processMessageEvent(receiver, event) {
-    const messageType = event.data.type + (event.data.widgetId ? ` (widget ${event.data.widgetId})` : '');
+    const messageType = event.data.type + (event.data.sessionId ? ` (widget ${event.data.sessionId})` : '');
     const dataElem = document.getElementById('data');
     if (event.data.type === 'vopStateChangedNotification') {
       let content = '';
@@ -165,18 +447,24 @@
     lastEventType = messageType;
 
     if (event.data.type === 'vopGetWidgetsNotification') {
-      document.querySelector('#widgets tbody').innerHTML = '';
-      (event.data?.widgets || [])
+      console.log(event.data);
+      document.querySelectorAll('#widgets tbody')
+        .forEach(body => body.innerHTML = '');
+      (event.data?.running || [])
         .forEach(widget => {
-          document.querySelector('#widgets tbody').innerHTML += `<tr><td>${widget.id}</td><td>${widget.type}</td><td><button onclick="closeWidget('${widget.id}', event)">X</button></td></tr>`;
+          document.querySelector('#widgets-running').innerHTML += `<tr><td>${widget.id}</td><td>${widget.name}</td><td><button onclick="closeWidget('${widget.id}', event)">Schließen</button></td></tr>`;
+        });
+      (event.data?.available || [])
+        .forEach(widget => {
+          document.querySelector('#widgets-available').innerHTML += `<tr><td>${widget.name}</td><td><button onclick="openWidget('${widget.name}', event)">Öffnen</button></td></tr>`;
         });
     }
   }
 
   window.parent.addEventListener('message', async  event => processMessageEvent('Host', event));
   window.addEventListener('message', async  event => processMessageEvent('Player', event));
-  document.getElementById('openBtn1').addEventListener('click', event => openWidget('sample-data/calculator.html', event));
-  document.getElementById('openBtn2').addEventListener('click', event => openWidget('sample-data/avatar-widget.html', event));
+  document.getElementById('openBtn1').addEventListener('click', event => openWidget('sample-data/widgets/calculator.html', event));
+  document.getElementById('openBtn2').addEventListener('click', event => openWidget('sample-data/widgets/avatar.html', event));
   document.getElementById('ListBtn').addEventListener('click', event => {
     event.preventDefault();
     Message.send.vopGetWidgetsRequestNotification();

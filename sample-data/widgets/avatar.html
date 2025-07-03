@@ -22,7 +22,7 @@
 <body>
   <img id="avatar" alt="avatar" src="about:blank" />
   <script>
-    let widgetId;
+    let sessionId;
     document.addEventListener('DOMContentLoaded', () => {
       window.parent.postMessage({
         type: 'vopWidgetReadyNotification',
@@ -34,7 +34,7 @@
     });
     window.addEventListener('message', msg => {
       if (msg.data.type==='vopWidgetStartCommand') {
-        widgetId = msg.data.widgetId;
+        sessionId = msg.data.sessionId;
         document.getElementById('avatar').src = `${msg.data.playerConfig.directDownloadUrl}/sample-data/avatar.svg`;
       }
     });

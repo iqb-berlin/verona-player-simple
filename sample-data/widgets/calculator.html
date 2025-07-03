@@ -215,7 +215,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     window.parent.postMessage({
-      type: 'vopWidgetReadyNotification',
+      type: 'vopReadyNotification',
       widgetType: 'example-calculator@1.0.0',
       widgetConfig: getWidgetConfig()
     }, '*');
@@ -223,7 +223,7 @@
 
   window.addEventListener('message', msg => {
     if (msg.data.type==='vopWidgetStartCommand') {
-      widgetId = msg.data.widgetId;
+      widgetId = msg.data.sessionId;
       reportCalculatorPosition();
     }
   });

@@ -76,6 +76,7 @@
     const getSendingWidgetHostId = event => {
       const result = Object.entries(widgets)
         .find(([id, widget]) => widget.elem.contentWindow === event.source);
+      if (host.contentWindow === event.source) return -1;
       if (!result) throw new Error("not send from a widgetHost");
       return result[0];
     }
@@ -91,16 +92,31 @@
 
     window.addEventListener('message', async  event => {
       if (event.data.type === 'vopReadyNotification') {
-        host.contentWindow.postMessage({
-          type: 'vopStartCommand',
-          unitDefinition,
-          sessionId: '1',
-          playerConfig,
-          unitState: {
-            unitStateDataType: 'iqb-standard@1.0',
-            dataParts: {}
-          }
-        }, '*');
+        const widgetHostId = getSendingWidgetHostId(event);
+        console.log(`[vopReadyNotification] from ${widgetHostId}`);
+        if (widgetHostId === -1) {
+          updateState('player', `${event.data.metadata.id} ${event.data.metadata.version}`);
+          host.contentWindow.postMessage({
+            type: 'vopStartCommand',
+            unitDefinition,
+            sessionId: '1',
+            playerConfig,
+            unitState: {}
+          }, '*');
+        } else {
+          const widgetHost = getWidgetHost(widgetHostId);
+          applyWidgetConfig(widgetHost, event.data.widgetConfig);
+          widgetHost.contentWindow.postMessage({
+            type: 'vopWidgetStartCommand',
+            sessionId: widgetHostId,
+            playerConfig
+          }, '*');
+        }
+      }
+
+      if (event.data.type === 'vopWindowFocusChangedNotification') {
+        const sender = (event.data.sessionId && widgets[event.data.sessionId]) ? event.data.sessionId : 'player';
+        updateState('focus', (event.data.hasFocus) ? sender : 'host');
       }
 
       if (event.data.type === 'vopStartWidget') {
@@ -110,57 +126,43 @@
         widgetHost.classList.add('widgetHost');
         widgetHost.srcdoc = (await widgetCode.text());
         document.body.appendChild(widgetHost);
-        const widgetId = event.data.name + '#' + Object.values(widgets).filter(widget => widget.type === event.data.name).length;
-        widgets[widgetId] = {
+        const sessionId = event.data.name + '#' + Object.values(widgets).filter(widget => widget.type === event.data.name).length;
+        widgets[sessionId] = {
           elem: widgetHost,
           type: event.data.name
         };
-        console.log(`widget registered: ${event.data.name} | id: ${widgetId}`)
-      }
-
-      if (event.data.type === 'vopWidgetReadyNotification') {
-        const widgetHostId = getSendingWidgetHostId(event);
-        console.log(`[vopWidgetReadyNotification] from ${widgetHostId}`);
-        const widgetHost = getWidgetHost(widgetHostId);
-        applyWidgetConfig(widgetHost, event.data.widgetConfig);
-        widgetHost.contentWindow.postMessage({
-          type: 'vopWidgetStartCommand',
-          widgetId: widgetHostId,
-          playerConfig
-        }, '*');
+        console.log(`widget registered: ${event.data.name} | id: ${sessionId}`)
       }
 
       if (event.data.type === 'vopCloseWidget') {
         console.log(`[vopCloseWidget] for ${event.data.widgetId}`);
         const widgetHost = getWidgetHost(event.data.widgetId);
-        console.log({
-          widgetId: event.data.widgetId,
-          widgetHost,
-          widgetHosts: widgets
-        });
         document.body.removeChild(widgetHost);
-        delete widgets[event.data.widgetId];
+        delete widgets[event.data.sessionId];
       }
 
       if (event.data.type === 'vopGetWidgetsRequestNotification') {
-        console.log(`[vopGetWidgetsRequestNotification] for ${event.data.widgetId}`);
-        const senderHost = (event.data.widgetId && widgets[event.data.widgetId]) ? widgets[event.data.widgetId].elem : host;
+        console.log(`[vopGetWidgetsRequestNotification] for ${event.data.sessionId}`);
+        const senderHost = (event.data.sessionId && widgets[event.data.sessionId]) ? widgets[event.data.sessionId].elem : host;
         senderHost.contentWindow.postMessage({
           sessionId: '1',
           type: 'vopGetWidgetsNotification',
-          widgets: Object.entries(widgets).map(([id, widget]) => ({ id, type: widget.type }))
+          running: Object.entries(widgets).map(([id, widget]) => ({ id, name: widget.type })),
+          available: [
+            {
+              name: 'sample-data/widgets/calculator.html',
+            },
+            {
+              name: 'sample-data/widgets/avatar.html',
+            }
+          ]
         }, '*');
       }
 
       if (event.data.type === 'vopChangeWidgetConfig') {
-        console.log(`[vopChangeWidgetConfig] for ${event.data.widgetId}`);
-        const widgetHost = getWidgetHost(event.data.widgetId);
+        console.log(`[vopChangeWidgetConfig] for ${event.data.sessionId}`);
+        const widgetHost = getWidgetHost(event.data.sessionId);
         applyWidgetConfig(widgetHost, event.data.widgetConfig);
-      }
-
-      if (event.data.type === 'vopWindowFocusChangedNotification') {
-        const sender = (event.data.widgetId && widgets[event.data.widgetId]) ? event.data.widgetId : 'player';
-        updateState('focus', (event.data.hasFocus) ? sender : 'host');
       }
     }, false);
 
