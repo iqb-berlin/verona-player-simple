@@ -3,6 +3,6 @@
   "unitId": "Unit·5",
   "unitTitle": "Einstiegsunit",
   "unitNumber": 5,
-  "directDownloadUrl": "verona-player-simple/",
+  "directDownloadUrl": "https://iqb-berlin.github.io/verona-player-simple/",
   "pagingMode": "concat-scroll"
 }
