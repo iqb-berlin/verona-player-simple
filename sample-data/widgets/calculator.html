@@ -74,6 +74,7 @@
   </div>
 
   <button class="toggle-btn" onclick="toggleAdvanced()">Toggle Advanced Mode</button>
+  <button class="toggle-btn" onclick="closeClaculator()">Close</button>
 
   <div class="buttons" id="advancedButtons">
     <button onclick="applyFunction('Math.sin')">sin</button>
@@ -131,6 +132,12 @@
       bookletState: {
         calculator_advanced_mode: JSON.stringify(adv.style.display === 'none')
       }
+    }, '*');
+  }
+  function closeClaculator() {
+    window.parent.postMessage({
+      type: 'vopCloseWidget',
+      widgetId
     }, '*');
   }
 
@@ -216,15 +223,20 @@
   document.addEventListener('DOMContentLoaded', () => {
     window.parent.postMessage({
       type: 'vopReadyNotification',
-      widgetType: 'example-calculator@1.0.0',
       widgetConfig: getWidgetConfig()
     }, '*');
   });
 
   window.addEventListener('message', msg => {
-    if (msg.data.type==='vopWidgetStartCommand') {
+    if (msg.data.type==='vopStartCommand') {
       widgetId = msg.data.sessionId;
       reportCalculatorPosition();
+    }
+    if (msg.data.type === 'vopStateChangedNotification') {
+      if (msg.data.bookletConfig && msg.data.bookletConfig.widgetColor) {
+        const calc = document.getElementById('calculator');
+        calc.style.borderColor = msg.data.bookletConfig.widgetColor;
+      }
     }
   });
 

@@ -32,7 +32,7 @@
       width: 100%;
       height: 100%;
       border: none;
-      background: rgba(0,0,0,0.2);
+      background: transparent;
     }
     #state > span {
       padding-left: 1em;
@@ -81,13 +81,13 @@
       return result[0];
     }
 
-    const getWidgetHost = widgetId => {
-      if (!widgets[widgetId]) throw new Error(`No widgetHost with id ${widgetId} registered.`);
-      return widgets[widgetId].elem;
+    const getWidget = widgetId => {
+      if (!widgets[widgetId]) throw new Error(`No widget with id ${widgetId} registered.`);
+      return widgets[widgetId];
     }
 
     const applyWidgetConfig = (widgetHost, widgetConfig) => {
-      widgetHost.style.clipPath = widgetConfig.clipPath;
+      if (widgetConfig && widgetConfig.clipPath) widgetHost.style.clipPath = widgetConfig.clipPath;
     }
 
     window.addEventListener('message', async  event => {
@@ -104,19 +104,38 @@
             unitState: {}
           }, '*');
         } else {
-          const widgetHost = getWidgetHost(widgetHostId);
-          applyWidgetConfig(widgetHost, event.data.widgetConfig);
-          widgetHost.contentWindow.postMessage({
-            type: 'vopWidgetStartCommand',
-            sessionId: widgetHostId,
-            playerConfig
-          }, '*');
+          const widget = getWidget(widgetHostId);
+          applyWidgetConfig(widget.elem, event.data.widgetConfig);
+          widget.elem.contentWindow.postMessage(
+            Object.assign(widget.startCommandParameter, {
+              type: 'vopStartCommand',
+              sessionId: widgetHostId,
+              widgetConfig: {
+                directDownloadUrl: playerConfig.directDownloadUrl
+              }
+            }, '*')
+          );
         }
       }
 
       if (event.data.type === 'vopWindowFocusChangedNotification') {
         const sender = (event.data.sessionId && widgets[event.data.sessionId]) ? event.data.sessionId : 'player';
         updateState('focus', (event.data.hasFocus) ? sender : 'host');
+      }
+
+      if (event.data.type === 'vopStateChangedNotification') {
+        console.log('[vopStateChangedNotification]');
+        if ('bookletConfig' in event.data) {
+          Object.entries(widgets)
+            .forEach(([widgetId, widget]) => {
+              console.log(`forwarding vopStateChangedNotification to ${widgetId}`);
+              widget.elem.contentWindow.postMessage({
+                type: 'vopStateChangedNotification',
+                widgetId,
+                bookletConfig: event.data.bookletConfig
+              }, '*');
+            });
+        }
       }
 
       if (event.data.type === 'vopStartWidget') {
@@ -129,16 +148,18 @@
         const sessionId = event.data.name + '#' + Object.values(widgets).filter(widget => widget.type === event.data.name).length;
         widgets[sessionId] = {
           elem: widgetHost,
-          type: event.data.name
+          type: event.data.name,
+          startCommandParameter: event.data.startCommandParameter || {}
         };
+        if (event.data.widgetConfig) applyWidgetConfig(widgetHost, event.data.widgetConfig);
         console.log(`widget registered: ${event.data.name} | id: ${sessionId}`)
       }
 
       if (event.data.type === 'vopCloseWidget') {
         console.log(`[vopCloseWidget] for ${event.data.widgetId}`);
-        const widgetHost = getWidgetHost(event.data.widgetId);
+        const widgetHost = getWidget(event.data.widgetId).elem;
         document.body.removeChild(widgetHost);
-        delete widgets[event.data.sessionId];
+        delete widgets[event.data.widgetId];
       }
 
       if (event.data.type === 'vopGetWidgetsRequestNotification') {
@@ -160,8 +181,8 @@
       }
 
       if (event.data.type === 'vopChangeWidgetConfig') {
-        console.log(`[vopChangeWidgetConfig] for ${event.data.sessionId}`);
-        const widgetHost = getWidgetHost(event.data.sessionId);
+        console.log(`[vopChangeWidgetConfig] for ${event.data.widgetId}`);
+        const widgetHost = getWidget(event.data.widgetId).elem;
         applyWidgetConfig(widgetHost, event.data.widgetConfig);
       }
     }, false);

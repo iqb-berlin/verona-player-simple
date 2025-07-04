@@ -37,7 +37,9 @@
     margin-bottom: 0.5em;
   }
 
-
+  li {
+    margin-bottom: 0.3em;
+  }
 
   .warning::before {
     content: "⚠";
@@ -56,8 +58,17 @@
       background: rgba(55, 150, 250, 0.1);
       border: 1px solid rgba(55, 150, 250, 0.5);
   }
+  .hint::before {
+      content: "!";
+      left: 0;
+      position: absolute;
+      color: rgb(55, 150, 250);
+      font-size: large;
+      height: 100%;
+      top: calc(50% - 0.6em)
+  }
   .alternative::before {
-    content: "⚠";
+    content: "?";
     left: 0;
     position: absolute;
     color: rgb(0, 50, 255);
@@ -84,10 +95,41 @@
 
 <div id="wrapper">
   <div id="left">
-    <h1>Widget Konzept</h1>
-    <p>Mit dieser Unit soll das Konzept für Verona-Widgets erklärt werden. Sie verwendet den simple player 6.0 in einer
-      modifizierten Version. Es handelt sich lediglich um eine <i>Konzeptskizze</i>, daher werden auch mögliche
-      Alternativen genannt.
+    <h1>Konzept "Widgets"</h1>
+    <p>
+      Dies ist ein Konzept für Verona-Widgets. Es wird vorgestellt durch eine probeweise Implementierung,
+      die sich selbst auf <strong>interaktive Weise</strong> beschreibt!
+      Es besteht aus:
+    </p>
+    <ul>
+      <li>
+        <a target="_blank" href="https://github.com/iqb-berlin/verona-player-simple/blob/widgets/sample-data/unit-with-widget.htm">
+          spezialisierten Unit
+        </a>
+      </li>
+      <li>
+        <a target="_blank" href="https://github.com/iqb-berlin/verona-player-simple/blob/widgets/verona-player-simple-6.0.html">
+          einer leicht modifizierten Version des Verona Simple Players
+        </a>
+      </li>
+      <li>
+        <a target="_blank" href="https://github.com/iqb-berlin/verona-player-simple/blob/widgets/dev-tools/testhost.html">
+          einem minimalistischen Verona-Host.
+        </a>
+      </li>
+      <li>
+        <a target="_blank" href="https://github.com/iqb-berlin/verona-player-simple/blob/widgets/sample-data/widgets/claculator.html">
+          einem rudimentären Taschenrechner-Widget
+        </a>
+      </li>
+      <li>
+        <a target="_blank" href="https://github.com/iqb-berlin/verona-player-simple/blob/widgets/sample-data/widgets/avatgar.html">
+          einem noch rudimentäreren Avatar-Widget
+        </a>
+      </li>
+    </ul>
+    <p>
+      <strong>Der Code dieser Dateien ist Teil dieser Dokumentation.</strong>
     </p>
     <h2>Was ist ein Verona Widget?</h2>
     <p>Es handelt sich um ein, von der eigentlichen Unit unabhängiges interaktives
@@ -102,23 +144,23 @@
       Attribut und postMessages.
     </p>
 
-
     <h2>Darstellung</h2>
     <p>
       <i>Vorschlag</i>: Widgets werden grundsätzlich als Vollbildoverlay dargestellt. Sie können aber den Host darüber
       informieren, sich beschneiden zu lassen (Details s. U.), sodass die darunter liegenden Elemente erreichbar sind.
       Dafür kann die CSS-Eigenschaft <i>clip-path</i> verwendet werden. Widgets müssen daher nicht rechteckig sein.
-      :
+      <br>
       <button id="openBtn2">Beispiel: Avatar Widget</button>
     </p>
     <p>
       Sollte das Widget verschiebbar sein sollen, ist die Drag-Und-Drop-Funktionalität im Widget selbst umzusetzen und
       im Verschiebungsfall der Host über einen veränderten clip-path zu informieren.
-      Beispiel:
+      <br>
       <button id="openBtn1">Beispiel: Taschenrechner Widget</button>
     </p>
     <p>
-      Analog dazu entscheidet auch der Widget-Autor selbst darüber, ob es z. B. einen schließen Button gibt.
+      Analog dazu entscheidet auch der Widget-Autor selbst darüber, ob es z. B. einen schließen Button gibt - wie etwa
+      hier im Taschenrechner-Widget umgesetzt.
     </p>
     <p class="warning">
       Das Konzept "immer fullscreen overlay und clip path" ist noch nicht im Zusammenspiel mit Mobile Devices erprobt.
@@ -143,38 +185,39 @@
     <ol>
       <li>
         Eine
-        <a href="https://verona-interfaces.github.io/player/#operation-send-vopReadyNotification">vopReadyNotification</a>
+        <a target="_blank" href="https://verona-interfaces.github.io/player/#operation-send-vopReadyNotification">vopReadyNotification</a>
         das Widget teilt mit, dass es fertig geladen ist.
       </li>
       <li>
         Ein
-        <a href="https://verona-interfaces.github.io/player/#operation-receive-vopStartCommand">vopStartCommand</a>,
+        <a target="_blank" href="https://verona-interfaces.github.io/player/#operation-receive-vopStartCommand">vopStartCommand</a>,
         des Hosts fordert das Widget auf, zu starten. Es wird allerdings keine
-        <a href="https://verona-interfaces.github.io/player/#schema-PlayerConfig">PlayerConfig</a>
+        <a target="_blank" href="https://verona-interfaces.github.io/player/#schema-PlayerConfig">PlayerConfig</a>
         mitgegeben, sondern eine WidgetConfig.
       </li>
     </ol>
     <p>
       Widgets können dann, genauso wie der player selbst UnitDaten und -States oder -Logs mit
-      <a href="https://verona-interfaces.github.io/player/#operation-send-vopStateChangedNotification">vopStateChangedNotification</a>
+      <a target="_blank" href="https://verona-interfaces.github.io/player/#operation-send-vopStateChangedNotification">vopStateChangedNotification</a>
       vermelden, Fehler mit
-      <a href="https://verona-interfaces.github.io/player/#operation-send-vopRuntimeErrorNotification">vopRuntimeErrorNotification</a>
+      <a target="_blank" href="https://verona-interfaces.github.io/player/#operation-send-vopRuntimeErrorNotification">vopRuntimeErrorNotification</a>
       melden und sogar eine Navigation mit
-      <a href="https://verona-interfaces.github.io/player/#operation-send-vopUnitNavigationRequestedNotification">vopUnitNavigationRequestedNotification</a>
+      <a target="_blank" href="https://verona-interfaces.github.io/player/#operation-send-vopUnitNavigationRequestedNotification">vopUnitNavigationRequestedNotification</a>
       anstoßen.
     </p>
     <p class="warning">
       In dem vorliegenden Beispiel wurde auch
-      <a href="https://verona-interfaces.github.io/player/#operation-send-vopWindowFocusChangedNotification">vopWindowFocusChangedNotification</a>
-      verwendet, um einen Fokuswechsel ins Widget mitzuteilen, <a href="https://github.com/verona-interfaces/player/issues/8">
+      <a target="_blank" href="https://verona-interfaces.github.io/player/#operation-send-vopWindowFocusChangedNotification">vopWindowFocusChangedNotification</a>
+      verwendet, um einen Fokuswechsel ins Widget mitzuteilen, <a target="_blank" href="https://github.com/verona-interfaces/player/issues/8">
       auch wenn, dieses in der nächsten Verona-Version wahrscheinlich nicht mehr vorkommt.</a>
     </p>
     <p class="warning">
-      Was das Wegschreiben von Unitdaten angeht, muss man sich fragen, ob widgets immer zusätzliche units-chunks zur
+      Was das Wegschreiben von Unitdaten angeht, muss man sich fragen, ob Widgets immer zusätzliche Units-Chunks zur
       jeweils aktuellen Unit produzieren oder zu einer eigenen "virtuellen" Unit.<br>
-      Der erste Ansatz hätte den Vorteil einer stärkeren Verzahnung von Unit und Widget, würde jedoch zu problemen führen,
-      wenn Unit und Widget nicht dasselbe Datenformat verwenden, <a href="https://github.com/verona-interfaces/player/issues/2">
-      so lange Verona chunks mit verschiedenen Datentypen innerhalb einer Unit zulässt.</a>
+      Der erste Ansatz hätte den Vorteil einer deutlich besseren Zuordnung der Ergebnisdaten,
+      würde jedoch zu Problemen führen,
+      wenn Unit und Widget nicht dasselbe Datenformat verwenden, <a target="_blank" href="https://github.com/verona-interfaces/player/issues/2">
+      so lange Verona Chunks mit verschiedenen Datentypen innerhalb einer Unit zulässt.</a>
     </p>
     <p>
       (Mehrheitlich) dieselbe API für widgets und player zu verwenden, führt dazu, dass die Widgets tendenziell sehr
@@ -256,7 +299,7 @@
         </div>
       </li>
     </ol>
-    <p><button id="ListBtn">Liste Abrufen</button></p>
+    <p><button id="ListBtn">Liste Aktualisieren</button></p>
     <table id="widgets">
       <thead>
         <tr><td colspan="3">Running</td></tr>
@@ -276,7 +319,7 @@
       Widgets können bestehen bleiben, während die Unit gewechselt wird. Ein Widget kann auch verschwinden und soll dann
       wieder im selben Zustand geöffnet werden können (Beispiel: Avatar-Farbe).
       Hierzu wird ein übergeordnentes objekt verwendet, der <i>bookletState</i>, das mit der
-      <a href="https://verona-interfaces.github.io/player/#operation-send-vopStateChangedNotification">vopStateChangedNotification</a>
+      <a target="_blank" href="https://verona-interfaces.github.io/player/#operation-send-vopStateChangedNotification">vopStateChangedNotification</a>
       mitgegeben wird.
       Dieser kann von playern, vom host und vom widget gesetzt werden. Das Datenformat ist eine einfache Collection von
       Strings.
@@ -284,10 +327,18 @@
     <blockquote>
 {
   "avatar-type": "man",
-  "avatar-color": "red"
+  "widget-color": "red"
   "calculatur-mode": "scientific"
 }
     </blockquote>
+    <p>
+      Öffne einige Widgets und probiere es aus:
+      <button onclick="changeWidgetColor('green', event)">Färbe widgets grün</button>
+      <button onclick="changeWidgetColor('red', event)">Färbe widgets rot</button>
+    </p>
+
+
+
     <div class="hint">
       Es handelt sich also nicht um Variablen im engeren Sinne. Warum? Weil sich diese Datenstruktur im
       <strong>Testcenter</strong> bereits befindet. Den BookletState des Testcenters auch als bookletState für Verona
@@ -304,7 +355,7 @@
     </div>
     <div class="alternative">
       Die Alternative wäre eine neue Datenstruktur zu erfinden, die über die Units hinweg gehalten wird und jeder neuen
-      unit und jedem neuen widget mitgeteilt wird. Aus <string>Verona-</string>sicht spricht nichts dagegen, aber es würde
+      unit und jedem neuen widget mitgeteilt wird. Aus <strong>Verona-</strong>sicht spricht nichts dagegen, aber es würde
       im Testcenter eine deutlich größere
     </div>
 
@@ -316,8 +367,8 @@
     </p>
     <ul>
       <li>
-        <strong>clipPath</strong>: <i>string</i> - enthält einen string für die CSS-Eigenschaft
-        <a href="https://developer.mozilla.org/en-US/docs/Web/CSS/clip-path">clip-path</a>
+        <strong>clipPath</strong>: <i>string</i> - enthält einen String für die CSS-Eigenschaft
+        <a target="_blank" href="https://developer.mozilla.org/en-US/docs/Web/CSS/clip-path">clip-path</a>
       </li>
     </ul>
     <blockquote>
@@ -342,7 +393,7 @@
     <h2>Implementation im IQB Testcenter und Studio</h2>
     <h3>Deklaration in der Unit.XML</h3>
     <p class="hint">
-      Die <a href="https://iqb-berlin.github.io/tba-info/Testcenter/Testinhalte/unit-xml.html">Unit.xml</a>
+      Die <a target="_blank" href="https://iqb-berlin.github.io/tba-info/Testcenter/Testinhalte/unit-xml.html">Unit.xml</a>
       ist ein austauschformat für (Verona-)Units innerhalb der IQB Anwendungen.<br>
       Die folgenden Überlegungen betreffen also nicht <i>Verona</i>.
     </p>
@@ -352,7 +403,7 @@
       Players. Zusätzlich sollte in der Unit-<i>Deklaration</i> (unit.xml) eine Abhängigkeit auf die Widget<i>datei(-en)</i>
       deklariert werden, damit diese vorgeladen werden können.
       Die Datenstrukturen dafür
-      <a href="https://github.com/iqb-berlin/testcenter/blob/b5bd7419f5810a8532ceb033e91ce3dd95ef8b00/definitions/vo_Unit.xsd#L172">
+      <a target="_blank" href="https://github.com/iqb-berlin/testcenter/blob/b5bd7419f5810a8532ceb033e91ce3dd95ef8b00/definitions/vo_Unit.xsd#L172">
       sind bereits vorhanden</a>:
     </p>
     <blockquote>
@@ -362,7 +413,7 @@
     </blockquote>
     <p>
       Diese Dateien werden allerdings nicht vorgeladen. Dieser Fall ist allerdings bereits mitgedacht, und der
-      <a href="https://github.com/iqb-berlin/testcenter/blob/master/frontend/src/app/test-controller/services/test-loader.service.ts">Test-Loader</a>
+      <a target="_blank" href="https://github.com/iqb-berlin/testcenter/blob/master/frontend/src/app/test-controller/services/test-loader.service.ts">Test-Loader</a>
       lässt sich leicht entsprechend erweitern.
     </p>
     <p class="hint">
@@ -380,15 +431,19 @@
     <p>
       Zum Abschluss noch ein Gedankenexperiment: Wenn Widgets nichts anderes sind, als parallele Verona-sessions
       mit etwas anderen Eigenschaften, könnte ein Widget auch ein normaler Verona-Player sein, dem man seinen
-      Inhalt als Unit mitgibt. Widgets ließen sich somit auch z. B. im Aspect-Editor bauen.
-      <button>Beispiel!</button>
+      Inhalt als Unit mitgibt. Widgets ließen sich somit auch z. B. im Aspect-Editor bauen, on the fly vom einem
+      player generieren lassen und vieles mehr.
+      <button id="experimentalBtn">Beispiel!</button>
     </p>
-    <p class="hint">Der Normalfall sollte aber natürlich sein, dass ein Widget ein single-unit Verona-PLayer ist.</p>
+    <p class="hint">Der Normalfall sollte aber natürlich sein, dass ein Widget ein single-unit Verona-Player ist.</p>
   </div>
 
   <div id="right">
     <h4>Messages</h4>
-    <p>Hier werden alle Post-Messages gelistet, die vom Player oder vom Host <i>empfangen</i> werden.</p>
+    <p>
+      Hier werden alle Post-Messages gelistet, die vom Player oder vom Host <i>empfangen</i> werden, um das
+      Zusammenspiel der verschiedenen Elemente verständlich zu machen.
+    </p>
     <ol id="data"></ol>
   </div>
 </div>
@@ -410,14 +465,32 @@
   }
 
   function openWidgetExperimental(event) {
-    // TODO
+    // We don't use Message.send.vopStartWidget here because this is a showcase for sending a unit to a widget
     event.preventDefault();
-    this._send({
+    Message.send._send({
       type: 'vopStartWidget',
       sessionId,
-      name: ''
+      name: 'sample-data/iqb-player-aspect-2.4.11.html',
+      startCommandParameter: {
+        unitDefinition: '{"type":"aspect-unit-definition","stateVariables":[],"version":"4.4.0","pages":[{"sections":[{"elements":[{"id":"math-field_1","isRelevantForPresentationComplete":true,"position":{"xPosition":0,"yPosition":0,"gridColumn":null,"gridColumnRange":1,"gridRow":null,"gridRowRange":1,"marginLeft":{"value":0,"unit":"px"},"marginRight":{"value":0,"unit":"px"},"marginTop":{"value":0,"unit":"px"},"marginBottom":{"value":0,"unit":"px"},"zIndex":0},"dimensions":{"width":180,"height":60,"isWidthFixed":false,"isHeightFixed":false,"minWidth":null,"maxWidth":null,"minHeight":null,"maxHeight":null},"label":"Ich bin eine Aspect unit","value":"\\\\sqrt{9}^2","required":false,"requiredWarnMessage":"Eingabe erforderlich","readOnly":false,"type":"math-field","enableModeSwitch":false,"styling":{"backgroundColor":"transparent","fontColor":"#000000","font":"NunitoSans","fontSize":20,"bold":false,"italic":false,"underline":false,"lineHeight":135}}],"height":400,"backgroundColor":"#ffffff","dynamicPositioning":true,"autoColumnSize":true,"autoRowSize":true,"gridColumnSizes":[{"value":1,"unit":"fr"},{"value":1,"unit":"fr"}],"gridRowSizes":[{"value":1,"unit":"fr"}],"visibilityDelay":0,"animatedVisibility":false,"enableReHide":false,"logicalConnectiveOfRules":"disjunction","visibilityRules":[]}],"hasMaxWidth":true,"maxWidth":750,"margin":30,"backgroundColor":"#ffffff","alwaysVisible":false,"alwaysVisiblePagePosition":"left","alwaysVisibleAspectRatio":50}]}',
+        unitDefinitionType: 'aspect-unit-definition',
+      },
+      widgetConfig: {
+        clipPath: 'inset(0% 25% 80% 25% round 13px)'
+      }
     });
     setTimeout(Message.send.vopGetWidgetsRequestNotification, 100);
+  }
+
+  function changeWidgetColor(color, event) {
+    event.preventDefault();
+    Message.send._send({
+      type: 'vopStateChangedNotification',
+      sessionId,
+      bookletConfig: {
+        widgetColor: color
+      }
+    });
   }
 
   let lastEventType = '';
@@ -461,10 +534,12 @@
     }
   }
 
+
   window.parent.addEventListener('message', async  event => processMessageEvent('Host', event));
   window.addEventListener('message', async  event => processMessageEvent('Player', event));
   document.getElementById('openBtn1').addEventListener('click', event => openWidget('sample-data/widgets/calculator.html', event));
   document.getElementById('openBtn2').addEventListener('click', event => openWidget('sample-data/widgets/avatar.html', event));
+  document.getElementById('experimentalBtn').addEventListener('click', event => openWidgetExperimental(event));
   document.getElementById('ListBtn').addEventListener('click', event => {
     event.preventDefault();
     Message.send.vopGetWidgetsRequestNotification();
