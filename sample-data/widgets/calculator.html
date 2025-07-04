@@ -233,9 +233,9 @@
       reportCalculatorPosition();
     }
     if (msg.data.type === 'vopStateChangedNotification') {
-      if (msg.data.bookletConfig && msg.data.bookletConfig.widgetColor) {
+      if (msg.data.bookletState && msg.data.bookletState.widgetColor) {
         const calc = document.getElementById('calculator');
-        calc.style.borderColor = msg.data.bookletConfig.widgetColor;
+        calc.style.borderColor = msg.data.bookletState.widgetColor;
       }
     }
   });

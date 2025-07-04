@@ -24,7 +24,8 @@
     margin: 0;
   }
 
-  #widgets,
+  #widgets-running,
+  #widgets-available,
   blockquote,
   .warning,
   .hint,
@@ -80,12 +81,15 @@
     background: rgba(0, 50, 255, 0.1);
     border: 1px solid rgba(0, 50, 255, 0.5);
   }
-  #widgets {
+
+  #widgets-running,
+  #widgets-available {
     padding: 0;
     border-collapse: collapse;
     width: 100%;
   }
-  #widgets td {
+  #widgets-running td,
+  #widgets-available td {
     border: 1px solid silver;
     padding: 2px;
   }
@@ -241,7 +245,13 @@
   "name": "calculator"
 }
     </blockquote>
-    <p>Die Eigenschaft <i>name</i> referiert welches Widget geöffnet werden soll.</p>
+    <p>Die Eigenschaft <i>name</i> gibt an, welches Widget geöffnet werden soll.</p>
+    <p class="hint">
+      In <i>dieser Implementierung</i> entspricht der Name der Einfachheit halber der Widgetdatei. Der Host kann die
+      Namen aber auch anders vergeben, er muss sie nur nachher wieder selbst auflösen und die entsprechenden
+      Inhalte laden. Er könnte z. B. auch generische Namen unterstützen wie "ruler" oder "calculator" und selbst
+      mit konkretem Inhalt füllen. Das interessiert die Schnittstelle selbst nicht.
+    </p>
 
     <h3>Widget schließen</h3>
     <blockquote>
@@ -300,18 +310,21 @@
       </li>
     </ol>
     <p><button id="ListBtn">Liste Aktualisieren</button></p>
-    <table id="widgets">
+    <table id="widgets-running">
       <thead>
         <tr><td colspan="3">Running</td></tr>
         <tr><td>ID</td><td>name</td><td></td></tr>
       </thead>
-      <tbody id="widgets-running"></tbody>
+      <tbody></tbody>
+    </table>
+    <table id="widgets-available">
       <thead>
         <tr><td colspan="2">Available</td></tr>
         <tr><td>Name</td><td></td></tr>
       </thead>
-      <tbody id="widgets-available"></tbody>
+      <tbody></tbody>
     </table>
+
 
     <h2>Übergreifende Daten</h2>
     <h3>BookletState</h3>
@@ -487,7 +500,7 @@
     Message.send._send({
       type: 'vopStateChangedNotification',
       sessionId,
-      bookletConfig: {
+      bookletState: {
         widgetColor: color
       }
     });
@@ -500,13 +513,14 @@
     const dataElem = document.getElementById('data');
     if (event.data.type === 'vopStateChangedNotification') {
       let content = '';
+      console.log('l:', event.data);
       if (event.data.bookletState && Object.keys(event.data.bookletState).length) {
         content += 'BookletState: <ul>' + Object.entries(event.data.bookletState)
           .map(([k, v]) => `<li>${k}: ${v}</li>`) + '</ul>';
       }
       if (event.data.unitState && event.data.unitState.dataParts) {
         content += '<ul>' + Object.entries(event.data.unitState.dataParts)
-          .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`) + '</ul>';
+          .map(([chunkId, chunk]) => `<li>${chunkId}: ${chunk}</li>`).join('') + '</ul>';
       }
       dataElem.innerHTML += `<li><b>${receiver}</b> <i>${event.data.type}</i> : ${content}</li>`;
     } else if (event.data.type === 'vopWindowFocusChangedNotification') {
@@ -521,15 +535,15 @@
 
     if (event.data.type === 'vopGetWidgetsNotification') {
       console.log(event.data);
-      document.querySelectorAll('#widgets tbody')
-        .forEach(body => body.innerHTML = '');
+      document.querySelector('#widgets-running tbody').innerHTML = '';
+      document.querySelector('#widgets-available tbody').innerHTML = '';
       (event.data?.running || [])
         .forEach(widget => {
-          document.querySelector('#widgets-running').innerHTML += `<tr><td>${widget.id}</td><td>${widget.name}</td><td><button onclick="closeWidget('${widget.id}', event)">Schließen</button></td></tr>`;
+          document.querySelector('#widgets-running tbody').innerHTML += `<tr><td>${widget.id}</td><td>${widget.name}</td><td><button onclick="closeWidget('${widget.id}', event)">Schließen</button></td></tr>`;
         });
       (event.data?.available || [])
         .forEach(widget => {
-          document.querySelector('#widgets-available').innerHTML += `<tr><td>${widget.name}</td><td><button onclick="openWidget('${widget.name}', event)">Öffnen</button></td></tr>`;
+          document.querySelector('#widgets-available tbody').innerHTML += `<tr><td>${widget.name}</td><td><button onclick="openWidget('${widget.name}', event)">Öffnen</button></td></tr>`;
         });
     }
   }

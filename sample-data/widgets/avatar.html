@@ -41,11 +41,11 @@
           });
       }
       if (msg.data.type === 'vopStateChangedNotification') {
-        if (msg.data.bookletConfig && msg.data.bookletConfig.widgetColor) {
+        if (msg.data.bookletState && msg.data.bookletState.widgetColor) {
           const body = document.querySelector('#avatar svg rect');
           if (body) {
             console.log({body})
-            body.setAttribute('fill', msg.data.bookletConfig.widgetColor);
+            body.setAttribute('fill', msg.data.bookletState.widgetColor);
           }
         }
       }

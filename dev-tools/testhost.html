@@ -125,14 +125,14 @@
 
       if (event.data.type === 'vopStateChangedNotification') {
         console.log('[vopStateChangedNotification]');
-        if ('bookletConfig' in event.data) {
+        if ('bookletState' in event.data) {
           Object.entries(widgets)
             .forEach(([widgetId, widget]) => {
               console.log(`forwarding vopStateChangedNotification to ${widgetId}`);
               widget.elem.contentWindow.postMessage({
                 type: 'vopStateChangedNotification',
                 widgetId,
-                bookletConfig: event.data.bookletConfig
+                bookletState: event.data.bookletState
               }, '*');
             });
         }
