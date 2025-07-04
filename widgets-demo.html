@@ -56,14 +56,14 @@
       focus: 'unknown'
     };
     const host = document.getElementById('host');
-    const player = await fetch('http://localhost:9999/player');
+    const player = await fetch('verona-player-simple-6.0.html');
     const playerSettings = 'debounceStateMessages=0&debounceKeyboardEvents=0';
     const playerSrc = (await player.text())
       .replace(/const overridePlayerSettings = (location\.search);/, `const overridePlayerSettings = "${playerSettings}"`);
-    const playerConfigRes = await fetch('http://localhost:9999/playerConfig');
+    const playerConfigRes = await fetch('dev-tools/player-config.json');
     const playerConfigTxt = playerConfigRes ? await playerConfigRes.text() : null;
     const playerConfig = playerConfigTxt ? JSON.parse(playerConfigTxt) : {};
-    const unit = await fetch('http://localhost:9999/unit')
+    const unit = await fetch('sample-data/unit-with-widget.htm')
     const unitDefinition = await unit.text() || 'not found';
     host.srcdoc = playerSrc;
 
@@ -141,7 +141,7 @@
       if (event.data.type === 'vopStartWidget') {
         console.log('[vopStartWidget]');
         const widgetHost = document.createElement('iframe');
-        const widgetCode = await fetch(`http://localhost:9999/${event.data.name}`);
+        const widgetCode = await fetch(`${event.data.name}`);
         widgetHost.classList.add('widgetHost');
         widgetHost.srcdoc = (await widgetCode.text());
         document.body.appendChild(widgetHost);
