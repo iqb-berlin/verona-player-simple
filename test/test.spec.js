@@ -302,6 +302,38 @@ describe('simple player', () => {
     ]));
   });
 
+  [
+    { value: ['A', 'C'], selected: ['A', 'C'] },
+    { value: 'C', selected: ['C'] },
+    { value: [], selected: [] },
+    { value: '', selected: [] }
+  ].forEach(({ value, selected }) => {
+    it(`should restore custom checkbox values ${JSON.stringify(value)}`, async () => {
+      await send({
+        type: 'vopStartCommand',
+        unitDefinition: `
+          <input type="checkbox" name="properties" value="A" />
+          <input type="checkbox" name="properties" value="B" checked />
+          <input type="checkbox" name="properties" value="C" />`,
+        sessionId: '1',
+        unitState: {
+          dataParts: {
+            answers: JSON.stringify([{ id: 'properties', status: 'VALUE_CHANGED', value }])
+          }
+        }
+      });
+
+      const inputs = await driver.findElements(By.name('properties'));
+      const checkedValues = [];
+      for (const input of inputs) {
+        if (await input.isSelected()) checkedValues.push(await input.getAttribute('value'));
+      }
+      expect(checkedValues).toEqual(selected);
+      expect((await VopState.getAnswer(driver, 'properties')).value)
+        .toEqual(selected.length === 0 ? '' : selected.length === 1 ? selected[0] : selected);
+    });
+  });
+
   it('should support various form elements', async () => {
     await loadPlayer({
       debounceStateMessages: 0,

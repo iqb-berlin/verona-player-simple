@@ -672,9 +672,7 @@
 
     set = answers => {
       (answers || []).forEach(answer => {
-        Array.isArray(answer.value)
-          ? answer.value.forEach((value, index) => this._setAnswer(answer.id, value, index))
-          : this._setAnswer(answer.id, answer.value)
+        this._setAnswer(answer.id, answer.value);
       });
     };
 
@@ -721,6 +719,14 @@
       }
       Answers.status[name] = "VALUE_CHANGED";
 
+      if (elements[0].tagName === 'INPUT' && elements[0].type === 'checkbox') {
+        const selectedValues = Array.isArray(value) ? value : [value];
+        elements.forEach(checkbox => {
+          checkbox.checked = selectedValues.includes(checkbox.value);
+        });
+        return;
+      }
+
       if (Array.isArray(value)) {
         value.forEach((valueEntry, i) => this._setAnswer(name, valueEntry, i));
         return;
@@ -739,13 +745,6 @@
                   radioElem.removeAttribute('checked')
                 }
               });
-              break;
-            case 'checkbox':
-              if (value === "on") {
-                element.setAttribute('checked', 'checked');
-              } else {
-                element.removeAttribute('checked');
-              }
               break;
             default:
               element.setAttribute('value', value);
